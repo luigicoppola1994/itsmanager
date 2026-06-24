@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guida Autenticazione JWT - FastAPI e JS</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #fff;
+        }
+        h1 {
+            color: #1e3a8a;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            font-size: 2.2rem;
+            margin-top: 0;
+        }
+        h2 {
+            color: #2563eb;
+            margin-top: 40px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        h3 {
+            color: #1e40af;
+            margin-top: 20px;
+        }
+        p, li {
+            font-size: 1.1rem;
+            color: #4b5563;
+        }
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+        pre {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .info-box {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+        .info-box p {
+            margin: 0;
+            font-weight: 500;
+            color: #1e40af;
+        }
+        @media print {
+            body {
+                padding: 0;
+                color: #000;
+            }
+            pre {
+                background-color: #f8fafc;
+                color: #0f172a;
+                border: 1px solid #cbd5e1;
+                box-shadow: none;
+                page-break-inside: avoid;
+            }
+            h2, h3 {
+                page-break-after: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Guida Passo-Passo: Creare un Sistema di Autenticazione JWT da Zero</h1>
+    <p>Questa guida è pensata per gli studenti che desiderano implementare da zero un sistema di autenticazione e sicurezza basato su <strong>JSON Web Token (JWT)</strong>, collegando un Backend <strong>FastAPI (Python)</strong> a un Frontend <strong>HTML/JS</strong>.</p>
+
+    <div class="info-box">
+        <p>💡 Istruzioni per salvare in PDF: apri questo file HTML con un browser (Chrome, Edge o Firefox), premi Ctrl+P (o Cmd+P su Mac) e seleziona "Salva come PDF".</p>
+    </div>
+
+    <h2>Passo 1: Installare le Librerie (Dipendenze)</h2>
+    <p>Nel file <code>backend/requirements.txt</code> inseriamo le librerie necessarie per gestire l'autenticazione e la cifratura:</p>
+    <pre><code>fastapi[all]
+sqlalchemy
+pymysql
+cryptography
+passlib[bcrypt]
+pyjwt</code></pre>
+    <ul>
+        <li><strong><code>passlib[bcrypt]</code></strong>: Serve a crittografare (hashare) in modo sicuro le password.</li>
+        <li><strong><code>pyjwt</code></strong>: Serve a generare e verificare i JSON Web Token.</li>
+    </ul>
+
+    <h2>Passo 2: Creare il Database e i Modelli (<code>models.py</code>)</h2>
+    <p>Prima di autenticare gli utenti, dobbiamo definire come sono fatti nel database.</p>
+    <ol>
+        <li>Creiamo la classe <code>Utente</code> che eredita dal gestore del database SQLAlchemy (<code>Base</code>).</li>
+        <li>Definiamo i campi principali: <code>id_utente</code>, <code>Email</code>, <code>Password</code> (dove salveremo l'hash della password), ed <code>id_ruolo</code> (chiave esterna collegata alla tabella dei ruoli).</li>
+    </ol>
+    <pre><code># backend/models.py
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+from database import Base
+
+class Ruolo(Base):
+    __tablename__ = "Ruoli"
+    id_ruolo = Column(Integer, primary_key=True, index=True)
+    Nome = Column(String(255), nullable=False)
+    
+    utenti = relationship("Utente", back_populates="ruolo")
+
+class Utente(Base):
+    __tablename__ = "Utenti"
+    id_utente = Column(Integer, primary_key=True, index=True)
+    Email = Column(String(255), unique=True, nullable=False)
+    Password = Column(String(255), nullable=False) # Contiene la password cifrata
+    id_ruolo = Column(Integer, ForeignKey("Ruoli.id_ruolo"), nullable=False)
+    
+    ruolo = relationship("Ruolo", back_populates="utenti")</code></pre>
+
+    <h2>Passo 3: Scrivere la Logica di Sicurezza (<code>auth.py</code>)</h2>
+    <p>Creiamo un modulo dedicato esclusivamente alla sicurezza: <code>backend/auth.py</code>. Qui configureremo l'algoritmo di hashing e la creazione dei token.</p>
+    <pre><code># backend/auth.py
+from datetime import datetime, timedelta
+import jwt
+from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordBearer
+
+# 1. Configurazione JWT e Hashing
+SECRET_KEY = "cambiami_con_una_chiave_segreta_sicura"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+# 2. Funzioni per le Password
+def verify_password(plain_password, hashed_password):
+    """Controlla se la password inserita corrisponde all'hash salvato nel DB"""
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    """Genera un hash sicuro a partire dalla password in chiaro"""
+    return pwd_context.hash(password)
+
+# 3. Funzioni per i Token JWT
+def create_access_token(data: dict):
+    """Crea un token JWT con scadenza di 30 minuti"""
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire, "type": "access"})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)</code></pre>
+
+    <h2>Passo 4: Scrivere gli Endpoint API (<code>main.py</code>)</h2>
+    <p>Ora colleghiamo la logica di sicurezza agli endpoint di FastAPI in <code>backend/main.py</code>.</p>
+
+    <h3>A. La Dipendenza <code>get_current_user</code></h3>
+    <p>Questa funzione verifica se la richiesta che arriva al backend ha un token valido nell'header HTTP <code>Authorization</code>. Se il token è valido, restituisce l'utente loggato, altrimenti blocca la richiesta con un errore <code>401</code>.</p>
+    <pre><code># backend/main.py
+import jwt
+from fastapi import Depends, HTTPException, status
+from sqlalchemy.orm import Session
+import auth, models
+
+def get_current_user(token: str = Depends(auth.oauth2_scheme), db: Session = Depends(get_db)):
+    try:
+        # Decodifica il token JWT
+        payload = jwt.decode(token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=401, detail="Token non valido")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Token scaduto o non valido")
+    
+    user = db.query(models.Utente).filter(models.Utente.Email == email).first()
+    if user is None:
+        raise HTTPException(status_code=401, detail="Utente non trovato")
+    return user</code></pre>
+
+    <h3>B. L'Endpoint <code>/login</code></h3>
+    <p>Questo endpoint riceve l'email e la password inserite dall'utente, controlla che siano corrette e restituisce il token JWT firmato ed il nome del ruolo dell'utente.</p>
+    <pre><code>from fastapi import Response
+from fastapi.security import OAuth2PasswordRequestForm
+
+@app.post("/login")
+def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    # 1. Trova l'utente nel DB
+    user = db.query(models.Utente).filter(models.Utente.Email == form_data.username).first()
+    
+    # 2. Verifica la password
+    if not user or not auth.verify_password(form_data.password, user.Password):
+        raise HTTPException(status_code=401, detail="Credenziali errate")
+    
+    # 3. Crea il token JWT
+    access_token = auth.create_access_token(data={"sub": user.Email})
+    
+    # 4. Ottiene il nome del ruolo (es: "super_admin")
+    ruolo_nome = user.ruolo.Nome if user.ruolo else "studente"
+    
+    # 5. Ritorna il token e il ruolo al frontend
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "ruolo": ruolo_nome
+    }</code></pre>
+
+    <h2>Passo 5: Gestire l'Autenticazione nel Frontend (<code>app.js</code>)</h2>
+    <p>Nel frontend, dobbiamo salvare il token ricevuto dopo il login e inserirlo in ogni chiamata successiva che richiede autenticazione.</p>
+
+    <h3>A. Salvare il token dopo il login</h3>
+    <p>Quando il form di login viene inviato, facciamo una chiamata <code>POST</code> al backend e salviamo il token nel <code>localStorage</code>:</p>
+    <pre><code>// frontend/app.js
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    const params = new URLSearchParams();
+    params.append('username', email);
+    params.append('password', password);
+
+    const response = await fetch('http://localhost:8000/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params
+    });
+
+    if (response.ok) {
+        const data = await response.json();
+        // Salviamo il token e il ruolo nel browser dell'utente
+        localStorage.setItem('jwt_token', data.access_token);
+        localStorage.setItem('user_role', data.ruolo);
+        
+        // Mostriamo l'applicazione principale e nascondiamo il login
+        document.getElementById('loginContainer').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'block';
+    } else {
+        alert('Credenziali non valide!');
+    }
+});</code></pre>
+
+    <h3>B. Effettuare chiamate protette (Funzione Wrapper)</h3>
+    <p>Per inviare richieste ad API protette (es. per caricare dati privati dal server), dobbiamo passare il token nell'header HTTP <code>Authorization: Bearer &lt;token&gt;</code>:</p>
+    <pre><code>async function fetchAutenticata(url, opzioni = {}) {
+    // Recupera il token salvato precedentemente
+    let token = localStorage.getItem('jwt_token');
+    
+    if (!opzioni.headers) opzioni.headers = {};
+    if (token) {
+        // Aggiunge il token all'intestazione della chiamata
+        opzioni.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return await fetch(url, opzioni);
+}</code></pre>
+
+</body>
+</html>

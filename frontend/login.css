@@ -1,0 +1,74 @@
+/* login.css */
+body.login-body {
+    font-family: 'Outfit', sans-serif;
+    overflow: hidden;
+}
+
+/* LEFT SIDE - BLUE GRADIENT */
+.login-left {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #38bdf8 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Decorative circles on the left */
+.login-left::before, .login-left::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+}
+.login-left::before {
+    width: 600px;
+    height: 600px;
+    top: -100px;
+    left: -150px;
+}
+.login-left::after {
+    width: 400px;
+    height: 400px;
+    bottom: -50px;
+    right: -100px;
+}
+
+.info-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    width: 350px;
+}
+
+.z-10 {
+    z-index: 10;
+}
+
+.text-primary-dark {
+    color: #1e3a8a !important;
+}
+
+.custom-input {
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.custom-input::placeholder {
+    color: #cbd5e1;
+}
+
+.custom-input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+    outline: none;
+}
+
+.custom-btn {
+    background: #2563eb;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.custom-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4) !important;
+}
