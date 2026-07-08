@@ -16,7 +16,7 @@
 
 from pydantic import BaseModel  # Classe base di Pydantic per tutti gli schemi
 from typing import Optional     # Permette di dichiarare campi opzionali (possono essere None)
-from datetime import date       # Tipo date per i campi data
+from datetime import date, time  # Tipo date e time per i campi data/orario
 
 
 # ------------------------------------------------------------------------------
@@ -83,44 +83,100 @@ class UtenteResponse(UtenteBase):
 # Segui il pattern Base/Create/Response per ogni entità.
 # ==============================================================================
 
-# --- ESEMPIO: Schema per la tabella Ruoli ---
-# class RuoloBase(BaseModel):
-#     Nome: str
-#     Descrizione: Optional[str] = None
-#
-# class RuoloCreate(RuoloBase):
-#     pass
-#
-# class RuoloResponse(RuoloBase):
-#     id_ruolo: int
-#     class Config:
-#         from_attributes = True
 
-# --- ESEMPIO: Schema per la tabella Corso ---
-# class CorsoBase(BaseModel):
-#     Nome: str
-#     Descrizione: Optional[str] = None
-#
-# class CorsoCreate(CorsoBase):
-#     pass
-#
-# class CorsoResponse(CorsoBase):
-#     id_corso: int
-#     class Config:
-#         from_attributes = True
+# --- Schema per la tabella Ruoli ---
+class RuoloBase(BaseModel):
+    Nome: str
+    Descrizione: Optional[str] = None
 
-# --- ESEMPIO: Schema per le Presenze ---
-# class PresenzaBase(BaseModel):
-#     id_utente: int
-#     data_presenza: date
-#     ora_ingresso: Optional[str] = None
-#     ora_uscita: Optional[str] = None
-#     note: Optional[str] = None
-#
-# class PresenzaCreate(PresenzaBase):
-#     pass
-#
-# class PresenzaResponse(PresenzaBase):
-#     id_presenza: int
-#     class Config:
-#         from_attributes = True
+class RuoloCreate(RuoloBase):
+    pass
+
+class RuoloResponse(RuoloBase):
+    id_ruolo: int
+    class Config:
+        from_attributes = True
+
+
+# --- Schema per la tabella Corsi ---
+class CorsoBase(BaseModel):
+    Nome: str
+    Descrizione: Optional[str] = None
+
+class CorsoCreate(CorsoBase):
+    pass
+
+class CorsoResponse(CorsoBase):
+    id_corso: int
+    class Config:
+        from_attributes = True
+
+
+# --- Schema per la tabella Corsi Attivi ---
+class CorsoAttivoBase(BaseModel):
+    id_corso: int
+    data_inizio: Optional[date] = None
+    data_fine: Optional[date] = None
+    durata_ore: Optional[int] = None
+    ore_stage: Optional[int] = None
+    ore_teoria_aula: Optional[int] = None
+    percentuale_ore_assenza: Optional[float] = None
+    tolleranza_ingresso_minuti: Optional[int] = None
+    tolleranza_uscita_minuti: Optional[int] = None
+    archiviato: Optional[bool] = False
+
+class CorsoAttivoCreate(CorsoAttivoBase):
+    pass
+
+class CorsoAttivoResponse(CorsoAttivoBase):
+    id_corso_attivo: int
+    class Config:
+        from_attributes = True
+
+
+# --- Schema per la tabella Unita Formative ---
+class UnitaFormativaBase(BaseModel):
+    Nome: str
+    Descrizione: Optional[str] = None
+
+class UnitaFormativaCreate(UnitaFormativaBase):
+    pass
+
+class UnitaFormativaResponse(UnitaFormativaBase):
+    id_unita_formativa: int
+    class Config:
+        from_attributes = True
+
+
+# --- Schema per la tabella Moduli ---
+class ModuloBase(BaseModel):
+    Nome: str
+    Descrizione: Optional[str] = None
+    id_unita_formativa: int
+
+class ModuloCreate(ModuloBase):
+    pass
+
+class ModuloResponse(ModuloBase):
+    id_modulo: int
+    class Config:
+        from_attributes = True
+
+
+# --- Schema per la tabella Calendario ---
+class CalendarioBase(BaseModel):
+    data: date
+    ora_inizio: time
+    ora_fine: time
+    id_modulo: Optional[int] = None
+    id_utente: Optional[int] = None
+    id_corso_attivo: int
+    note: Optional[str] = None
+
+class CalendarioCreate(CalendarioBase):
+    pass
+
+class CalendarioResponse(CalendarioBase):
+    id: int
+    class Config:
+        from_attributes = True

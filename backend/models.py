@@ -11,7 +11,7 @@
 # 5. Aggiungi gli endpoint in main.py
 # ==============================================================================
 
-from sqlalchemy import Column, Integer, String, Enum, Date, Boolean, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Enum, Date, Time, Boolean, Text, Float, ForeignKey
 from sqlalchemy.orm import relationship  # Per definire relazioni tra tabelle
 from database import Base               # La Base dichiarativa da cui tutti i modelli ereditano
 
@@ -88,26 +88,70 @@ class Utente(Base):
 # Ogni classe deve ereditare da Base e avere __tablename__ corretto.
 # ==============================================================================
 
-# --- ESEMPIO: Modello per la tabella Ruoli ---
-# class Ruolo(Base):
-#     __tablename__ = "Ruoli"
-#     id_ruolo = Column(Integer, primary_key=True, index=True)
-#     Nome = Column(String(255), nullable=False)
-#     Descrizione = Column(Text, nullable=True)
 
-# --- ESEMPIO: Modello per la tabella Corso ---
-# class Corso(Base):
-#     __tablename__ = "corso"
-#     id_corso = Column(Integer, primary_key=True, index=True)
-#     Nome = Column(String(255), nullable=False)
-#     Descrizione = Column(Text, nullable=True)
+# --- Modello per la tabella Corsi ---
+class Corso(Base):
+    __tablename__ = "corsi"
+    id_corso = Column("id_corso", Integer, primary_key=True, index=True)
+    Nome = Column("nome", String(255), nullable=False)
+    Descrizione = Column("descrizione", Text, nullable=True)
 
-# --- ESEMPIO: Modello per la tabella Presenze ---
-# class Presenza(Base):
-#     __tablename__ = "presenze"
-#     id_presenza = Column(Integer, primary_key=True, index=True)
-#     id_utente = Column(Integer, ForeignKey("Utenti.id_utente"), nullable=False)
-#     data_presenza = Column(Date, nullable=False)
-#     ora_ingresso = Column(String(8), nullable=True)   # formato HH:MM:SS
-#     ora_uscita = Column(String(8), nullable=True)
-#     note = Column(Text, nullable=True)
+    corsi_attivi = relationship("CorsoAttivo", back_populates="corso")
+
+
+# --- Modello per la tabella Corsi Attivi ---
+class CorsoAttivo(Base):
+    __tablename__ = "corsi_attivi"
+    id_corso_attivo = Column("id_corso_attivo", Integer, primary_key=True, index=True)
+    id_corso = Column("id_corso", Integer, ForeignKey("corsi.id_corso"), nullable=False)
+    data_inizio = Column("data_inizio", Date, nullable=True)
+    data_fine = Column("data_fine", Date, nullable=True)
+    durata_ore = Column("durata_ore", Integer, nullable=True)
+    ore_stage = Column("ore_stage", Integer, nullable=True)
+    ore_teoria_aula = Column("ore_teoria_aula", Integer, nullable=True)
+    percentuale_ore_assenza = Column("percentuale_ore_assenza", Float, nullable=True)
+    tolleranza_ingresso_minuti = Column("tolleranza_ingresso_minuti", Integer, nullable=True)
+    tolleranza_uscita_minuti = Column("tolleranza_uscita_minuti", Integer, nullable=True)
+    archiviato = Column("archiviato", Boolean, default=False)
+
+    corso = relationship("Corso", back_populates="corsi_attivi")
+    lezioni = relationship("Calendario", back_populates="corso_attivo")
+
+
+# --- Modello per la tabella Unita Formative ---
+class UnitaFormativa(Base):
+    __tablename__ = "unita_formative"
+    id_unita_formativa = Column("id_unita_formativa", Integer, primary_key=True, index=True)
+    Nome = Column("nome", String(255), nullable=False)
+    Descrizione = Column("descrizione", Text, nullable=True)
+
+    moduli = relationship("Modulo", back_populates="unita_formativa")
+
+
+# --- Modello per la tabella Moduli ---
+class Modulo(Base):
+    __tablename__ = "moduli"
+    id_modulo = Column("id_modulo", Integer, primary_key=True, index=True)
+    Nome = Column("nome", String(255), nullable=False)
+    Descrizione = Column("descrizione", Text, nullable=True)
+    id_unita_formativa = Column("id_unita_formativa", Integer, ForeignKey("unita_formative.id_unita_formativa"), nullable=False)
+
+    unita_formativa = relationship("UnitaFormativa", back_populates="moduli")
+    lezioni = relationship("Calendario", back_populates="modulo")
+
+
+# --- Modello per la tabella Calendario ---
+class Calendario(Base):
+    __tablename__ = "calendario"
+    id = Column("id", Integer, primary_key=True, index=True)
+    data = Column("data", Date, nullable=False)
+    ora_inizio = Column("ora_inizio", Time, nullable=False)
+    ora_fine = Column("ora_fine", Time, nullable=False)
+    id_modulo = Column("id_modulo", Integer, ForeignKey("moduli.id_modulo"), nullable=True)
+    id_utente = Column("id_utente", Integer, ForeignKey("utenti.id_utente"), nullable=True)
+    id_corso_attivo = Column("id_corso_attivo", Integer, ForeignKey("corsi_attivi.id_corso_attivo"), nullable=False)
+    note = Column("note", Text, nullable=True)
+
+    modulo = relationship("Modulo", back_populates="lezioni")
+    corso_attivo = relationship("CorsoAttivo", back_populates="lezioni")
+    docente = relationship("Utente", foreign_keys=[id_utente])
