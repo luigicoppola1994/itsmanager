@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITS Manager - Nuovo Corso</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- CSS condiviso e segreteria -->
+    <link rel="stylesheet" href="../shared/styles.css">
+    <link rel="stylesheet" href="segreteria.css">
+    <link rel="stylesheet" href="nuovo-corso.css">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- SIDEBAR A SINISTRA -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo">
+                </div>
+                <h2 class="sidebar-brand-title">ITS Manager</h2>
+                <span class="sidebar-brand-subtitle">Gestionale IT</span>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-small">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">Segreteria Didattica</div>
+                    <span class="user-role-badge">SEGRETERIA</span>
+                </div>
+            </div>
+
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="dashboard.html" class="nav-item-link" id="navCorsi">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        <span>Corsi</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico">
+                        <i class="bi bi-book-half"></i>
+                        <span>Piano Didattico</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-item-link" id="navStudenti">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Studenti</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-item-link" id="navDocenti">
+                        <i class="bi bi-person-video3"></i>
+                        <span>Docenti</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-item-link" id="navCalendario">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Calendario</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Disconnetti</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENUTO PRINCIPALE -->
+        <main class="main-content">
+
+            <!-- BREADCRUMB + TITOLO -->
+            <div class="nc-page-header">
+                <div class="nc-breadcrumb">
+                    <a href="dashboard.html" class="nc-breadcrumb-link">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        Corsi
+                    </a>
+                    <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
+                    <span class="nc-breadcrumb-current">Nuovo Corso</span>
+                </div>
+
+                <div class="nc-header-row">
+                    <div>
+                        <h1 class="nc-title">
+                            <span class="nc-title-icon"><i class="bi bi-journal-plus"></i></span>
+                            Crea Nuovo Corso
+                        </h1>
+                        <p class="nc-subtitle">Compila i campi per aggiungere un nuovo corso al catalogo dell'istituto.</p>
+                    </div>
+                    <a href="dashboard.html" class="btn-back">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>Torna ai corsi</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- FORM CARD -->
+            <div class="nc-form-layout">
+
+                <!-- COLONNA SINISTRA: form -->
+                <div class="nc-form-card">
+                    <div class="nc-form-card-header">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>Informazioni del corso</span>
+                    </div>
+
+                    <form id="nuovoCorsoForm" novalidate>
+
+                        <!-- SCELTA MODALITÀ -->
+                        <div class="nc-mode-selector mb-4 pb-3" style="border-bottom: 1px dashed var(--border-color);">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="corsoMode" id="modeNew" value="new" checked>
+                                <label class="form-check-label fw-bold text-primary" for="modeNew">Crea Nuovo Corso</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="corsoMode" id="modeExisting" value="existing">
+                                <label class="form-check-label fw-bold text-secondary" for="modeExisting">Usa Corso Esistente</label>
+                            </div>
+                        </div>
+
+                        <!-- SEZIONE: ANAGRAFICA CORSO -->
+                        <div class="nc-section-title">
+                            <span class="nc-step-number">1</span>
+                            Anagrafica Corso
+                        </div>
+                        
+                        <!-- Mostrato solo se mode == 'existing' -->
+                        <div id="sectionExistingCourse" style="display: none;" class="mb-4 ps-4 border-start border-3 border-secondary">
+                            <div class="nc-field-group">
+                                <label for="corsoEsistenteSelect" class="nc-label">Seleziona dal Catalogo <span class="nc-required">*</span></label>
+                                <select id="corsoEsistenteSelect" class="form-select nc-input py-2">
+                                    <option value="">Caricamento corsi in corso...</option>
+                                </select>
+                                <span class="nc-field-error" id="erroreCorsoEsistente"></span>
+                            </div>
+                        </div>
+
+                        <!-- Mostrato solo se mode == 'new' -->
+                        <div id="sectionNewCourse" class="mb-4 ps-4 border-start border-3 border-primary">
+                            <div class="nc-field-group mb-3">
+                                <label for="nomeCorso" class="nc-label">Nome del Corso <span class="nc-required">*</span></label>
+                                <div class="nc-input-wrapper">
+                                    <i class="bi bi-journal-text nc-input-icon"></i>
+                                    <input type="text" id="nomeCorso" class="nc-input" placeholder="Es. AI Specialist & Cloud Data Engineering" maxlength="200">
+                                </div>
+                                <span class="nc-field-error" id="erroreNome"></span>
+                            </div>
+
+                            <div class="nc-field-group">
+                                <label for="descrizioneCorso" class="nc-label">Descrizione</label>
+                                <div class="nc-textarea-wrapper">
+                                    <i class="bi bi-card-text nc-input-icon nc-textarea-icon"></i>
+                                    <textarea id="descrizioneCorso" class="nc-textarea" rows="2" placeholder="Descrivi il percorso formativo..." maxlength="1000"></textarea>
+                                </div>
+                                <div class="nc-field-hint-row">
+                                    <span class="nc-field-hint">Facoltativa ma consigliata.</span>
+                                    <span class="nc-char-count" id="charCount">0 / 1000</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SEZIONE: DETTAGLI EDIZIONE (SEMPRE VISIBILE) -->
+                        <div class="nc-section-title mt-2">
+                            <span class="nc-step-number">2</span>
+                            Dettagli Edizione (Corso Attivo)
+                        </div>
+                        
+                        <div class="ps-4 border-start border-3 border-success mb-4">
+                            <!-- Date -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <div class="nc-field-group">
+                                        <label for="dataInizio" class="nc-label">Data Inizio <span class="nc-required">*</span></label>
+                                        <input type="date" id="dataInizio" class="form-control nc-input py-2" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="nc-field-group">
+                                        <label for="dataFine" class="nc-label">Data Fine <span class="nc-required">*</span></label>
+                                        <input type="date" id="dataFine" class="form-control nc-input py-2" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ore -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <div class="nc-field-group">
+                                        <label for="durataOre" class="nc-label">Ore Totali <span class="nc-required">*</span></label>
+                                        <input type="number" id="durataOre" class="form-control nc-input py-2" min="1" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="nc-field-group">
+                                        <label for="oreTeoria" class="nc-label">Ore Teoria Aula</label>
+                                        <input type="number" id="oreTeoria" class="form-control nc-input py-2" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="nc-field-group">
+                                        <label for="oreStage" class="nc-label">Ore Stage</label>
+                                        <input type="number" id="oreStage" class="form-control nc-input py-2" min="0" value="0">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Regole -->
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="nc-field-group">
+                                        <label for="percAssenza" class="nc-label">% Assenza Max</label>
+                                        <div class="input-group">
+                                            <input type="number" id="percAssenza" class="form-control py-2" min="0" max="30" value="20" required>
+                                            <span class="input-group-text bg-light">%</span>
+                                        </div>
+                                        <span class="nc-field-hint" style="font-size:0.75rem;">Max 30%</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="nc-field-group">
+                                        <label for="tollIngresso" class="nc-label">Toll. Ingresso</label>
+                                        <div class="input-group">
+                                            <input type="number" id="tollIngresso" class="form-control py-2" min="0" max="30" value="15" required>
+                                            <span class="input-group-text bg-light">min</span>
+                                        </div>
+                                        <span class="nc-field-hint" style="font-size:0.75rem;">Max 30 min</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="nc-field-group">
+                                        <label for="tollUscita" class="nc-label">Toll. Uscita</label>
+                                        <div class="input-group">
+                                            <input type="number" id="tollUscita" class="form-control py-2" min="0" max="45" value="15" required>
+                                            <span class="input-group-text bg-light">min</span>
+                                        </div>
+                                        <span class="nc-field-hint" style="font-size:0.75rem;">Max 45 min</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- INFO BOX -->
+                        <div class="nc-info-box mt-2">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <div>
+                                <strong>Operazione Sequenziale</strong>
+                                <p>Il sistema verificherà tutti i campi prima di creare l'Edizione nel database (e, se richiesto, il nuovo corso a catalogo).</p>
+                            </div>
+                        </div>
+
+                        <!-- AZIONI FORM -->
+                        <div class="nc-form-actions mt-4 pt-3 border-top">
+                            <a href="dashboard.html" class="btn-nc-cancel">
+                                <i class="bi bi-x-lg"></i>
+                                Annulla
+                            </a>
+                            <button type="submit" class="btn-nc-submit" id="submitBtn">
+                                <span class="btn-nc-text">
+                                    <i class="bi bi-check-lg"></i>
+                                    Salva Edizione
+                                </span>
+                                <span class="btn-nc-loading" style="display:none;">
+                                    <span class="nc-spinner"></span>
+                                    Salvataggio...
+                                </span>
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- COLONNA DESTRA: anteprima -->
+                <div class="nc-preview-panel">
+                    <div class="nc-preview-header">
+                        <i class="bi bi-eye"></i>
+                        <span>Anteprima card</span>
+                    </div>
+                    <p class="nc-preview-hint">Così apparirà il corso nella dashboard</p>
+
+                    <div class="nc-preview-card" id="previewCard">
+                        <div class="nc-preview-card-top">
+                            <div class="nc-preview-badge">
+                                <span class="course-badge active">Nuovo</span>
+                            </div>
+                            <h3 class="nc-preview-title" id="previewTitle">Nome del corso</h3>
+                        </div>
+                        <div class="nc-preview-card-body">
+                            <p class="nc-preview-desc" id="previewDesc">La descrizione del corso apparirà qui...</p>
+                            <div class="nc-preview-meta">
+                                <div class="meta-item">
+                                    <div class="meta-icon"><i class="bi bi-clock-history"></i></div>
+                                    <div>
+                                        <p class="meta-text-val">—</p>
+                                        <p class="meta-text-lbl">Ore Totali</p>
+                                    </div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-icon"><i class="bi bi-briefcase"></i></div>
+                                    <div>
+                                        <p class="meta-text-val">—</p>
+                                        <p class="meta-text-lbl">Ore Stage</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CHECKLIST CAMPI -->
+                    <div class="nc-checklist">
+                        <div class="nc-checklist-item" id="checkCorso">
+                            <i class="bi bi-circle nc-check-icon"></i>
+                            <span>Anagrafica Corso (selezionata o creata)</span>
+                        </div>
+                        <div class="nc-checklist-item" id="checkDate">
+                            <i class="bi bi-circle nc-check-icon"></i>
+                            <span>Date impostate</span>
+                        </div>
+                        <div class="nc-checklist-item" id="checkOre">
+                            <i class="bi bi-circle nc-check-icon"></i>
+                            <span>Monte ore definito</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST NOTIFICHE -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
+
+    <!-- Auth + logica pagina -->
+    <script src="../shared/auth.js"></script>
+    <script src="nuovo-corso.js"></script>
+</body>
+</html>

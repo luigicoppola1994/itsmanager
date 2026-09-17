@@ -14,7 +14,7 @@
 # 3. Crea una classe Response (per le risposte GET) che aggiunge i campi del DB (es. id)
 # ==============================================================================
 
-from pydantic import BaseModel  # Classe base di Pydantic per tutti gli schemi
+from pydantic import BaseModel, model_validator  # Classe base di Pydantic e validatore per gli schemi
 from typing import Optional     # Permette di dichiarare campi opzionali (possono essere None)
 from datetime import date, time  # Tipo date e time per i campi data/orario
 
@@ -139,6 +139,16 @@ class UnitaFormativaBase(BaseModel):
     Nome: str
     Descrizione: Optional[str] = None
 
+    @model_validator(mode='before')
+    @classmethod
+    def handle_column_names(cls, data):
+        if isinstance(data, dict):
+            if 'nome' in data and 'Nome' not in data:
+                data['Nome'] = data['nome']
+            if 'descrizione' in data and 'Descrizione' not in data:
+                data['Descrizione'] = data['descrizione']
+        return data
+
 class UnitaFormativaCreate(UnitaFormativaBase):
     pass
 
@@ -154,11 +164,35 @@ class ModuloBase(BaseModel):
     Descrizione: Optional[str] = None
     id_unita_formativa: int
 
+    @model_validator(mode='before')
+    @classmethod
+    def handle_column_names(cls, data):
+        if isinstance(data, dict):
+            if 'nome' in data and 'Nome' not in data:
+                data['Nome'] = data['nome']
+            if 'descrizione' in data and 'Descrizione' not in data:
+                data['Descrizione'] = data['descrizione']
+        return data
+
 class ModuloCreate(ModuloBase):
     pass
 
 class ModuloResponse(ModuloBase):
     id_modulo: int
+    class Config:
+        from_attributes = True
+
+
+# --- Schema per Corsi Attivi - Unità Formative (Piano Studio) ---
+class CorsoAttivoUnitaFormativaBase(BaseModel):
+    id_corso_attivo: int
+    id_unita_formativa: int
+    ore_dedicate: int
+
+class CorsoAttivoUnitaFormativaCreate(CorsoAttivoUnitaFormativaBase):
+    pass
+
+class CorsoAttivoUnitaFormativaResponse(CorsoAttivoUnitaFormativaBase):
     class Config:
         from_attributes = True
 

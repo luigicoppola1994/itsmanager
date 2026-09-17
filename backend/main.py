@@ -178,6 +178,23 @@ def refresh(refresh_token: str = Cookie(None)):
 
 
 # ==============================================================================
+# ENDPOINT: POST /logout
+# Effettua il logout eliminando il cookie refresh_token lato server.
+# Anche se il client ha ancora l'access token, esso scadrà entro 30 minuti
+# e NON potrà essere rinnovato perché il cookie di refresh è stato rimosso.
+# ==============================================================================
+@app.post("/logout")
+def logout(response: Response):
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        samesite="lax",
+        secure=False,     # ⚠️ Impostare True in produzione con HTTPS!
+    )
+    return {"message": "Logout effettuato con successo"}
+
+
+# ==============================================================================
 # ENDPOINT: GET /users
 # Restituisce la lista di tutti gli utenti dal database.
 # È un endpoint PROTETTO: richiede un token JWT valido nell'header Authorization.
@@ -601,6 +618,64 @@ def delete_modulo(id_modulo: int, db: Session = Depends(get_db), current_user: m
     db.delete(modulo)
     db.commit()
     return {"message": "Modulo eliminato con successo"}
+
+
+# --- Endpoint per il Piano Studio (Corsi Attivi - Unità Formative) ---
+@app.get("/piano-studio", response_model=List[schemas.CorsoAttivoUnitaFormativaResponse])
+def get_tutti_piani_studio(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
+    """Restituisce tutte le associazioni del Piano Studio tra Corsi Attivi ed Unità Formative."""
+    return db.query(models.CorsoAttivoUnitaFormativa).all()
+
+@app.get("/corsi-attivi/{id_corso_attivo}/piano-studio", response_model=List[schemas.CorsoAttivoUnitaFormativaResponse])
+def get_piano_studio_corso(id_corso_attivo: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
+    """Restituisce il Piano Studio (Unità Formative e ore dedicate) per un specifico Corso Attivo."""
+    return db.query(models.CorsoAttivoUnitaFormativa).filter(models.CorsoAttivoUnitaFormativa.id_corso_attivo == id_corso_attivo).all()
+
+@app.post("/piano-studio", response_model=schemas.CorsoAttivoUnitaFormativaResponse, status_code=status.HTTP_201_CREATED)
+def create_o_aggiorna_piano_studio(item: schemas.CorsoAttivoUnitaFormativaCreate, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
+    """Crea o aggiorna un'associazione nel Piano Studio per un Corso Attivo."""
+    corso_attivo = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == item.id_corso_attivo).first()
+    if not corso_attivo:
+        raise HTTPException(status_code=400, detail="Il corso attivo specificato non esiste")
+    
+    uf = db.query(models.UnitaFormativa).filter(models.UnitaFormativa.id_unita_formativa == item.id_unita_formativa).first()
+    if not uf:
+        raise HTTPException(status_code=400, detail="L'unità formativa specificata non esiste")
+
+    esistente = db.query(models.CorsoAttivoUnitaFormativa).filter(
+        models.CorsoAttivoUnitaFormativa.id_corso_attivo == item.id_corso_attivo,
+        models.CorsoAttivoUnitaFormativa.id_unita_formativa == item.id_unita_formativa
+    ).first()
+
+    if esistente:
+        esistente.ore_dedicate = item.ore_dedicate
+        db.commit()
+        db.refresh(esistente)
+        return esistente
+    else:
+        nuova_associazione = models.CorsoAttivoUnitaFormativa(
+            id_corso_attivo=item.id_corso_attivo,
+            id_unita_formativa=item.id_unita_formativa,
+            ore_dedicate=item.ore_dedicate
+        )
+        db.add(nuova_associazione)
+        db.commit()
+        db.refresh(nuova_associazione)
+        return nuova_associazione
+
+@app.delete("/piano-studio/{id_corso_attivo}/{id_unita_formativa}")
+def delete_piano_studio_item(id_corso_attivo: int, id_unita_formativa: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
+    """Rimuove un'Unità Formativa dal Piano Studio di un Corso Attivo."""
+    item = db.query(models.CorsoAttivoUnitaFormativa).filter(
+        models.CorsoAttivoUnitaFormativa.id_corso_attivo == id_corso_attivo,
+        models.CorsoAttivoUnitaFormativa.id_unita_formativa == id_unita_formativa
+    ).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Voce del piano studio non trovata")
+    
+    db.delete(item)
+    db.commit()
+    return {"message": "Voce del piano studio rimossa con successo"}
 
 
 # --- Endpoint per il Calendario ---
