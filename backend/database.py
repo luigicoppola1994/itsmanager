@@ -25,7 +25,7 @@ from sqlalchemy.ext.declarative import declarative_base # Base per i modelli ORM
 # ------------------------------------------------------------------------------
 SQLALCHEMY_DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "mysql+pymysql://user:user_password@localhost:3306/its_db"  # Fallback locale
+    "mysql+pymysql://its-manager:progettoits2026@mysql-its-manager.alwaysdata.net:3306/its-manager_db"  # Fallback remoto
 )
 
 # ------------------------------------------------------------------------------

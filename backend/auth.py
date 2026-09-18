@@ -7,8 +7,8 @@
 
 from datetime import datetime, timedelta
 import jwt                                    # Libreria PyJWT per creare/verificare token JWT
-from passlib.context import CryptContext      # Libreria per hashing sicuro delle password
-from fastapi.security import OAuth2PasswordBearer  # Schema OAuth2 per leggere il token dall'header
+from fastapi.security import OAuth2PasswordBearer
+import bcrypt
 
 # ------------------------------------------------------------------------------
 # CONFIGURAZIONE SICUREZZA
@@ -20,10 +20,6 @@ SECRET_KEY = "la_tua_chiave_segreta_molto_sicura"  # ⚠️ CAMBIARE in produzio
 ALGORITHM = "HS256"                                  # Algoritmo di firma del token JWT
 ACCESS_TOKEN_EXPIRE_MINUTES = 30                     # L'access token scade dopo 30 minuti
 REFRESH_TOKEN_EXPIRE_DAYS = 7                        # Il refresh token dura 7 giorni
-
-# Configura il contesto per l'hashing con l'algoritmo bcrypt.
-# bcrypt è l'algoritmo raccomandato per le password: è lento e aggiunge un "salt" automaticamente.
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # oauth2_scheme è usato da FastAPI per estrarre il token JWT dall'header HTTP:
 # "Authorization: Bearer <token>"
@@ -38,7 +34,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 def verify_password(plain_password, hashed_password):
     try:
         # Prima prova a verificare come hash bcrypt (password moderne create dal backend)
-        if pwd_context.verify(plain_password, hashed_password):
+        if bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8')):
             return True
     except Exception:
         # Se il formato non è un hash bcrypt, cattura l'eccezione e prova il fallback
@@ -53,7 +49,8 @@ def verify_password(plain_password, hashed_password):
 # USARE SEMPRE questa funzione quando si salva una nuova password!
 # ------------------------------------------------------------------------------
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 
 # ------------------------------------------------------------------------------

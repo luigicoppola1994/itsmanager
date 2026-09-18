@@ -115,6 +115,7 @@ class CorsoResponse(CorsoBase):
 # --- Schema per la tabella Corsi Attivi ---
 class CorsoAttivoBase(BaseModel):
     id_corso: int
+    etichetta: Optional[str] = None  # es. 'Gruppo A', 'Turno Mattina'
     data_inizio: Optional[date] = None
     data_fine: Optional[date] = None
     durata_ore: Optional[int] = None

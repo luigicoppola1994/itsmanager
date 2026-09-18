@@ -10,8 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Bootstrap 5 CSS & Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../assets/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/bootstrap-icons.css" rel="stylesheet">
     
     <!-- Custom Segreteria CSS -->
     <link rel="stylesheet" href="../shared/styles.css">
@@ -121,11 +121,40 @@
 
 
 
+    <!-- MODAL: MODIFICA CORSO (ANAGRAFICA) -->
+    <div class="modal fade" id="editCorsoModal" tabindex="-1" aria-labelledby="editCorsoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCorsoModalLabel"><i class="bi bi-pencil-square text-primary me-2"></i>Modifica Corso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editCorsoForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="editCorsoId">
+                        <div class="mb-3">
+                            <label for="editCorsoNome" class="form-label fw-bold">Nome del Corso <span class="text-danger">*</span></label>
+                            <input type="text" id="editCorsoNome" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCorsoDescrizione" class="form-label fw-bold">Descrizione</label>
+                            <textarea id="editCorsoDescrizione" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Annulla</button>
+                        <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSaveCorso">Salva Modifiche</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICHE -->
     <div class="toast" id="toast">Operazione completata!</div>
 
     <!-- Bootstrap JS Bundle (deve essere caricato PRIMA di auth.js e app.js) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
+    <script src="../assets/bootstrap.bundle.min.js"></script>
 
     <!-- Scripts Autenticazione e Logica Segreteria -->
     <script src="../shared/auth.js"></script>

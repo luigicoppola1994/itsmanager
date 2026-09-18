@@ -93,7 +93,7 @@ class Utente(Base):
 class Corso(Base):
     __tablename__ = "corso"
     id_corso = Column("id_corso", Integer, primary_key=True, index=True)
-    Nome = Column("nome", String(255), nullable=False)
+    Nome = Column("nome", String(255), unique=True, nullable=False)
     Descrizione = Column("descrizione", Text, nullable=True)
 
     corsi_attivi = relationship("CorsoAttivo", back_populates="corso")
@@ -104,6 +104,7 @@ class CorsoAttivo(Base):
     __tablename__ = "corsi_attivi"
     id_corso_attivo = Column("id_corso_attivo", Integer, primary_key=True, index=True)
     id_corso = Column("id_corso", Integer, ForeignKey("corso.id_corso"), nullable=False)
+    etichetta = Column("etichetta", String(100), nullable=True)  # es. 'Gruppo A', 'Turno Mattina'
     data_inizio = Column("data_inizio", Date, nullable=True)
     data_fine = Column("data_fine", Date, nullable=True)
     durata_ore = Column("durata_ore", Integer, nullable=True)

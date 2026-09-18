@@ -16,7 +16,8 @@
 # ==============================================================================
 
 # --- Importazioni da FastAPI ---
-from fastapi import FastAPI, Depends, HTTPException, Response, Cookie, status
+from fastapi import FastAPI, Depends, HTTPException, Response, Cookie, status, Request
+from fastapi.responses import JSONResponse
 # FastAPI: la classe principale che crea l'app
 # Depends: sistema di "dependency injection" per iniettare dipendenze (es. DB, utente corrente)
 # HTTPException: per restituire errori HTTP (es. 401 Unauthorized, 404 Not Found)
@@ -25,10 +26,13 @@ from fastapi import FastAPI, Depends, HTTPException, Response, Cookie, status
 # status: costanti per i codici HTTP (es. status.HTTP_200_OK)
 
 from sqlalchemy.orm import Session     # Tipo della sessione database SQLAlchemy
+from sqlalchemy import func            # Per funzioni SQL come func.lower
 from typing import List, Optional                # Per dichiarare liste e tipi opzionali come parametri
 from fastapi.middleware.cors import CORSMiddleware  # Middleware per gestire le policy CORS
 from fastapi.security import OAuth2PasswordRequestForm  # Form standard per login (username + password)
 import jwt                             # Libreria PyJWT per decodificare i token
+from pydantic import BaseModel         # Per definire modelli di richiesta inline
+from datetime import date              # Per i campi data nei modelli Pydantic
 
 # --- Importazioni dai nostri moduli ---
 import models         # I modelli SQLAlchemy (tabelle del DB)
@@ -74,6 +78,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    # Ritorna i log dell'eccezione interna con intestazioni CORS in modo che il frontend non mostri errori CORS per gli errori 500
+    origin = request.headers.get("origin", "*")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error", "error": str(exc)},
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*"
+        }
+    )
+
 
 
 # ==============================================================================
@@ -382,6 +402,10 @@ def get_corso(id_corso: int, db: Session = Depends(get_db), current_user: models
 @app.post("/corsi", response_model=schemas.CorsoResponse, status_code=status.HTTP_201_CREATED)
 def create_corso(corso: schemas.CorsoCreate, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
     """Crea un nuovo corso."""
+    esistente = db.query(models.Corso).filter(func.lower(models.Corso.Nome) == func.lower(corso.Nome.strip())).first()
+    if esistente:
+        raise HTTPException(status_code=400, detail="Un corso con questo nome esiste già nel catalogo.")
+        
     nuovo_corso = models.Corso(Nome=corso.Nome, Descrizione=corso.Descrizione)
     db.add(nuovo_corso)
     db.commit()
@@ -394,6 +418,11 @@ def update_corso(id_corso: int, corso_data: schemas.CorsoCreate, db: Session = D
     corso = db.query(models.Corso).filter(models.Corso.id_corso == id_corso).first()
     if corso is None:
         raise HTTPException(status_code=404, detail="Corso non trovato")
+        
+    if corso_data.Nome != corso.Nome:
+        esistente = db.query(models.Corso).filter(func.lower(models.Corso.Nome) == func.lower(corso_data.Nome.strip())).first()
+        if esistente:
+            raise HTTPException(status_code=400, detail="Un corso con questo nome esiste già nel catalogo.")
     
     corso.Nome = corso_data.Nome
     corso.Descrizione = corso_data.Descrizione
@@ -408,10 +437,114 @@ def delete_corso(id_corso: int, db: Session = Depends(get_db), current_user: mod
     corso = db.query(models.Corso).filter(models.Corso.id_corso == id_corso).first()
     if corso is None:
         raise HTTPException(status_code=404, detail="Corso non trovato")
+        
+    # Controlla se ci sono edizioni attive
+    if corso.corsi_attivi:
+        raise HTTPException(status_code=400, detail="Impossibile eliminare il corso perché ha edizioni associate.")
     
     db.delete(corso)
     db.commit()
     return {"message": "Corso eliminato con successo"}
+
+
+# ==============================================================================
+# ENDPOINT ATOMICO: POST /corsi/nuovo
+# Crea un nuovo corso a catalogo E la sua prima edizione attiva in un'unica
+# transazione SQL. Se la creazione dell'edizione fallisce (es. date errate,
+# vincoli violati), ANCHE il corso viene annullato tramite rollback.
+# Questo previene la creazione di corsi "orfani" a catalogo.
+# ==============================================================================
+class NuovoCorsoConEdizione(BaseModel):
+    # Campi Corso
+    nome_corso: str
+    descrizione_corso: Optional[str] = None
+    # Campi Edizione
+    etichetta: Optional[str] = None
+    data_inizio: Optional[date] = None
+    data_fine: Optional[date] = None
+    durata_ore: Optional[int] = None
+    ore_stage: Optional[int] = None
+    ore_teoria_aula: Optional[int] = None
+    percentuale_ore_assenza: Optional[float] = None
+    tolleranza_ingresso_minuti: Optional[int] = None
+    tolleranza_uscita_minuti: Optional[int] = None
+
+class NuovoCorsoConEdizioneResponse(BaseModel):
+    corso: schemas.CorsoResponse
+    edizione: schemas.CorsoAttivoResponse
+    class Config:
+        from_attributes = True
+
+@app.post("/corsi/nuovo", response_model=NuovoCorsoConEdizioneResponse, status_code=status.HTTP_201_CREATED)
+def create_corso_con_edizione(
+    payload: NuovoCorsoConEdizione,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """
+    Endpoint atomico: crea corso + edizione in un'unica transazione.
+    Se l'edizione non può essere creata, il corso viene annullato (rollback).
+    """
+    # Validazioni manuali (i vincoli di business che il DB non gestisce)
+    if not payload.nome_corso or not payload.nome_corso.strip():
+        raise HTTPException(status_code=422, detail="Il nome del corso è obbligatorio.")
+    if payload.data_inizio and payload.data_fine and payload.data_inizio > payload.data_fine:
+        raise HTTPException(status_code=422, detail="La data di inizio non può essere successiva alla data di fine.")
+    if payload.durata_ore is not None and payload.durata_ore <= 0:
+        raise HTTPException(status_code=422, detail="Il monte ore totale deve essere maggiore di zero.")
+    if payload.ore_stage is not None and payload.ore_stage < 0:
+        raise HTTPException(status_code=422, detail="Le ore di stage non possono essere negative.")
+    if payload.ore_teoria_aula is not None and payload.ore_teoria_aula < 0:
+        raise HTTPException(status_code=422, detail="Le ore di teoria non possono essere negative.")
+    if payload.percentuale_ore_assenza is not None and not (0 <= payload.percentuale_ore_assenza <= 100):
+        raise HTTPException(status_code=422, detail="La percentuale di assenza deve essere tra 0 e 100.")
+
+    esistente = db.query(models.Corso).filter(func.lower(models.Corso.Nome) == func.lower(payload.nome_corso.strip())).first()
+    if esistente:
+        raise HTTPException(status_code=400, detail="Un corso con questo nome esiste già nel catalogo. Selezionalo dal menu 'Usa Corso Esistente'.")
+
+    try:
+        # STEP 1: Crea il corso (non ancora committed)
+        nuovo_corso = models.Corso(
+            Nome=payload.nome_corso.strip(),
+            Descrizione=payload.descrizione_corso.strip() if payload.descrizione_corso else None
+        )
+        db.add(nuovo_corso)
+        db.flush()  # Assegna l'ID al corso senza fare commit definitivo
+
+        # STEP 2: Crea l'edizione usando l'ID appena generato
+        nuova_edizione = models.CorsoAttivo(
+            id_corso=nuovo_corso.id_corso,
+            etichetta=payload.etichetta.strip() if payload.etichetta else None,
+            data_inizio=payload.data_inizio,
+            data_fine=payload.data_fine,
+            durata_ore=payload.durata_ore,
+            ore_stage=payload.ore_stage or 0,
+            ore_teoria_aula=payload.ore_teoria_aula or 0,
+            percentuale_ore_assenza=payload.percentuale_ore_assenza or 0,
+            tolleranza_ingresso_minuti=payload.tolleranza_ingresso_minuti or 0,
+            tolleranza_uscita_minuti=payload.tolleranza_uscita_minuti or 0,
+            archiviato=False
+        )
+        db.add(nuova_edizione)
+
+        # COMMIT unico: o tutto va a buon fine, o niente viene salvato
+        db.commit()
+        db.refresh(nuovo_corso)
+        db.refresh(nuova_edizione)
+
+        return {"corso": nuovo_corso, "edizione": nuova_edizione}
+
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        # Rollback automatico: annulla sia il corso che l'edizione
+        db.rollback()
+        msg = str(e.orig) if hasattr(e, 'orig') else str(e)
+        raise HTTPException(status_code=400, detail=f"Errore nella creazione: {msg}")
+
+
 
 
 # --- Endpoint per i Corsi Attivi ---
@@ -454,6 +587,7 @@ def create_corso_attivo(corso_attivo: schemas.CorsoAttivoCreate, db: Session = D
         
     nuovo_corso_attivo = models.CorsoAttivo(
         id_corso=corso_attivo.id_corso,
+        etichetta=corso_attivo.etichetta.strip() if corso_attivo.etichetta else None,
         data_inizio=corso_attivo.data_inizio,
         data_fine=corso_attivo.data_fine,
         durata_ore=corso_attivo.durata_ore,
@@ -481,6 +615,7 @@ def update_corso_attivo(id_corso_attivo: int, corso_attivo_data: schemas.CorsoAt
         raise HTTPException(status_code=400, detail="Il corso specificato non esiste")
         
     corso_attivo.id_corso = corso_attivo_data.id_corso
+    corso_attivo.etichetta = corso_attivo_data.etichetta.strip() if corso_attivo_data.etichetta else None
     corso_attivo.data_inizio = corso_attivo_data.data_inizio
     corso_attivo.data_fine = corso_attivo_data.data_fine
     corso_attivo.durata_ore = corso_attivo_data.durata_ore

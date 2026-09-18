@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Avvia la dashboard dei corsi
     initCorsiDashboard();
+
+    const editCorsoForm = document.getElementById('editCorsoForm');
+    if (editCorsoForm) {
+        editCorsoForm.addEventListener('submit', handleEditCorsoSubmit);
+    }
 });
 
 let masterCoursesList = [];
@@ -134,10 +139,11 @@ function renderCorsi(list) {
                     badgeLabel = "Da Archiviare";
                 }
 
-                // Genera etichetta anno tipo "edizione 24/25"
+                // Genera etichetta anno tipo "edizione 24/25" o usa quella personalizzata
                 const startYear = new Date(e.data_inizio).getFullYear().toString().slice(-2);
                 const endYear = new Date(e.data_fine).getFullYear().toString().slice(-2);
-                const edizLabel = `edizione ${startYear}/${endYear}`;
+                const defaultLabel = `edizione ${startYear}/${endYear}`;
+                const edizLabel = e.etichetta ? e.etichetta : defaultLabel;
 
                 const dataInizioFmt = new Date(e.data_inizio).toLocaleDateString('it-IT');
                 const dataFineFmt = new Date(e.data_fine).toLocaleDateString('it-IT');
@@ -181,6 +187,16 @@ function renderCorsi(list) {
                         <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-bold fs-7 me-2">
                             ${numEdizioni} ${numEdizioni === 1 ? 'Edizione' : 'Edizioni'}
                         </span>
+                        <button class="btn-action-icon btn-edit-corso me-1" title="Modifica Corso"
+                            data-id="${c.id_corso}"
+                            data-nome="${encodeURIComponent(c.Nome)}"
+                            data-descrizione="${encodeURIComponent(c.Descrizione || '')}">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button class="btn-action-icon danger btn-delete-corso me-2" title="Elimina Corso"
+                            data-id="${c.id_corso}">
+                            <i class="bi bi-trash3-fill"></i>
+                        </button>
                         <a href="nuovo-corso.html?id_corso=${c.id_corso}" class="btn btn-outline-primary btn-sm fw-semibold rounded-2 px-3 py-1 me-2" onclick="event.stopPropagation();">
                             + Nuova Edizione
                         </a>
@@ -205,6 +221,25 @@ function renderCorsi(list) {
             ${itemsHtml}
         </div>
     `;
+
+    // Delegated event listener: gestisce click su pulsanti modifica e elimina corso
+    grid.addEventListener('click', function(e) {
+        // Trova il pulsante cliccato (o il suo figlio icona)
+        const editBtn = e.target.closest('.btn-edit-corso');
+        const deleteBtn = e.target.closest('.btn-delete-corso');
+
+        if (editBtn) {
+            e.stopPropagation();
+            const id = editBtn.dataset.id;
+            const nome = decodeURIComponent(editBtn.dataset.nome);
+            const descrizione = decodeURIComponent(editBtn.dataset.descrizione);
+            window.editCorso(id, nome, descrizione);
+        } else if (deleteBtn) {
+            e.stopPropagation();
+            const id = deleteBtn.dataset.id;
+            window.deleteCorso(id);
+        }
+    }, false); // listener su grid: funziona sempre perché la grid viene ricreata ad ogni render (il vecchio DOM viene rimosso)
 }
 
 // Elimina Edizione Corso
@@ -225,5 +260,157 @@ window.deleteCorsoAttivo = async function(id) {
         } catch (e) {
             showToast("Errore di rete durante l'eliminazione", true);
         }
+    }
+}
+
+// -----------------------------------------
+// GESTIONE CORSO (Anagrafica)
+// -----------------------------------------
+
+window.editCorso = function(id, nome, descrizione) {
+    document.getElementById('editCorsoId').value = id;
+    document.getElementById('editCorsoNome').value = nome;
+    document.getElementById('editCorsoDescrizione').value = descrizione;
+    
+    // Pulisce eventuali errori precedenti
+    const errEl = document.getElementById('editCorsoError');
+    if (errEl) errEl.style.display = 'none';
+    
+    // Ripristina il pulsante
+    const btn = document.getElementById('btnSaveCorso');
+    if (btn) { btn.disabled = false; btn.textContent = 'Salva Modifiche'; }
+    
+    // Apri la modale (Bootstrap o fallback nativo)
+    openModal('editCorsoModal');
+};
+
+window.deleteCorso = async function(id) {
+    if (confirm(`Sei sicuro di voler eliminare il corso? Verrà rimosso dal catalogo.\nNOTA: Se il corso ha edizioni attive non potrà essere eliminato.`)) {
+        try {
+            const response = await fetchAutenticata(`${API_URL}/corsi/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                showToast("Corso eliminato con successo dal catalogo.");
+                loadDashboardData();
+            } else {
+                const err = await response.json();
+                showToast(err.detail || "Errore durante l'eliminazione", true);
+            }
+        } catch (e) {
+            showToast("Errore di rete durante l'eliminazione", true);
+        }
+    }
+};
+
+async function handleEditCorsoSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('editCorsoId').value;
+    const nome = document.getElementById('editCorsoNome').value.trim();
+    const descrizione = document.getElementById('editCorsoDescrizione').value.trim();
+    
+    if (!nome) {
+        showEditCorsoError('Il nome del corso è obbligatorio.');
+        return;
+    }
+    
+    const btn = document.getElementById('btnSaveCorso');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvataggio...';
+    
+    try {
+        const response = await fetchAutenticata(`${API_URL}/corsi/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ Nome: nome, Descrizione: descrizione || null })
+        });
+        
+        if (response.ok) {
+            // Chiude la modale
+            closeModal('editCorsoModal');
+            
+            showToast('Corso aggiornato con successo.');
+            loadDashboardData();
+        } else {
+            const err = await response.json();
+            showEditCorsoError(err.detail || "Errore durante l'aggiornamento del corso.");
+        }
+    } catch (error) {
+        showEditCorsoError('Errore di rete. Controlla la connessione.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Salva Modifiche';
+    }
+}
+
+function showEditCorsoError(msg) {
+    let errEl = document.getElementById('editCorsoError');
+    if (!errEl) {
+        errEl = document.createElement('div');
+        errEl.id = 'editCorsoError';
+        errEl.className = 'alert alert-danger py-2 mt-2 mb-0';
+        document.getElementById('editCorsoForm').querySelector('.modal-body').appendChild(errEl);
+    }
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+}
+
+// Visualizza i toast
+function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    if (isError) {
+        toast.style.backgroundColor = '#dc3545';
+    } else {
+        toast.style.backgroundColor = 'var(--primary-color)';
+    }
+    toast.className = 'toast show';
+    setTimeout(() => { toast.classList.remove('show'); }, 3500);
+}
+
+// -----------------------------------------
+// HELPERS MODALI (compatibili con o senza Bootstrap JS)
+// -----------------------------------------
+function openModal(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (typeof bootstrap !== 'undefined') {
+        // Bootstrap JS disponibile
+        let inst = bootstrap.Modal.getInstance(el);
+        if (!inst) inst = new bootstrap.Modal(el);
+        inst.show();
+    } else {
+        // Fallback nativo senza Bootstrap JS
+        el.style.cssText = 'display:flex; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100%; height:100%; z-index:1055;';
+        el.classList.add('show');
+        el.removeAttribute('aria-hidden');
+        document.body.classList.add('modal-open');
+        let backdrop = document.getElementById('modal-backdrop-custom');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.id = 'modal-backdrop-custom';
+            backdrop.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1040;';
+            backdrop.onclick = () => closeModal(id);
+            document.body.appendChild(backdrop);
+        }
+        backdrop.style.display = 'block';
+    }
+}
+
+function closeModal(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (typeof bootstrap !== 'undefined') {
+        const inst = bootstrap.Modal.getInstance(el);
+        if (inst) inst.hide();
+    } else {
+        el.style.display = 'none';
+        el.classList.remove('show');
+        el.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        const backdrop = document.getElementById('modal-backdrop-custom');
+        if (backdrop) backdrop.style.display = 'none';
     }
 }

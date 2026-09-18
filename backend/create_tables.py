@@ -97,6 +97,28 @@ def create_missing_tables():
         else:
             print("  ✓ Colonna 'id_modulo' già presente in 'calendario'.")
         
+        # Aggiunge la colonna 'etichetta' a corsi_attivi se non esiste già
+        result = conn.execute(text("""
+            SELECT COUNT(*) as cnt 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+              AND TABLE_NAME = 'corsi_attivi' 
+              AND COLUMN_NAME = 'etichetta'
+        """))
+        row = result.fetchone()
+        if row[0] == 0:
+            print("Aggiunta colonna 'etichetta' alla tabella 'corsi_attivi'...")
+            try:
+                conn.execute(text("""
+                    ALTER TABLE `corsi_attivi`
+                    ADD COLUMN `etichetta` VARCHAR(100) NULL AFTER `id_corso`
+                """))
+                print("  ✓ Colonna 'etichetta' aggiunta a 'corsi_attivi'.")
+            except Exception as e:
+                print(f"  ⚠ Errore su corsi_attivi: {e}")
+        else:
+            print("  ✓ Colonna 'etichetta' già presente in 'corsi_attivi'.")
+
         conn.commit()
         print("\n✅ Tutte le tabelle sono state create con successo!")
 

@@ -11,8 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 CSS & Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../assets/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/bootstrap-icons.css" rel="stylesheet">
 
     <!-- CSS condiviso e segreteria -->
     <link rel="stylesheet" href="../shared/styles.css">
@@ -184,6 +184,17 @@
                         </div>
                         
                         <div class="ps-4 border-start border-3 border-success mb-4">
+
+                            <!-- Etichetta Edizione -->
+                            <div class="nc-field-group mb-3">
+                                <label for="etichettaEdizione" class="nc-label">Etichetta Edizione</label>
+                                <div class="nc-input-wrapper">
+                                    <i class="bi bi-tag-fill nc-input-icon"></i>
+                                    <input type="text" id="etichettaEdizione" class="nc-input" placeholder="Es. Gruppo A, Turno Mattina, Sede Roma…" maxlength="100">
+                                </div>
+                                <span class="nc-field-hint">Facoltativa — utile per distinguere edizioni parallele dello stesso corso.</span>
+                            </div>
+
                             <!-- Date -->
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
@@ -348,7 +359,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
+    <script src="../assets/bootstrap.bundle.min.js"></script>
 
     <!-- Auth + logica pagina -->
     <script src="../shared/auth.js"></script>

@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const charCount = document.getElementById('charCount');
     
     // Campi Edizione Attiva
+    const etichettaInput = document.getElementById('etichettaEdizione');
     const dataInizio = document.getElementById('dataInizio');
     const dataFine = document.getElementById('dataFine');
     const durataOre = document.getElementById('durataOre');
@@ -37,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewDesc = document.getElementById('previewDesc');
     const metaOreTotali = document.querySelectorAll('.meta-text-val')[0];
     const metaOreStage = document.querySelectorAll('.meta-text-val')[1];
+    const previewBadge = document.querySelector('.course-badge');
     
     const checkCorso = document.getElementById('checkCorso');
     const checkDate = document.getElementById('checkDate');
@@ -142,9 +144,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Aggiorna UI Anagrafica
+        // Aggiorna UI Anagrafica e Badge
         previewTitle.textContent = titleText;
         previewDesc.textContent = descText;
+        if (etichettaInput && etichettaInput.value.trim()) {
+            previewBadge.textContent = `Nuovo • ${etichettaInput.value.trim()}`;
+        } else {
+            previewBadge.textContent = 'Nuovo';
+        }
+
         if (isCorsoValido) {
             previewTitle.classList.remove('placeholder-text');
             previewDesc.classList.remove('placeholder-text');
@@ -176,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Aggiungi listener per l'input in tempo reale
-    const inputsToWatch = [nomeInput, descInput, corsoEsistenteSelect, dataInizio, dataFine, durataOre, oreStage];
+    const inputsToWatch = [nomeInput, descInput, corsoEsistenteSelect, etichettaInput, dataInizio, dataFine, durataOre, oreStage];
     inputsToWatch.forEach(input => input.addEventListener('input', updatePreview));
     inputsToWatch.forEach(input => input.addEventListener('change', updatePreview));
 
@@ -187,9 +195,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // Validazione Client-Side
         let isValid = true;
         
-        if (modeNew.checked && !nomeInput.value.trim()) {
-            nomeInput.classList.add('is-invalid');
-            isValid = false;
+        if (modeNew.checked) {
+            const nomeStr = nomeInput.value.trim();
+            if (!nomeStr) {
+                nomeInput.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                // Controllo duplicato case-insensitive lato client
+                const nomeLower = nomeStr.toLowerCase();
+                const exist = Object.values(corsiEsistentiMap).some(c => c.Nome.toLowerCase() === nomeLower);
+                if (exist) {
+                    showToastCustom("Un corso con questo nome esiste già nel catalogo. Usa 'Usa Corso Esistente'.", 'error');
+                    nomeInput.classList.add('is-invalid');
+                    isValid = false;
+                }
+            }
         }
         if (modeExisting.checked && !corsoEsistenteSelect.value) {
             corsoEsistenteSelect.classList.add('is-invalid');
@@ -199,12 +219,12 @@ document.addEventListener('DOMContentLoaded', () => {
             showToastCustom('Inserisci Data Inizio e Data Fine valide.', 'error');
             isValid = false;
         }
-        if (new Date(dataInizio.value) > new Date(dataFine.value)) {
+        if (dataInizio.value && dataFine.value && new Date(dataInizio.value) > new Date(dataFine.value)) {
             showToastCustom('La Data di Inizio non può essere successiva alla Data di Fine.', 'error');
             isValid = false;
         }
         if (!durataOre.value || parseInt(durataOre.value) <= 0) {
-            showToastCustom('Inserisci un monte ore totale valido.', 'error');
+            showToastCustom('Inserisci un monte ore totale valido (deve essere maggiore di zero).', 'error');
             isValid = false;
         }
 
@@ -213,53 +233,76 @@ document.addEventListener('DOMContentLoaded', () => {
         setLoadingState(true);
 
         try {
-            let idCorsoDaUsare = null;
+            let idEdizione = null;
 
-            // STEP 1: Creazione nuovo corso a catalogo (se richiesto)
             if (modeNew.checked) {
-                const responseCorso = await fetchAutenticata(`${API_URL}/corsi`, {
+                // ─────────────────────────────────────────────────────────────
+                // ENDPOINT ATOMICO: crea corso + edizione in un'unica
+                // transazione. Se l'edizione fallisce → rollback automatico
+                // del corso. Nessun corso orfano nel DB!
+                // ─────────────────────────────────────────────────────────────
+                const payload = {
+                    nome_corso: nomeInput.value.trim(),
+                    descrizione_corso: descInput.value.trim() || null,
+                    etichetta: etichettaInput ? etichettaInput.value.trim() || null : null,
+                    data_inizio: dataInizio.value,
+                    data_fine: dataFine.value,
+                    durata_ore: parseInt(durataOre.value),
+                    ore_stage: parseInt(oreStage.value) || 0,
+                    ore_teoria_aula: parseInt(oreTeoria.value) || 0,
+                    percentuale_ore_assenza: parseFloat(percAssenza.value) || 0,
+                    tolleranza_ingresso_minuti: parseInt(tollIngresso.value) || 0,
+                    tolleranza_uscita_minuti: parseInt(tollUscita.value) || 0
+                };
+
+                const response = await fetchAutenticata(`${API_URL}/corsi/nuovo`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        Nome: nomeInput.value.trim(),
-                        Descrizione: descInput.value.trim() ? descInput.value.trim() : null
-                    })
+                    body: JSON.stringify(payload)
                 });
 
-                if (!responseCorso.ok) {
-                    const err = await responseCorso.json();
-                    throw new Error(err.detail || 'Errore nella creazione dell\'anagrafica corso.');
+                if (!response.ok) {
+                    const err = await response.json();
+                    // Estrae il messaggio specifico dal campo "detail" del backend
+                    const detail = err.detail || err.error || 'Errore nella creazione del corso.';
+                    throw new Error(detail);
                 }
-                
-                const nuovoCorso = await responseCorso.json();
-                idCorsoDaUsare = nuovoCorso.id_corso;
+
+                const risultato = await response.json();
+                idEdizione = risultato.edizione.id_corso_attivo;
+
             } else {
-                idCorsoDaUsare = parseInt(corsoEsistenteSelect.value);
-            }
+                // ─────────────────────────────────────────────────────────────
+                // CORSO ESISTENTE: crea solo l'edizione
+                // ─────────────────────────────────────────────────────────────
+                const datiEdizione = {
+                    id_corso: parseInt(corsoEsistenteSelect.value),
+                    etichetta: etichettaInput ? etichettaInput.value.trim() || null : null,
+                    data_inizio: dataInizio.value,
+                    data_fine: dataFine.value,
+                    durata_ore: parseInt(durataOre.value),
+                    ore_stage: parseInt(oreStage.value) || 0,
+                    ore_teoria_aula: parseInt(oreTeoria.value) || 0,
+                    percentuale_ore_assenza: parseFloat(percAssenza.value) || 0,
+                    tolleranza_ingresso_minuti: parseInt(tollIngresso.value) || 0,
+                    tolleranza_uscita_minuti: parseInt(tollUscita.value) || 0,
+                    archiviato: false
+                };
 
-            // STEP 2: Creazione Edizione Attiva
-            const datiEdizione = {
-                id_corso: idCorsoDaUsare,
-                data_inizio: dataInizio.value,
-                data_fine: dataFine.value,
-                durata_ore: parseInt(durataOre.value),
-                ore_stage: parseInt(oreStage.value) || 0,
-                ore_teoria_aula: parseInt(oreTeoria.value) || 0,
-                percentuale_ore_assenza: parseFloat(percAssenza.value) || 0,
-                tolleranza_ingresso_minuti: parseInt(tollIngresso.value) || 0,
-                tolleranza_uscita_minuti: parseInt(tollUscita.value) || 0,
-                archiviato: false
-            };
+                const responseEdizione = await fetchAutenticata(`${API_URL}/corsi-attivi`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datiEdizione)
+                });
 
-            const responseEdizione = await fetchAutenticata(`${API_URL}/corsi-attivi`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datiEdizione)
-            });
+                if (!responseEdizione.ok) {
+                    const err = await responseEdizione.json();
+                    const detail = err.detail || err.error || 'Errore nella creazione dell\'edizione.';
+                    throw new Error(detail);
+                }
 
-            if (!responseEdizione.ok) {
-                const err = await responseEdizione.json();
-                throw new Error(err.detail || 'Errore nella creazione dell\'edizione.');
+                const nuovaEdizione = await responseEdizione.json();
+                idEdizione = nuovaEdizione.id_corso_attivo;
             }
 
             // SUCCESSO!
@@ -272,10 +315,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Errore salvataggio:", error);
-            showToastCustom(error.message || 'Errore di connessione al server', 'error');
+            showToastCustom(error.message || 'Errore di connessione al server.', 'error');
             setLoadingState(false);
         }
     });
+
 
     // Helpers
     function setLoadingState(isLoading) {

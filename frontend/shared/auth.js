@@ -106,7 +106,7 @@ function showToast(message, isError = false) {
 window.addEventListener('load', () => {
     const token = localStorage.getItem('jwt_token');
     const path = window.location.pathname;
-    const isLoginPage = path.includes('login.html') || path === '/';
+    const isLoginPage = path.includes('login') || path === '/';
 
     if (!isLoginPage && !token) {
         console.warn('[Auth] Sessione assente. Reindirizzamento al login...');
