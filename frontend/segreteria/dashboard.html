@@ -14,8 +14,8 @@
     <link href="../assets/bootstrap-icons.css" rel="stylesheet">
     
     <!-- Custom Segreteria CSS -->
-    <link rel="stylesheet" href="../shared/styles.css">
-    <link rel="stylesheet" href="segreteria.css">
+    <link rel="stylesheet" href="../shared/styles.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=2.1">
 </head>
 <body>
 
@@ -57,15 +57,9 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-item-link" id="navStudenti">
+                    <a href="utenze.html" class="nav-item-link" id="navUtenze">
                         <i class="bi bi-people-fill"></i>
-                        <span>Studenti</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-item-link" id="navDocenti">
-                        <i class="bi bi-person-video3"></i>
-                        <span>Docenti</span>
+                        <span>Utenze</span>
                     </a>
                 </li>
                 <li>
@@ -150,6 +144,83 @@
         </div>
     </div>
 
+    <!-- MODAL: MODIFICA EDIZIONE CORSO (CORSO ATTIVO) -->
+    <div class="modal fade" id="editEdizioneModal" tabindex="-1" aria-labelledby="editEdizioneModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editEdizioneModalLabel"><i class="bi bi-pencil-square text-primary me-2"></i>Modifica Edizione Corso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editEdizioneForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="editEdizioneId">
+                        <input type="hidden" id="editEdizioneIdCorso">
+                        
+                        <div class="mb-3">
+                            <label for="editEdizioneEtichetta" class="form-label fw-bold">Etichetta Edizione</label>
+                            <input type="text" id="editEdizioneEtichetta" class="form-control" placeholder="Es. Gruppo A, Turno Mattina...">
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="editEdizioneDataInizio" class="form-label fw-bold">Data Inizio <span class="text-danger">*</span></label>
+                                <input type="date" id="editEdizioneDataInizio" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editEdizioneDataFine" class="form-label fw-bold">Data Fine <span class="text-danger">*</span></label>
+                                <input type="date" id="editEdizioneDataFine" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="editEdizioneOreTeoria" class="form-label fw-bold">Ore Aula <span class="text-danger">*</span></label>
+                                <input type="number" id="editEdizioneOreTeoria" class="form-control" min="1" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editEdizioneOreStage" class="form-label fw-bold">Ore Stage <span class="text-danger">*</span></label>
+                                <input type="number" id="editEdizioneOreStage" class="form-control" min="0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editEdizioneDurataOre" class="form-label fw-bold">Ore Totali</label>
+                                <input type="number" id="editEdizioneDurataOre" class="form-control bg-light fw-bold" readonly disabled tabindex="-1">
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="editEdizionePercAssenza" class="form-label fw-bold">% Assenza Max</label>
+                                <div class="input-group">
+                                    <input type="number" id="editEdizionePercAssenza" class="form-control" min="0" max="30" required>
+                                    <span class="input-group-text bg-light">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editEdizioneTollIngresso" class="form-label fw-bold">Toll. Ingresso</label>
+                                <div class="input-group">
+                                    <input type="number" id="editEdizioneTollIngresso" class="form-control" min="0" max="30" required>
+                                    <span class="input-group-text bg-light">min</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editEdizioneTollUscita" class="form-label fw-bold">Toll. Uscita</label>
+                                <div class="input-group">
+                                    <input type="number" id="editEdizioneTollUscita" class="form-control" min="0" max="45" required>
+                                    <span class="input-group-text bg-light">min</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Annulla</button>
+                        <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSaveEdizione">Salva Modifiche</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICHE -->
     <div class="toast" id="toast">Operazione completata!</div>
 
@@ -158,6 +229,6 @@
 
     <!-- Scripts Autenticazione e Logica Segreteria -->
     <script src="../shared/auth.js"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=2.1"></script>
 </body>
 </html>

@@ -111,6 +111,8 @@ function renderCorsi(list) {
         const numEdizioni = c.edizioni.length;
         const isOpenByDefault = index === 0;
 
+        const isMasterArchiviato = numEdizioni > 0 && c.edizioni.every(e => e.archiviato || (new Date() > new Date(e.data_fine)));
+
         const edizioniRowsHtml = numEdizioni === 0 
             ? `
                 <div class="p-3 text-muted border-start border-3 border-primary ms-2 my-2 bg-light rounded-2">
@@ -121,22 +123,21 @@ function renderCorsi(list) {
                 </div>
             `
             : c.edizioni.map(e => {
-                let badgeClass = "bg-success-subtle text-success border-success-subtle";
-                let badgeLabel = "Attiva";
-
                 const oggi = new Date();
+                oggi.setHours(0,0,0,0);
                 const start = new Date(e.data_inizio);
+                start.setHours(0,0,0,0);
                 const end = new Date(e.data_fine);
+                end.setHours(23,59,59,999);
 
-                if (e.archiviato) {
-                    badgeClass = "bg-secondary-subtle text-secondary border-secondary-subtle";
-                    badgeLabel = "Conclusa";
+                // Calcolo etichetta di stato: ARCHIVIATO, IN PREPARAZIONE, IN CORSO
+                let badgeStatusHtml = '';
+                if (e.archiviato || oggi > end) {
+                    badgeStatusHtml = `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-1 rounded-pill fw-semibold me-2">ARCHIVIATO</span>`;
                 } else if (oggi < start) {
-                    badgeClass = "bg-warning-subtle text-warning border-warning-subtle";
-                    badgeLabel = "Pianificata";
-                } else if (oggi > end) {
-                    badgeClass = "bg-danger-subtle text-danger border-danger-subtle";
-                    badgeLabel = "Da Archiviare";
+                    badgeStatusHtml = `<span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1 rounded-pill fw-semibold me-2">IN PREPARAZIONE</span>`;
+                } else {
+                    badgeStatusHtml = `<span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fw-semibold me-2">IN CORSO</span>`;
                 }
 
                 // Genera etichetta anno tipo "edizione 24/25" o usa quella personalizzata
@@ -152,17 +153,26 @@ function renderCorsi(list) {
                     <div class="edition-row" id="edition-row-${e.id_corso_attivo}">
                         <div class="d-flex align-items-center gap-3">
                             <span class="edition-label-title">${edizLabel}</span>
-                            <span class="text-muted small fw-semibold">(Edizione #${e.id_corso_attivo})</span>
                         </div>
                         
                         <div class="edition-info-meta">
                             <div><i class="bi bi-calendar-event me-1 text-primary"></i>${dataInizioFmt} ➔ ${dataFineFmt}</div>
                             <div><strong class="text-dark">${e.durata_ore}h</strong> <span class="small">(${e.ore_stage}h stage)</span></div>
-                            <span class="badge ${badgeClass} border px-2.5 py-1 rounded-pill fw-semibold">
-                                ${badgeLabel}
-                            </span>
-                            <div class="d-flex gap-1 ms-2">
-                                <button class="btn-action-icon" title="Modifica Edizione" onclick="event.stopPropagation(); alert('Modifica edizione ID: ${e.id_corso_attivo}')">
+                            
+                            ${badgeStatusHtml}
+
+                            <div class="d-flex gap-1 ms-1">
+                                <button class="btn-action-icon btn-edit-edizione me-1" title="Modifica Edizione"
+                                    data-id="${e.id_corso_attivo}"
+                                    data-etichetta="${encodeURIComponent(e.etichetta || '')}"
+                                    data-inizio="${e.data_inizio || ''}"
+                                    data-fine="${e.data_fine || ''}"
+                                    data-teoria="${e.ore_teoria_aula || 0}"
+                                    data-stage="${e.ore_stage || 0}"
+                                    data-assenza="${e.percentuale_ore_assenza || 20}"
+                                    data-tolling="${e.tolleranza_ingresso_minuti || 15}"
+                                    data-tollusc="${e.tolleranza_uscita_minuti || 15}"
+                                    data-idcorso="${e.id_corso}">
                                     <i class="bi bi-pencil-fill"></i>
                                 </button>
                                 <button class="btn-action-icon danger" title="Elimina Edizione" onclick="event.stopPropagation(); deleteCorsoAttivo(${e.id_corso_attivo})">
@@ -180,7 +190,7 @@ function renderCorsi(list) {
                 
                 <!-- Intestazione Titolo Corso + Riga Sotto + Bottone Nuova Edizione + Chevron 'v' -->
                 <div class="course-card-header-line" onclick="toggleCourseCard(${c.id_corso})">
-                    <h2 class="course-card-title">
+                    <h2 class="course-card-title d-flex align-items-center gap-2">
                         ${c.Nome}
                     </h2>
                     <div class="course-card-actions">
@@ -222,11 +232,11 @@ function renderCorsi(list) {
         </div>
     `;
 
-    // Delegated event listener: gestisce click su pulsanti modifica e elimina corso
+    // Delegated event listener: gestisce click su pulsanti modifica e elimina corso / edizione
     grid.addEventListener('click', function(e) {
-        // Trova il pulsante cliccato (o il suo figlio icona)
         const editBtn = e.target.closest('.btn-edit-corso');
         const deleteBtn = e.target.closest('.btn-delete-corso');
+        const editEdizBtn = e.target.closest('.btn-edit-edizione');
 
         if (editBtn) {
             e.stopPropagation();
@@ -238,9 +248,53 @@ function renderCorsi(list) {
             e.stopPropagation();
             const id = deleteBtn.dataset.id;
             window.deleteCorso(id);
+        } else if (editEdizBtn) {
+            e.stopPropagation();
+            window.openEditEdizione(
+                editEdizBtn.dataset.id,
+                decodeURIComponent(editEdizBtn.dataset.etichetta),
+                editEdizBtn.dataset.inizio,
+                editEdizBtn.dataset.fine,
+                editEdizBtn.dataset.teoria,
+                editEdizBtn.dataset.stage,
+                editEdizBtn.dataset.assenza,
+                editEdizBtn.dataset.tolling,
+                editEdizBtn.dataset.tollusc,
+                editEdizBtn.dataset.idcorso
+            );
         }
-    }, false); // listener su grid: funziona sempre perché la grid viene ricreata ad ogni render (il vecchio DOM viene rimosso)
+    }, false);
 }
+
+// Toggle Stato Edizione (Requisito 7)
+window.toggleStatoEdizione = async function(idEdizione, isAttivo) {
+    try {
+        const resGet = await fetchAutenticata(`${API_URL}/corsi-attivi/${idEdizione}`);
+        if (!resGet.ok) throw new Error("Impossibile recuperare i dati dell'edizione");
+        const edizData = await resGet.json();
+
+        edizData.archiviato = !isAttivo;
+
+        const resPut = await fetchAutenticata(`${API_URL}/corsi-attivi/${idEdizione}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(edizData)
+        });
+
+        if (resPut.ok) {
+            showToast(`Stato corso ${isAttivo ? 'attivato' : 'disattivato (archiviato)'} con successo.`);
+            await loadDashboardData();
+        } else {
+            const err = await resPut.json();
+            showToast(err.detail || "Errore aggiornamento stato", true);
+            await loadDashboardData();
+        }
+    } catch (error) {
+        console.error("Errore cambio stato:", error);
+        showToast("Errore di connessione durante il cambio di stato", true);
+        await loadDashboardData();
+    }
+};
 
 // Elimina Edizione Corso
 window.deleteCorsoAttivo = async function(id) {
@@ -369,6 +423,118 @@ function showToast(message, isError = false) {
     toast.className = 'toast show';
     setTimeout(() => { toast.classList.remove('show'); }, 3500);
 }
+
+// -----------------------------------------
+// GESTIONE EDIZIONE (Modifica Edizione Corso)
+// -----------------------------------------
+window.openEditEdizione = function(id, etichetta, dataInizio, dataFine, oreTeoria, oreStage, percAssenza, tollIng, tollUsc, idCorso) {
+    document.getElementById('editEdizioneId').value = id;
+    document.getElementById('editEdizioneIdCorso').value = idCorso;
+    document.getElementById('editEdizioneEtichetta').value = etichetta;
+    document.getElementById('editEdizioneDataInizio').value = dataInizio;
+    document.getElementById('editEdizioneDataFine').value = dataFine;
+    document.getElementById('editEdizioneOreTeoria').value = oreTeoria;
+    document.getElementById('editEdizioneOreStage').value = oreStage;
+    document.getElementById('editEdizionePercAssenza').value = percAssenza;
+    document.getElementById('editEdizioneTollIngresso').value = tollIng;
+    document.getElementById('editEdizioneTollUscita').value = tollUsc;
+
+    const t = parseInt(oreTeoria) || 0;
+    const s = parseInt(oreStage) || 0;
+    document.getElementById('editEdizioneDurataOre').value = t + s;
+
+    openModal('editEdizioneModal');
+};
+
+// Event listener per la sottomissione del form di modifica edizione
+document.addEventListener('DOMContentLoaded', () => {
+    const editEdizForm = document.getElementById('editEdizioneForm');
+    if (editEdizForm) {
+        const tInput = document.getElementById('editEdizioneOreTeoria');
+        const sInput = document.getElementById('editEdizioneOreStage');
+        const totInput = document.getElementById('editEdizioneDurataOre');
+
+        const updateModaleTot = () => {
+            const t = parseInt(tInput.value) || 0;
+            const s = parseInt(sInput.value) || 0;
+            totInput.value = t + s;
+        };
+
+        if (tInput && sInput) {
+            ['input', 'keyup', 'change'].forEach(evt => {
+                tInput.addEventListener(evt, updateModaleTot);
+                sInput.addEventListener(evt, updateModaleTot);
+            });
+        }
+
+        editEdizForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editEdizioneId').value;
+            const idCorso = document.getElementById('editEdizioneIdCorso').value;
+            const etichetta = document.getElementById('editEdizioneEtichetta').value.trim();
+            const dInizio = document.getElementById('editEdizioneDataInizio').value;
+            const dFine = document.getElementById('editEdizioneDataFine').value;
+            const oreTeoriaVal = parseInt(document.getElementById('editEdizioneOreTeoria').value);
+            const oreStageVal = parseInt(document.getElementById('editEdizioneOreStage').value);
+            const percAssenzaVal = parseFloat(document.getElementById('editEdizionePercAssenza').value);
+            const tollIngVal = parseInt(document.getElementById('editEdizioneTollIngresso').value);
+            const tollUscVal = parseInt(document.getElementById('editEdizioneTollUscita').value);
+
+            if (isNaN(oreTeoriaVal) || oreTeoriaVal <= 0) {
+                showToast("Le ore in aula sono obbligatorie e devono essere maggiori di 0.", true);
+                return;
+            }
+            if (isNaN(oreStageVal) || oreStageVal < 0) {
+                showToast("Le ore di stage sono obbligatorie (inserisci 0 se non previste).", true);
+                return;
+            }
+            if (!dInizio || !dFine || new Date(dInizio) > new Date(dFine)) {
+                showToast("Inserisci un intervallo di date valido.", true);
+                return;
+            }
+
+            const payload = {
+                id_corso: parseInt(idCorso),
+                etichetta: etichetta || null,
+                data_inizio: dInizio,
+                data_fine: dFine,
+                durata_ore: oreTeoriaVal + oreStageVal,
+                ore_teoria_aula: oreTeoriaVal,
+                ore_stage: oreStageVal,
+                percentuale_ore_assenza: percAssenzaVal,
+                tolleranza_ingresso_minuti: tollIngVal,
+                tolleranza_uscita_minuti: tollUscVal,
+                archiviato: false
+            };
+
+            const btn = document.getElementById('btnSaveEdizione');
+            btn.disabled = true;
+            btn.textContent = 'Salvataggio...';
+
+            try {
+                const res = await fetchAutenticata(`${API_URL}/corsi-attivi/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    closeModal('editEdizioneModal');
+                    showToast("Edizione aggiornata con successo.");
+                    loadDashboardData();
+                } else {
+                    const err = await res.json();
+                    showToast(err.detail || "Errore durante l'aggiornamento dell'edizione.", true);
+                }
+            } catch (err) {
+                showToast("Errore di connessione.", true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Salva Modifiche';
+            }
+        });
+    }
+});
 
 // -----------------------------------------
 // HELPERS MODALI (compatibili con o senza Bootstrap JS)

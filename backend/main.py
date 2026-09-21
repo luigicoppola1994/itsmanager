@@ -31,8 +31,9 @@ from typing import List, Optional                # Per dichiarare liste e tipi o
 from fastapi.middleware.cors import CORSMiddleware  # Middleware per gestire le policy CORS
 from fastapi.security import OAuth2PasswordRequestForm  # Form standard per login (username + password)
 import jwt                             # Libreria PyJWT per decodificare i token
+import re                              # Regex per parsing errori DB
 from pydantic import BaseModel         # Per definire modelli di richiesta inline
-from datetime import date              # Per i campi data nei modelli Pydantic
+from datetime import date, timedelta   # Per i campi data e calcolo date nei modelli Pydantic
 
 # --- Importazioni dai nostri moduli ---
 import models         # I modelli SQLAlchemy (tabelle del DB)
@@ -385,6 +386,87 @@ def delete_ruolo(id_ruolo: int, db: Session = Depends(get_db), current_user: mod
     db.commit()
     return {"message": "Ruolo eliminato con successo"}
 
+# ------------------------------------------------------------------------------
+# HELPER: Mappatura pulita degli errori del DB e Validazione Date/Ore Coerenti
+# ------------------------------------------------------------------------------
+def handle_db_exception(e: Exception) -> str:
+    msg_raw = str(e.orig) if hasattr(e, 'orig') else str(e)
+    msg_lower = msg_raw.lower()
+    
+    # 1. Messaggi inviati da trigger SQL (SIGNAL SQLSTATE / MESSAGE_TEXT)
+    match_err = re.search(r"'([^']*Errore[^']*)'", msg_raw, re.IGNORECASE)
+    if match_err:
+        return match_err.group(1)
+        
+    match_signal = re.search(r"MESSAGE_TEXT\s*=\s*'([^']+)'", msg_raw, re.IGNORECASE)
+    if match_signal:
+        return match_signal.group(1)
+
+    # 2. Key duplicata / Unique constraint
+    if "1062" in msg_raw or "duplicate entry" in msg_lower or "unique constraint" in msg_lower:
+        if "corso.nome" in msg_lower or "nome" in msg_lower:
+            return "Un corso con questo nome è già presente nel catalogo."
+        if "email" in msg_lower:
+            return "Un utente con questa email risulta già registrato."
+        if "codice_fiscale" in msg_lower:
+            return "Un utente con questo codice fiscale risulta già registrato."
+        return "Un record con questi dati identificativi è già esistente nel database."
+
+    # 3. Violazione Foreign Key (RESTRICT / DELETE CASCADE restriction)
+    if "1451" in msg_raw or "1452" in msg_raw or "foreign key constraint" in msg_lower or "cannot delete or update a parent row" in msg_lower:
+        return "Impossibile completare l'operazione: l'elemento è collegato ad altre risorse (es. edizioni, lezioni o studenti)."
+
+    return f"Errore del database: {msg_raw}"
+
+
+def calcola_giorni_lavorativi(d_inizio: date, d_fine: date) -> int:
+    if not d_inizio or not d_fine or d_inizio > d_fine:
+        return 0
+    giorni = 0
+    curr = d_inizio
+    while curr <= d_fine:
+        if curr.weekday() < 5:  # Lunedì = 0, Venerdì = 4
+            giorni += 1
+        curr += timedelta(days=1)
+    return giorni
+
+
+def valida_ediz_ore_e_date(
+    data_inizio: Optional[date],
+    data_fine: Optional[date],
+    ore_teoria_aula: Optional[int],
+    ore_stage: Optional[int],
+    percentuale_ore_assenza: Optional[float] = None,
+    tolleranza_ingresso_minuti: Optional[int] = None,
+    tolleranza_uscita_minuti: Optional[int] = None
+):
+    if ore_teoria_aula is None or ore_teoria_aula <= 0:
+        raise HTTPException(status_code=400, detail="Le ore in aula sono obbligatorie e devono essere maggiori di 0.")
+    if ore_stage is None or ore_stage < 0:
+        raise HTTPException(status_code=400, detail="Le ore di stage sono obbligatorie (possono essere 0 se non previste).")
+
+    if percentuale_ore_assenza is not None and not (0 <= percentuale_ore_assenza <= 30):
+        raise HTTPException(status_code=400, detail="La percentuale di assenza massima deve essere compresa tra 0% e 30%.")
+    if tolleranza_ingresso_minuti is not None and not (0 <= tolleranza_ingresso_minuti <= 30):
+        raise HTTPException(status_code=400, detail="La tolleranza in ingresso deve essere compresa tra 0 e 30 minuti.")
+    if tolleranza_uscita_minuti is not None and not (0 <= tolleranza_uscita_minuti <= 45):
+        raise HTTPException(status_code=400, detail="La tolleranza in uscita deve essere compresa tra 0 e 45 minuti.")
+
+    totale_ore = ore_teoria_aula + ore_stage
+    if totale_ore <= 0:
+        raise HTTPException(status_code=400, detail="Il monte ore totale calcolato deve essere maggiore di 0.")
+
+    if data_inizio and data_fine:
+        if data_inizio > data_fine:
+            raise HTTPException(status_code=400, detail="La data di inizio non può essere successiva alla data di fine.")
+        giorni_lav = calcola_giorni_lavorativi(data_inizio, data_fine)
+        max_ore_possibili = giorni_lav * 8
+        if max_ore_possibili < totale_ore:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Il periodo compreso tra il {data_inizio.strftime('%d/%m/%Y')} e il {data_fine.strftime('%d/%m/%Y')} ha {giorni_lav} giorni lavorativi (max {max_ore_possibili}h a 8h/giorno, 40h/settimana). Impossibile coprire le {totale_ore}h totali del corso."
+            )
+
 # --- Endpoint per i Corsi ---
 @app.get("/corsi", response_model=List[schemas.CorsoResponse])
 def get_corsi(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -485,23 +567,25 @@ def create_corso_con_edizione(
     Endpoint atomico: crea corso + edizione in un'unica transazione.
     Se l'edizione non può essere creata, il corso viene annullato (rollback).
     """
-    # Validazioni manuali (i vincoli di business che il DB non gestisce)
     if not payload.nome_corso or not payload.nome_corso.strip():
         raise HTTPException(status_code=422, detail="Il nome del corso è obbligatorio.")
-    if payload.data_inizio and payload.data_fine and payload.data_inizio > payload.data_fine:
-        raise HTTPException(status_code=422, detail="La data di inizio non può essere successiva alla data di fine.")
-    if payload.durata_ore is not None and payload.durata_ore <= 0:
-        raise HTTPException(status_code=422, detail="Il monte ore totale deve essere maggiore di zero.")
-    if payload.ore_stage is not None and payload.ore_stage < 0:
-        raise HTTPException(status_code=422, detail="Le ore di stage non possono essere negative.")
-    if payload.ore_teoria_aula is not None and payload.ore_teoria_aula < 0:
-        raise HTTPException(status_code=422, detail="Le ore di teoria non possono essere negative.")
+
+    # Validazione ore in aula (>0), ore stage (>=0), totale ore e coerenza range date (max 40h/settimana)
+    valida_ediz_ore_e_date(
+        payload.data_inizio,
+        payload.data_fine,
+        payload.ore_teoria_aula,
+        payload.ore_stage
+    )
+
     if payload.percentuale_ore_assenza is not None and not (0 <= payload.percentuale_ore_assenza <= 100):
         raise HTTPException(status_code=422, detail="La percentuale di assenza deve essere tra 0 e 100.")
 
     esistente = db.query(models.Corso).filter(func.lower(models.Corso.Nome) == func.lower(payload.nome_corso.strip())).first()
     if esistente:
         raise HTTPException(status_code=400, detail="Un corso con questo nome esiste già nel catalogo. Selezionalo dal menu 'Usa Corso Esistente'.")
+
+    durata_calcolata = (payload.ore_teoria_aula or 0) + (payload.ore_stage or 0)
 
     try:
         # STEP 1: Crea il corso (non ancora committed)
@@ -518,7 +602,7 @@ def create_corso_con_edizione(
             etichetta=payload.etichetta.strip() if payload.etichetta else None,
             data_inizio=payload.data_inizio,
             data_fine=payload.data_fine,
-            durata_ore=payload.durata_ore,
+            durata_ore=durata_calcolata,
             ore_stage=payload.ore_stage or 0,
             ore_teoria_aula=payload.ore_teoria_aula or 0,
             percentuale_ore_assenza=payload.percentuale_ore_assenza or 0,
@@ -539,10 +623,8 @@ def create_corso_con_edizione(
         db.rollback()
         raise
     except Exception as e:
-        # Rollback automatico: annulla sia il corso che l'edizione
         db.rollback()
-        msg = str(e.orig) if hasattr(e, 'orig') else str(e)
-        raise HTTPException(status_code=400, detail=f"Errore nella creazione: {msg}")
+        raise HTTPException(status_code=400, detail=handle_db_exception(e))
 
 
 
@@ -584,24 +666,39 @@ def create_corso_attivo(corso_attivo: schemas.CorsoAttivoCreate, db: Session = D
     corso = db.query(models.Corso).filter(models.Corso.id_corso == corso_attivo.id_corso).first()
     if corso is None:
         raise HTTPException(status_code=400, detail="Il corso specificato non esiste")
-        
-    nuovo_corso_attivo = models.CorsoAttivo(
-        id_corso=corso_attivo.id_corso,
-        etichetta=corso_attivo.etichetta.strip() if corso_attivo.etichetta else None,
-        data_inizio=corso_attivo.data_inizio,
-        data_fine=corso_attivo.data_fine,
-        durata_ore=corso_attivo.durata_ore,
-        ore_stage=corso_attivo.ore_stage,
-        ore_teoria_aula=corso_attivo.ore_teoria_aula,
-        percentuale_ore_assenza=corso_attivo.percentuale_ore_assenza,
-        tolleranza_ingresso_minuti=corso_attivo.tolleranza_ingresso_minuti,
-        tolleranza_uscita_minuti=corso_attivo.tolleranza_uscita_minuti,
-        archiviato=corso_attivo.archiviato
+
+    valida_ediz_ore_e_date(
+        corso_attivo.data_inizio,
+        corso_attivo.data_fine,
+        corso_attivo.ore_teoria_aula,
+        corso_attivo.ore_stage
     )
-    db.add(nuovo_corso_attivo)
-    db.commit()
-    db.refresh(nuovo_corso_attivo)
-    return nuovo_corso_attivo
+    durata_calcolata = (corso_attivo.ore_teoria_aula or 0) + (corso_attivo.ore_stage or 0)
+
+    try:
+        nuovo_corso_attivo = models.CorsoAttivo(
+            id_corso=corso_attivo.id_corso,
+            etichetta=corso_attivo.etichetta.strip() if corso_attivo.etichetta else None,
+            data_inizio=corso_attivo.data_inizio,
+            data_fine=corso_attivo.data_fine,
+            durata_ore=durata_calcolata,
+            ore_stage=corso_attivo.ore_stage or 0,
+            ore_teoria_aula=corso_attivo.ore_teoria_aula or 0,
+            percentuale_ore_assenza=corso_attivo.percentuale_ore_assenza,
+            tolleranza_ingresso_minuti=corso_attivo.tolleranza_ingresso_minuti,
+            tolleranza_uscita_minuti=corso_attivo.tolleranza_uscita_minuti,
+            archiviato=corso_attivo.archiviato if corso_attivo.archiviato is not None else False
+        )
+        db.add(nuovo_corso_attivo)
+        db.commit()
+        db.refresh(nuovo_corso_attivo)
+        return nuovo_corso_attivo
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=handle_db_exception(e))
 
 @app.put("/corsi-attivi/{id_corso_attivo}", response_model=schemas.CorsoAttivoResponse)
 def update_corso_attivo(id_corso_attivo: int, corso_attivo_data: schemas.CorsoAttivoCreate, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -613,22 +710,38 @@ def update_corso_attivo(id_corso_attivo: int, corso_attivo_data: schemas.CorsoAt
     corso = db.query(models.Corso).filter(models.Corso.id_corso == corso_attivo_data.id_corso).first()
     if corso is None:
         raise HTTPException(status_code=400, detail="Il corso specificato non esiste")
+
+    valida_ediz_ore_e_date(
+        corso_attivo_data.data_inizio,
+        corso_attivo_data.data_fine,
+        corso_attivo_data.ore_teoria_aula,
+        corso_attivo_data.ore_stage
+    )
+    durata_calcolata = (corso_attivo_data.ore_teoria_aula or 0) + (corso_attivo_data.ore_stage or 0)
+
+    try:
+        corso_attivo.id_corso = corso_attivo_data.id_corso
+        corso_attivo.etichetta = corso_attivo_data.etichetta.strip() if corso_attivo_data.etichetta else None
+        corso_attivo.data_inizio = corso_attivo_data.data_inizio
+        corso_attivo.data_fine = corso_attivo_data.data_fine
+        corso_attivo.durata_ore = durata_calcolata
+        corso_attivo.ore_stage = corso_attivo_data.ore_stage or 0
+        corso_attivo.ore_teoria_aula = corso_attivo_data.ore_teoria_aula or 0
+        corso_attivo.percentuale_ore_assenza = corso_attivo_data.percentuale_ore_assenza
+        corso_attivo.tolleranza_ingresso_minuti = corso_attivo_data.tolleranza_ingresso_minuti
+        corso_attivo.tolleranza_uscita_minuti = corso_attivo_data.tolleranza_uscita_minuti
+        if corso_attivo_data.archiviato is not None:
+            corso_attivo.archiviato = corso_attivo_data.archiviato
         
-    corso_attivo.id_corso = corso_attivo_data.id_corso
-    corso_attivo.etichetta = corso_attivo_data.etichetta.strip() if corso_attivo_data.etichetta else None
-    corso_attivo.data_inizio = corso_attivo_data.data_inizio
-    corso_attivo.data_fine = corso_attivo_data.data_fine
-    corso_attivo.durata_ore = corso_attivo_data.durata_ore
-    corso_attivo.ore_stage = corso_attivo_data.ore_stage
-    corso_attivo.ore_teoria_aula = corso_attivo_data.ore_teoria_aula
-    corso_attivo.percentuale_ore_assenza = corso_attivo_data.percentuale_ore_assenza
-    corso_attivo.tolleranza_ingresso_minuti = corso_attivo_data.tolleranza_ingresso_minuti
-    corso_attivo.tolleranza_uscita_minuti = corso_attivo_data.tolleranza_uscita_minuti
-    corso_attivo.archiviato = corso_attivo_data.archiviato
-    
-    db.commit()
-    db.refresh(corso_attivo)
-    return corso_attivo
+        db.commit()
+        db.refresh(corso_attivo)
+        return corso_attivo
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=handle_db_exception(e))
 
 @app.delete("/corsi-attivi/{id_corso_attivo}")
 def delete_corso_attivo(id_corso_attivo: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -637,9 +750,13 @@ def delete_corso_attivo(id_corso_attivo: int, db: Session = Depends(get_db), cur
     if corso_attivo is None:
         raise HTTPException(status_code=404, detail="Corso attivo non trovato")
         
-    db.delete(corso_attivo)
-    db.commit()
-    return {"message": "Corso attivo eliminato con successo"}
+    try:
+        db.delete(corso_attivo)
+        db.commit()
+        return {"message": "Corso attivo eliminato con successo"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=handle_db_exception(e))
 
 
 # --- Endpoint per le Unità Formative ---

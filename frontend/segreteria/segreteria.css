@@ -810,3 +810,7 @@ body {
     background: linear-gradient(135deg, #1d4ed8, #1e40af);
     box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
 }
+
+.cursor-pointer {
+    cursor: pointer !important;
+}

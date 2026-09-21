@@ -100,3 +100,17 @@ input.nc-input[type="date"], input.nc-input[type="number"], select.nc-input { pa
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast.error { background: var(--danger); }
 .toast.success { background: var(--success); }
+
+/* Campo Ore Totali non modificabile */
+#durataOre::-webkit-outer-spin-button,
+#durataOre::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+#durataOre {
+    -moz-appearance: textfield;
+    pointer-events: none;
+    user-select: none;
+    background-color: #f1f5f9 !important;
+    cursor: not-allowed;
+}

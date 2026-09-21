@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const charCount = document.getElementById('charCount');
     
     // Campi Edizione Attiva
+    const checkCreaEdizione = document.getElementById('checkCreaEdizione');
+    const sectionEdizioneContainer = document.getElementById('sectionEdizioneContainer');
     const etichettaInput = document.getElementById('etichettaEdizione');
     const dataInizio = document.getElementById('dataInizio');
     const dataFine = document.getElementById('dataFine');
@@ -90,23 +92,93 @@ document.addEventListener('DOMContentLoaded', () => {
             // Resetta validazione
             nomeInput.required = true;
             corsoEsistenteSelect.required = false;
+
+            if (checkCreaEdizione) {
+                checkCreaEdizione.disabled = false;
+                sectionEdizioneContainer.style.display = checkCreaEdizione.checked ? 'block' : 'none';
+            }
         } else {
             sectionNewCourse.style.display = 'none';
             sectionExistingCourse.style.display = 'block';
             // Resetta validazione
             nomeInput.required = false;
             corsoEsistenteSelect.required = true;
+
+            if (checkCreaEdizione) {
+                checkCreaEdizione.checked = true;
+                checkCreaEdizione.disabled = true;
+                sectionEdizioneContainer.style.display = 'block';
+            }
         }
         updatePreview();
     }
     modeNew.addEventListener('change', toggleMode);
     modeExisting.addEventListener('change', toggleMode);
+    if (checkCreaEdizione) {
+        checkCreaEdizione.addEventListener('change', toggleMode);
+    }
     
     // Inizializza stato UI
     toggleMode();
 
+    // Helper per il calcolo dei giorni lavorativi (lunedì-venerdì)
+    function calcolaGiorniLavorativi(startStr, endStr) {
+        if (!startStr || !endStr) return 0;
+        const start = new Date(startStr);
+        const end = new Date(endStr);
+        if (isNaN(start) || isNaN(end) || start > end) return 0;
+        
+        let workingDays = 0;
+        let cur = new Date(start);
+        while (cur <= end) {
+            const day = cur.getDay();
+            if (day !== 0 && day !== 6) { // 0 = Domenica, 6 = Sabato
+                workingDays++;
+            }
+            cur.setDate(cur.getDate() + 1);
+        }
+        return workingDays;
+    }
+
+    // Calcolo automatico Ore Totali (Aula + Stage) in tempo reale
+    function calcolaOreTotali() {
+        const tStr = oreTeoria ? oreTeoria.value.trim() : '';
+        const sStr = oreStage ? oreStage.value.trim() : '';
+        const tVal = parseInt(tStr) || 0;
+        const sVal = parseInt(sStr) || 0;
+        const tot = tVal + sVal;
+        
+        if (durataOre) {
+            durataOre.value = tot;
+        }
+
+        // Se la data inizio è impostata e la data fine è vuota (o modificabile), suggerisci automaticamente la data fine coerente (max 40h/settimana)
+        if (dataInizio && dataInizio.value && dataFine && !dataFine.value && tot > 0) {
+            const giorniLavNecessari = Math.ceil(tot / 8);
+            let count = 0;
+            let cur = new Date(dataInizio.value);
+            while (count < giorniLavNecessari) {
+                const day = cur.getDay();
+                if (day !== 0 && day !== 6) { // 0 = Domenica, 6 = Sabato
+                    count++;
+                    if (count === giorniLavNecessari) break;
+                }
+                cur.setDate(cur.getDate() + 1);
+            }
+            if (!isNaN(cur.getTime())) {
+                const year = cur.getFullYear();
+                const month = String(cur.getMonth() + 1).padStart(2, '0');
+                const day = String(cur.getDate()).padStart(2, '0');
+                dataFine.value = `${year}-${month}-${day}`;
+            }
+        }
+        return tot;
+    }
+
     // 5. Funzione per aggiornare l'anteprima e la checklist in tempo reale
     function updatePreview() {
+        calcolaOreTotali();
+
         let isCorsoValido = false;
         let titleText = 'Nome del corso';
         let descText = 'La descrizione del corso apparirà qui...';
@@ -163,30 +235,47 @@ document.addEventListener('DOMContentLoaded', () => {
             checkCorso.classList.remove('filled');
         }
 
-        // Check Date
-        if (dataInizio.value && dataFine.value && new Date(dataInizio.value) <= new Date(dataFine.value)) {
-            checkDate.classList.add('filled');
-        } else {
-            checkDate.classList.remove('filled');
-        }
+        const creaEdizioneAttiva = checkCreaEdizione ? checkCreaEdizione.checked : true;
 
-        // Check Ore
-        const tot = parseInt(durataOre.value) || 0;
-        const stage = parseInt(oreStage.value) || 0;
-        metaOreTotali.textContent = tot > 0 ? `${tot}h` : '—';
-        metaOreStage.textContent = stage > 0 ? `${stage}h` : (stage === 0 ? '0h' : '—');
-        
-        if (tot > 0) {
-            checkOre.classList.add('filled');
-        } else {
+        if (!creaEdizioneAttiva && modeNew.checked) {
+            submitBtn.querySelector('.btn-nc-text').innerHTML = '<i class="bi bi-check-lg"></i> Salva Corso (Senza Edizione)';
+            checkDate.style.opacity = '0.4';
+            checkOre.style.opacity = '0.4';
+            checkDate.classList.remove('filled');
             checkOre.classList.remove('filled');
+        } else {
+            submitBtn.querySelector('.btn-nc-text').innerHTML = '<i class="bi bi-check-lg"></i> Salva Edizione';
+            checkDate.style.opacity = '1';
+            checkOre.style.opacity = '1';
+
+            // Check Date
+            if (dataInizio.value && dataFine.value && new Date(dataInizio.value) <= new Date(dataFine.value)) {
+                checkDate.classList.add('filled');
+            } else {
+                checkDate.classList.remove('filled');
+            }
+
+            // Check Ore
+            const tot = parseInt(durataOre.value) || 0;
+            const stage = parseInt(oreStage.value) || 0;
+            metaOreTotali.textContent = tot > 0 ? `${tot}h` : '—';
+            metaOreStage.textContent = oreStage.value.trim() !== '' ? `${stage}h` : '—';
+            
+            if (tot > 0) {
+                checkOre.classList.add('filled');
+            } else {
+                checkOre.classList.remove('filled');
+            }
         }
     }
 
-    // Aggiungi listener per l'input in tempo reale
-    const inputsToWatch = [nomeInput, descInput, corsoEsistenteSelect, etichettaInput, dataInizio, dataFine, durataOre, oreStage];
-    inputsToWatch.forEach(input => input.addEventListener('input', updatePreview));
-    inputsToWatch.forEach(input => input.addEventListener('change', updatePreview));
+    // Aggiungi listener per l'input in tempo reale su tutti i campi
+    const inputsToWatch = [nomeInput, descInput, corsoEsistenteSelect, etichettaInput, dataInizio, dataFine, oreTeoria, oreStage];
+    inputsToWatch.forEach(input => {
+        if (input) {
+            ['input', 'keyup', 'change'].forEach(evt => input.addEventListener(evt, updatePreview));
+        }
+    });
 
     // 6. Gestione Invio del Form (Chiamata API)
     form.addEventListener('submit', async (e) => {
@@ -194,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Validazione Client-Side
         let isValid = true;
+        const creaEdizioneAttiva = checkCreaEdizione ? checkCreaEdizione.checked : true;
         
         if (modeNew.checked) {
             const nomeStr = nomeInput.value.trim();
@@ -201,7 +291,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 nomeInput.classList.add('is-invalid');
                 isValid = false;
             } else {
-                // Controllo duplicato case-insensitive lato client
                 const nomeLower = nomeStr.toLowerCase();
                 const exist = Object.values(corsiEsistentiMap).some(c => c.Nome.toLowerCase() === nomeLower);
                 if (exist) {
@@ -215,17 +304,76 @@ document.addEventListener('DOMContentLoaded', () => {
             corsoEsistenteSelect.classList.add('is-invalid');
             isValid = false;
         }
-        if (!dataInizio.value || !dataFine.value) {
-            showToastCustom('Inserisci Data Inizio e Data Fine valide.', 'error');
-            isValid = false;
-        }
-        if (dataInizio.value && dataFine.value && new Date(dataInizio.value) > new Date(dataFine.value)) {
-            showToastCustom('La Data di Inizio non può essere successiva alla Data di Fine.', 'error');
-            isValid = false;
-        }
-        if (!durataOre.value || parseInt(durataOre.value) <= 0) {
-            showToastCustom('Inserisci un monte ore totale valido (deve essere maggiore di zero).', 'error');
-            isValid = false;
+
+        // Se è richiesta la creazione dell'edizione, effettua le relative validazioni
+        if (creaEdizioneAttiva) {
+            // Validazione Ore Aula e Stage
+            const tVal = parseInt(oreTeoria.value);
+            if (isNaN(tVal) || tVal <= 0) {
+                showToastCustom('Le ore in aula sono obbligatorie e devono essere maggiori di 0.', 'error');
+                oreTeoria.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                oreTeoria.classList.remove('is-invalid');
+            }
+
+            const sVal = parseInt(oreStage.value);
+            if (isNaN(sVal) || sVal < 0) {
+                showToastCustom('Le ore di stage sono obbligatorie (inserisci 0 se non previste).', 'error');
+                oreStage.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                oreStage.classList.remove('is-invalid');
+            }
+
+            const totOreCalculated = (tVal || 0) + (sVal || 0);
+
+            // Validazione Date e Coerenza Monte Ore 40h/settimana
+            if (!dataInizio.value || !dataFine.value) {
+                showToastCustom('Inserisci Data Inizio e Data Fine valide.', 'error');
+                isValid = false;
+            } else if (new Date(dataInizio.value) > new Date(dataFine.value)) {
+                showToastCustom('La Data di Inizio non può essere successiva alla Data di Fine.', 'error');
+                isValid = false;
+            } else if (totOreCalculated > 0) {
+                const giorniLav = calcolaGiorniLavorativi(dataInizio.value, dataFine.value);
+                const maxOreCopribili = giorniLav * 8; // Max 8h/giorno = 40h/settimana
+                if (maxOreCopribili < totOreCalculated) {
+                    showToastCustom(`Il periodo dal ${new Date(dataInizio.value).toLocaleDateString('it-IT')} al ${new Date(dataFine.value).toLocaleDateString('it-IT')} ha ${giorniLav} giorni lavorativi per un max di ${maxOreCopribili}h (max 8h/giorno, 40h/settimana). Impossibile coprire le ${totOreCalculated}h totali.`, 'error');
+                    dataFine.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    dataFine.classList.remove('is-invalid');
+                }
+            }
+
+            // Validazione % Assenza Max, Toll. Ingresso e Toll. Uscita
+            const assenzaVal = parseFloat(percAssenza.value);
+            if (isNaN(assenzaVal) || assenzaVal < 0 || assenzaVal > 30) {
+                showToastCustom('La percentuale di assenza massima deve essere compresa tra 0% e 30%.', 'error');
+                percAssenza.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                percAssenza.classList.remove('is-invalid');
+            }
+
+            const tollIngVal = parseInt(tollIngresso.value);
+            if (isNaN(tollIngVal) || tollIngVal < 0 || tollIngVal > 30) {
+                showToastCustom('La tolleranza in ingresso deve essere compresa tra 0 e 30 minuti.', 'error');
+                tollIngresso.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                tollIngresso.classList.remove('is-invalid');
+            }
+
+            const tollUscVal = parseInt(tollUscita.value);
+            if (isNaN(tollUscVal) || tollUscVal < 0 || tollUscVal > 45) {
+                showToastCustom('La tolleranza in uscita deve essere compresa tra 0 e 45 minuti.', 'error');
+                tollUscita.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                tollUscita.classList.remove('is-invalid');
+            }
         }
 
         if (!isValid) return;
@@ -233,13 +381,35 @@ document.addEventListener('DOMContentLoaded', () => {
         setLoadingState(true);
 
         try {
-            let idEdizione = null;
-
-            if (modeNew.checked) {
+            if (modeNew.checked && !creaEdizioneAttiva) {
                 // ─────────────────────────────────────────────────────────────
-                // ENDPOINT ATOMICO: crea corso + edizione in un'unica
-                // transazione. Se l'edizione fallisce → rollback automatico
-                // del corso. Nessun corso orfano nel DB!
+                // CREAZIONE SOLO CORSO A CATALOGO (Senza Edizione)
+                // ─────────────────────────────────────────────────────────────
+                const payload = {
+                    Nome: nomeInput.value.trim(),
+                    Descrizione: descInput.value.trim() || null
+                };
+
+                const response = await fetchAutenticata(`${API_URL}/corsi`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    const detail = err.detail || err.error || 'Errore nella creazione del corso.';
+                    throw new Error(detail);
+                }
+
+                showToastCustom('Corso a catalogo creato con successo!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+
+            } else if (modeNew.checked && creaEdizioneAttiva) {
+                // ─────────────────────────────────────────────────────────────
+                // ENDPOINT ATOMICO: crea corso + edizione in un'unica transazione
                 // ─────────────────────────────────────────────────────────────
                 const payload = {
                     nome_corso: nomeInput.value.trim(),
@@ -263,13 +433,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!response.ok) {
                     const err = await response.json();
-                    // Estrae il messaggio specifico dal campo "detail" del backend
                     const detail = err.detail || err.error || 'Errore nella creazione del corso.';
                     throw new Error(detail);
                 }
 
-                const risultato = await response.json();
-                idEdizione = risultato.edizione.id_corso_attivo;
+                showToastCustom('Corso ed Edizione creati con successo!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
 
             } else {
                 // ─────────────────────────────────────────────────────────────
@@ -301,17 +472,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(detail);
                 }
 
-                const nuovaEdizione = await responseEdizione.json();
-                idEdizione = nuovaEdizione.id_corso_attivo;
+                showToastCustom('Edizione del corso creata con successo!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
             }
-
-            // SUCCESSO!
-            showToastCustom('Edizione del corso creata con successo!', 'success');
-            
-            // Reindirizza alla dashboard
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1500);
 
         } catch (error) {
             console.error("Errore salvataggio:", error);

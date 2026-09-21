@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITS Manager - Segreteria | Gestione Utenze</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="../assets/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom Segreteria CSS -->
+    <link rel="stylesheet" href="../shared/styles.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=2.1">
+
+    <style>
+        /* ── Role tag pill — stesso stile dei badge di stato ── */
+        .user-role-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 11px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+        }
+        .user-role-tag.segreteria { background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; }
+        .user-role-tag.docente    { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
+        .user-role-tag.studente   { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; }
+        .user-role-tag.default    { background:#f8fafc; color:#64748b; border:1px solid #e2e8f0; }
+
+        /* ── Avatar iniziali inline ── */
+        .user-avatar-inline {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            letter-spacing: -0.5px;
+        }
+
+        /* ── Nome + email impilati ── */
+        .user-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-name-cell .name { font-weight: 700; color: var(--text-main); font-size: 0.93rem; }
+        .user-name-cell .email { font-size: 0.8rem; color: var(--text-muted); }
+
+        /* ── Filter chips ── */
+        .stat-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border: 1px solid;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .stat-chip.all { background:#f1f5f9; color:#475569; border-color:#e2e8f0; }
+        .stat-chip.all.active, .stat-chip.all:hover { background:#1e293b; color:#fff; border-color:#1e293b; }
+        .stat-chip.seg { background:#eff6ff; color:#2563eb; border-color:#bfdbfe; }
+        .stat-chip.seg.active, .stat-chip.seg:hover { background:#2563eb; color:#fff; border-color:#2563eb; }
+        .stat-chip.doc { background:#f0fdf4; color:#16a34a; border-color:#bbf7d0; }
+        .stat-chip.doc.active, .stat-chip.doc:hover { background:#16a34a; color:#fff; border-color:#16a34a; }
+        .stat-chip.stu { background:#fff7ed; color:#c2410c; border-color:#fed7aa; }
+        .stat-chip.stu.active, .stat-chip.stu:hover { background:#ea580c; color:#fff; border-color:#ea580c; }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo">
+                </div>
+                <h2 class="sidebar-brand-title">ITS Manager</h2>
+                <span class="sidebar-brand-subtitle">Gestionale IT</span>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-small">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">Segreteria Didattica</div>
+                    <span class="user-role-badge">SEGRETERIA</span>
+                </div>
+            </div>
+
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="dashboard.html" class="nav-item-link" id="navCorsi">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        <span>Corsi</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico">
+                        <i class="bi bi-book-half"></i>
+                        <span>Piano Didattico</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="utenze.html" class="nav-item-link active" id="navUtenze">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Utenze</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-item-link" id="navCalendario">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Calendario</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Disconnetti</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <!-- TOP ACTION BAR -->
+            <div class="top-action-bar">
+                <div class="page-header-info">
+                    <h1>
+                        <i class="bi bi-people-fill text-primary"></i>
+                        Gestione Utenze
+                    </h1>
+                    <p>Visualizza, aggiungi e gestisci tutti gli utenti del sistema</p>
+                </div>
+                <div class="header-controls">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Cerca per nome, cognome o email...">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <button class="btn-add-course" id="btnNuovoUtente" onclick="openCreateModal()">
+                        <i class="bi bi-person-plus-fill fs-5"></i>
+                        <span>Aggiungi utente</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- FILTER CHIPS -->
+            <div class="filter-bar" id="filterBar">
+                <span class="stat-chip all active" data-filter="all" onclick="setFilter(this)">
+                    <i class="bi bi-people"></i> Tutti&nbsp;<strong id="cntAll">0</strong>
+                </span>
+                <span class="stat-chip seg" data-filter="segreteria" onclick="setFilter(this)">
+                    <i class="bi bi-shield-lock"></i> Segreteria&nbsp;<strong id="cntSeg">0</strong>
+                </span>
+                <span class="stat-chip doc" data-filter="docente" onclick="setFilter(this)">
+                    <i class="bi bi-person-video3"></i> Docenti&nbsp;<strong id="cntDoc">0</strong>
+                </span>
+                <span class="stat-chip stu" data-filter="studente" onclick="setFilter(this)">
+                    <i class="bi bi-mortarboard"></i> Studenti&nbsp;<strong id="cntStu">0</strong>
+                </span>
+            </div>
+
+            <!-- TABELLA UTENTI — stile identico a editions-section delle pagine Corsi -->
+            <div class="editions-section">
+                <div class="editions-section-title">
+                    <span><i class="bi bi-people me-2"></i>Elenco Utenti</span>
+                    <span id="tableCount" class="text-muted" style="font-weight:500; font-size:0.8rem;"></span>
+                </div>
+                <table class="editions-table" id="utenzeTable">
+                    <thead>
+                        <tr>
+                            <th style="width:36px;">#</th>
+                            <th>Utente</th>
+                            <th>Ruolo</th>
+                            <th>Codice Fiscale</th>
+                            <th>Data Nascita</th>
+                            <th style="width:90px; text-align:center;">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="utenzeBody">
+                        <!-- generato da JS -->
+                    </tbody>
+                </table>
+
+                <!-- Stato vuoto -->
+                <div id="emptyState" class="no-results" style="display:none;">
+                    <i class="bi bi-person-slash"></i>
+                    <h3>Nessun utente trovato</h3>
+                    <p>Prova a cambiare il filtro o il termine di ricerca.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ─── MODAL: CREA / MODIFICA UTENTE ─── -->
+    <div class="modal fade" id="utenteModal" tabindex="-1" aria-labelledby="utenteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="utenteModalLabel">
+                        <i class="bi bi-person-plus-fill text-primary me-2"></i>
+                        <span id="modalTitleText">Aggiungi Utente</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="utenteForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="editUtenteId">
+
+                        <!-- Nome / Cognome -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="editNome" class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                                <input type="text" id="editNome" class="form-control" placeholder="Es. Mario" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editCognome" class="form-label fw-semibold">Cognome <span class="text-danger">*</span></label>
+                                <input type="text" id="editCognome" class="form-control" placeholder="Es. Rossi" required>
+                            </div>
+                        </div>
+
+                        <!-- Email / Ruolo -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-7">
+                                <label for="editEmail" class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                                <input type="email" id="editEmail" class="form-control" placeholder="mario.rossi@example.com" required>
+                            </div>
+                            <div class="col-md-5">
+                                <label for="editRuolo" class="form-label fw-semibold">Ruolo <span class="text-danger">*</span></label>
+                                <select id="editRuolo" class="form-select" required>
+                                    <option value="">— Seleziona ruolo —</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <label for="editPassword" class="form-label fw-semibold">
+                                    Password <span class="text-danger" id="pwdRequired">*</span>
+                                    <small class="text-muted fw-normal" id="pwdHint" style="display:none;">(lascia vuoto per non modificarla)</small>
+                                </label>
+                                <input type="password" id="editPassword" class="form-control" placeholder="••••••••" autocomplete="new-password">
+                            </div>
+                        </div>
+
+                        <!-- CF / Data Nascita -->
+                        <div class="row g-3 mb-1">
+                            <div class="col-md-6">
+                                <label for="editCF" class="form-label fw-semibold text-muted small">Codice Fiscale</label>
+                                <input type="text" id="editCF" class="form-control" placeholder="RSSMRA90A01H501Z" maxlength="16">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editDataNascita" class="form-label fw-semibold text-muted small">Data di Nascita</label>
+                                <input type="date" id="editDataNascita" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Annulla</button>
+                        <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSaveUtente">
+                            <i class="bi bi-check-lg me-1"></i> Salva
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="../assets/bootstrap.bundle.min.js"></script>
+    <!-- Auth + logic -->
+    <script src="../shared/auth.js"></script>
+    <script src="utenze.js?v=1.1"></script>
+</body>
+</html>
