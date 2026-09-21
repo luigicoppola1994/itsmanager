@@ -113,3 +113,20 @@ window.addEventListener('load', () => {
         window.location.href = '/login.html';
     }
 });
+
+// ==============================================================================
+// Sidebar (Sempre Fissa/Estesa - Toggle rimosso su richiesta)
+// ==============================================================================
+function toggleSidebar() {
+    // No-op: il menu laterale rimane sempre esteso
+}
+
+// Assicura che la sidebar non rimanga bloccata in stato compresso da sessioni precedenti
+document.addEventListener('DOMContentLoaded', () => {
+    localStorage.removeItem('sidebar_collapsed');
+    const sidebar = document.querySelector('.sidebar');
+    const wrapper = document.querySelector('.app-wrapper');
+    if (sidebar) sidebar.classList.remove('collapsed');
+    if (wrapper) wrapper.classList.remove('sidebar-collapsed');
+});
+

@@ -1,3 +1,7 @@
+// ============================================================
+// nuovo-corso.js — Creazione Corso ed Edizione Attiva
+// ============================================================
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Gestione Logout
     const logoutBtn = document.getElementById('logoutBtn');
@@ -35,12 +39,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const submitBtn = document.getElementById('submitBtn');
     
-    // Anteprima & Checklist
+    // Anteprima & Checklist Elementi
     const previewTitle = document.getElementById('previewTitle');
     const previewDesc = document.getElementById('previewDesc');
-    const metaOreTotali = document.querySelectorAll('.meta-text-val')[0];
-    const metaOreStage = document.querySelectorAll('.meta-text-val')[1];
-    const previewBadge = document.querySelector('.course-badge');
+    const previewStatusBadge = document.getElementById('previewStatusBadge');
+    const previewEditionBadge = document.getElementById('previewEditionBadge');
+    const previewDatesVal = document.getElementById('previewDatesVal');
+    const previewDaysCount = document.getElementById('previewDaysCount');
+    const previewOreTotali = document.getElementById('previewOreTotali');
+    const previewOreAula = document.getElementById('previewOreAula');
+    const previewOreStage = document.getElementById('previewOreStage');
+    const previewAssenza = document.getElementById('previewAssenza');
+    const previewTollIngresso = document.getElementById('previewTollIngresso');
+    const previewTollUscita = document.getElementById('previewTollUscita');
+    const previewProgressPercent = document.getElementById('previewProgressPercent');
+    const previewProgressBar = document.getElementById('previewProgressBar');
     
     const checkCorso = document.getElementById('checkCorso');
     const checkDate = document.getElementById('checkDate');
@@ -89,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modeNew.checked) {
             sectionNewCourse.style.display = 'block';
             sectionExistingCourse.style.display = 'none';
-            // Resetta validazione
             nomeInput.required = true;
             corsoEsistenteSelect.required = false;
 
@@ -100,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             sectionNewCourse.style.display = 'none';
             sectionExistingCourse.style.display = 'block';
-            // Resetta validazione
             nomeInput.required = false;
             corsoEsistenteSelect.required = true;
 
@@ -140,6 +151,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return workingDays;
     }
 
+    // Helper formattazione data italiana abbreviata
+    function formatDateIt(dStr) {
+        if (!dStr) return '';
+        const parts = dStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        const d = new Date(dStr);
+        return isNaN(d) ? dStr : d.toLocaleDateString('it-IT');
+    }
+
     // Calcolo automatico Ore Totali (Aula + Stage) in tempo reale
     function calcolaOreTotali() {
         const tStr = oreTeoria ? oreTeoria.value.trim() : '';
@@ -152,14 +174,14 @@ document.addEventListener('DOMContentLoaded', () => {
             durataOre.value = tot;
         }
 
-        // Se la data inizio è impostata e la data fine è vuota (o modificabile), suggerisci automaticamente la data fine coerente (max 40h/settimana)
+        // Suggerisci automaticamente la data fine coerente se inizio è presente e fine vuota
         if (dataInizio && dataInizio.value && dataFine && !dataFine.value && tot > 0) {
             const giorniLavNecessari = Math.ceil(tot / 8);
             let count = 0;
             let cur = new Date(dataInizio.value);
             while (count < giorniLavNecessari) {
                 const day = cur.getDay();
-                if (day !== 0 && day !== 6) { // 0 = Domenica, 6 = Sabato
+                if (day !== 0 && day !== 6) {
                     count++;
                     if (count === giorniLavNecessari) break;
                 }
@@ -177,11 +199,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 5. Funzione per aggiornare l'anteprima e la checklist in tempo reale
     function updatePreview() {
-        calcolaOreTotali();
+        const totOre = calcolaOreTotali();
 
         let isCorsoValido = false;
         let titleText = 'Nome del corso';
-        let descText = 'La descrizione del corso apparirà qui...';
+        let descText = 'La descrizione del percorso formativo apparirà qui...';
 
         // Check Anagrafica
         if (modeNew.checked) {
@@ -216,31 +238,101 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Aggiorna UI Anagrafica e Badge
-        previewTitle.textContent = titleText;
-        previewDesc.textContent = descText;
-        if (etichettaInput && etichettaInput.value.trim()) {
-            previewBadge.textContent = `Nuovo • ${etichettaInput.value.trim()}`;
-        } else {
-            previewBadge.textContent = 'Nuovo';
+        // Titolo & Descrizione card
+        if (previewTitle) {
+            previewTitle.textContent = titleText;
+            if (isCorsoValido) {
+                previewTitle.classList.remove('placeholder-text');
+            } else {
+                previewTitle.classList.add('placeholder-text');
+            }
+        }
+        if (previewDesc) {
+            previewDesc.textContent = descText;
+            if (isCorsoValido && descText !== 'La descrizione del percorso formativo apparirà qui...') {
+                previewDesc.classList.remove('placeholder-text');
+            } else {
+                previewDesc.classList.add('placeholder-text');
+            }
         }
 
-        if (isCorsoValido) {
-            previewTitle.classList.remove('placeholder-text');
-            previewDesc.classList.remove('placeholder-text');
-            checkCorso.classList.add('filled');
+        // Status badge
+        if (previewStatusBadge) {
+            if (modeNew.checked) {
+                previewStatusBadge.innerHTML = '<i class="bi bi-mortarboard-fill me-1"></i>Nuovo Corso';
+            } else {
+                previewStatusBadge.innerHTML = '<i class="bi bi-journal-check me-1"></i>Da Catalogo';
+            }
+        }
+
+        // Edition badge
+        const creaEdizioneAttiva = checkCreaEdizione ? checkCreaEdizione.checked : true;
+        const etichettaVal = etichettaInput ? etichettaInput.value.trim() : '';
+        if (previewEditionBadge) {
+            if (!creaEdizioneAttiva && modeNew.checked) {
+                previewEditionBadge.textContent = 'Solo Catalogo';
+                previewEditionBadge.style.background = '#64748b';
+            } else if (etichettaVal) {
+                previewEditionBadge.textContent = `Edizione: ${etichettaVal}`;
+                previewEditionBadge.style.background = '#10b981';
+            } else {
+                previewEditionBadge.textContent = 'Edizione Attiva';
+                previewEditionBadge.style.background = '#10b981';
+            }
+        }
+
+        // Date del corso & giorni lavorativi
+        let isDateValide = false;
+        let giorniLav = 0;
+        if (dataInizio.value && dataFine.value && new Date(dataInizio.value) <= new Date(dataFine.value)) {
+            isDateValide = true;
+            giorniLav = calcolaGiorniLavorativi(dataInizio.value, dataFine.value);
+            if (previewDatesVal) {
+                previewDatesVal.textContent = `${formatDateIt(dataInizio.value)} → ${formatDateIt(dataFine.value)}`;
+            }
+            if (previewDaysCount) {
+                previewDaysCount.textContent = `${giorniLav} gg lavorativi`;
+            }
+        } else if (dataInizio.value) {
+            if (previewDatesVal) previewDatesVal.textContent = `Dal ${formatDateIt(dataInizio.value)} (fine non definita)`;
+            if (previewDaysCount) previewDaysCount.textContent = '—';
         } else {
-            previewTitle.classList.add('placeholder-text');
-            previewDesc.classList.add('placeholder-text');
+            if (previewDatesVal) previewDatesVal.textContent = 'Date da definire';
+            if (previewDaysCount) previewDaysCount.textContent = '0 gg lav.';
+        }
+
+        // Ore Totali, Aula, Stage
+        const tVal = parseInt(oreTeoria.value) || 0;
+        const sVal = parseInt(oreStage.value) || 0;
+        if (previewOreTotali) previewOreTotali.textContent = totOre > 0 ? `${totOre}h` : '—';
+        if (previewOreAula) previewOreAula.textContent = oreTeoria.value.trim() !== '' ? `${tVal}h` : '—';
+        if (previewOreStage) previewOreStage.textContent = oreStage.value.trim() !== '' ? `${sVal}h` : '—';
+
+        // Assenza max
+        const assenza = percAssenza ? percAssenza.value : 20;
+        if (previewAssenza) previewAssenza.textContent = assenza ? `${assenza}%` : '20%';
+
+        // Tolleranze
+        const tollIng = tollIngresso ? tollIngresso.value || 15 : 15;
+        const tollUsc = tollUscita ? tollUscita.value || 15 : 15;
+        if (previewTollIngresso) previewTollIngresso.innerHTML = `<i class="bi bi-box-arrow-in-right text-primary me-1"></i>Toll. Entrata: <strong>${tollIng} min</strong>`;
+        if (previewTollUscita) previewTollUscita.innerHTML = `<i class="bi bi-box-arrow-right text-primary me-1"></i>Toll. Uscita: <strong>${tollUsc} min</strong>`;
+
+        // Checklist & Calcolo Percentuale di Completamento
+        let completedSteps = 0;
+        let totalSteps = creaEdizioneAttiva ? 3 : 1;
+
+        if (isCorsoValido) {
+            checkCorso.classList.add('filled');
+            completedSteps++;
+        } else {
             checkCorso.classList.remove('filled');
         }
 
-        const creaEdizioneAttiva = checkCreaEdizione ? checkCreaEdizione.checked : true;
-
         if (!creaEdizioneAttiva && modeNew.checked) {
             submitBtn.querySelector('.btn-nc-text').innerHTML = '<i class="bi bi-check-lg"></i> Salva Corso (Senza Edizione)';
-            checkDate.style.opacity = '0.4';
-            checkOre.style.opacity = '0.4';
+            checkDate.style.opacity = '0.35';
+            checkOre.style.opacity = '0.35';
             checkDate.classList.remove('filled');
             checkOre.classList.remove('filled');
         } else {
@@ -248,29 +340,28 @@ document.addEventListener('DOMContentLoaded', () => {
             checkDate.style.opacity = '1';
             checkOre.style.opacity = '1';
 
-            // Check Date
-            if (dataInizio.value && dataFine.value && new Date(dataInizio.value) <= new Date(dataFine.value)) {
+            if (isDateValide) {
                 checkDate.classList.add('filled');
+                completedSteps++;
             } else {
                 checkDate.classList.remove('filled');
             }
 
-            // Check Ore
-            const tot = parseInt(durataOre.value) || 0;
-            const stage = parseInt(oreStage.value) || 0;
-            metaOreTotali.textContent = tot > 0 ? `${tot}h` : '—';
-            metaOreStage.textContent = oreStage.value.trim() !== '' ? `${stage}h` : '—';
-            
-            if (tot > 0) {
+            if (totOre > 0 && tVal > 0) {
                 checkOre.classList.add('filled');
+                completedSteps++;
             } else {
                 checkOre.classList.remove('filled');
             }
         }
+
+        const percent = Math.round((completedSteps / totalSteps) * 100);
+        if (previewProgressPercent) previewProgressPercent.textContent = `${percent}%`;
+        if (previewProgressBar) previewProgressBar.style.width = `${percent}%`;
     }
 
     // Aggiungi listener per l'input in tempo reale su tutti i campi
-    const inputsToWatch = [nomeInput, descInput, corsoEsistenteSelect, etichettaInput, dataInizio, dataFine, oreTeoria, oreStage];
+    const inputsToWatch = [nomeInput, descInput, corsoEsistenteSelect, etichettaInput, dataInizio, dataFine, oreTeoria, oreStage, percAssenza, tollIngresso, tollUscita];
     inputsToWatch.forEach(input => {
         if (input) {
             ['input', 'keyup', 'change'].forEach(evt => input.addEventListener(evt, updatePreview));
@@ -281,7 +372,6 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Validazione Client-Side
         let isValid = true;
         const creaEdizioneAttiva = checkCreaEdizione ? checkCreaEdizione.checked : true;
         
@@ -307,7 +397,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Se è richiesta la creazione dell'edizione, effettua le relative validazioni
         if (creaEdizioneAttiva) {
-            // Validazione Ore Aula e Stage
             const tVal = parseInt(oreTeoria.value);
             if (isNaN(tVal) || tVal <= 0) {
                 showToastCustom('Le ore in aula sono obbligatorie e devono essere maggiori di 0.', 'error');
@@ -337,9 +426,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 isValid = false;
             } else if (totOreCalculated > 0) {
                 const giorniLav = calcolaGiorniLavorativi(dataInizio.value, dataFine.value);
-                const maxOreCopribili = giorniLav * 8; // Max 8h/giorno = 40h/settimana
+                const maxOreCopribili = giorniLav * 8;
                 if (maxOreCopribili < totOreCalculated) {
-                    showToastCustom(`Il periodo dal ${new Date(dataInizio.value).toLocaleDateString('it-IT')} al ${new Date(dataFine.value).toLocaleDateString('it-IT')} ha ${giorniLav} giorni lavorativi per un max di ${maxOreCopribili}h (max 8h/giorno, 40h/settimana). Impossibile coprire le ${totOreCalculated}h totali.`, 'error');
+                    showToastCustom(`Il periodo dal ${formatDateIt(dataInizio.value)} al ${formatDateIt(dataFine.value)} ha ${giorniLav} giorni lavorativi per un max di ${maxOreCopribili}h (max 8h/giorno, 40h/settimana). Impossibile coprire le ${totOreCalculated}h totali.`, 'error');
                     dataFine.classList.add('is-invalid');
                     isValid = false;
                 } else {
@@ -382,9 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (modeNew.checked && !creaEdizioneAttiva) {
-                // ─────────────────────────────────────────────────────────────
-                // CREAZIONE SOLO CORSO A CATALOGO (Senza Edizione)
-                // ─────────────────────────────────────────────────────────────
+                // Creazione solo Corso a catalogo
                 const payload = {
                     Nome: nomeInput.value.trim(),
                     Descrizione: descInput.value.trim() || null
@@ -405,12 +492,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToastCustom('Corso a catalogo creato con successo!', 'success');
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
-                }, 1500);
+                }, 1200);
 
             } else if (modeNew.checked && creaEdizioneAttiva) {
-                // ─────────────────────────────────────────────────────────────
-                // ENDPOINT ATOMICO: crea corso + edizione in un'unica transazione
-                // ─────────────────────────────────────────────────────────────
+                // Nuovo Corso + Edizione contestuale
                 const payload = {
                     nome_corso: nomeInput.value.trim(),
                     descrizione_corso: descInput.value.trim() || null,
@@ -440,12 +525,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToastCustom('Corso ed Edizione creati con successo!', 'success');
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
-                }, 1500);
+                }, 1200);
 
             } else {
-                // ─────────────────────────────────────────────────────────────
-                // CORSO ESISTENTE: crea solo l'edizione
-                // ─────────────────────────────────────────────────────────────
+                // Corso esistente a catalogo + nuova Edizione
                 const datiEdizione = {
                     id_corso: parseInt(corsoEsistenteSelect.value),
                     etichetta: etichettaInput ? etichettaInput.value.trim() || null : null,
@@ -475,7 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToastCustom('Edizione del corso creata con successo!', 'success');
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
-                }, 1500);
+                }, 1200);
             }
 
         } catch (error) {
@@ -485,25 +568,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-
-    // Helpers
+    // Helpers UI
     function setLoadingState(isLoading) {
         const btnText = submitBtn.querySelector('.btn-nc-text');
         const btnLoading = submitBtn.querySelector('.btn-nc-loading');
 
         if (isLoading) {
             submitBtn.disabled = true;
-            btnText.style.display = 'none';
-            btnLoading.style.display = 'flex';
+            if (btnText) btnText.style.display = 'none';
+            if (btnLoading) btnLoading.style.display = 'flex';
         } else {
             submitBtn.disabled = false;
-            btnText.style.display = 'flex';
-            btnLoading.style.display = 'none';
+            if (btnText) btnText.style.display = 'flex';
+            if (btnLoading) btnLoading.style.display = 'none';
         }
     }
 
     function showToastCustom(message, type) {
         const toast = document.getElementById('toast');
+        if (!toast) return;
         toast.textContent = message;
         toast.className = `toast show ${type}`;
         setTimeout(() => { toast.classList.remove('show'); }, 3500);

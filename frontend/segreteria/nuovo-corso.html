@@ -8,7 +8,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="../assets/bootstrap.min.css" rel="stylesheet">
@@ -16,7 +16,7 @@
 
     <!-- CSS condiviso e segreteria -->
     <link rel="stylesheet" href="../shared/styles.css?v=2.1">
-    <link rel="stylesheet" href="segreteria.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=3.0">
     <link rel="stylesheet" href="nuovo-corso.css?v=2.1">
 </head>
 <body>
@@ -25,11 +25,16 @@
         <!-- SIDEBAR A SINISTRA -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo">
+                
+                <div class="sidebar-brand-block">
+                    <div class="sidebar-logo-container">
+                        <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo" class="sidebar-logo-img">
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <h2 class="sidebar-brand-title">ITS MANAGER</h2>
+                        <span class="sidebar-brand-subtitle">Gestionale Didattico</span>
+                    </div>
                 </div>
-                <h2 class="sidebar-brand-title">ITS Manager</h2>
-                <span class="sidebar-brand-subtitle">Gestionale IT</span>
             </div>
 
             <div class="sidebar-user">
@@ -44,27 +49,19 @@
 
             <ul class="sidebar-nav">
                 <li>
-                    <a href="dashboard.html" class="nav-item-link" id="navCorsi">
-                        <i class="bi bi-journal-bookmark-fill"></i>
-                        <span>Corsi</span>
+                    <a href="dashboard.html" class="nav-item-link" id="navCorsi" title="Corsi"><i class="bi bi-journal-bookmark-fill"></i><span class="nav-label">Corsi</span>
                     </a>
                 </li>
                 <li>
-                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico">
-                        <i class="bi bi-book-half"></i>
-                        <span>Piano Didattico</span>
+                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" title="Piano Didattico"><i class="bi bi-book-half"></i><span class="nav-label">Piano Didattico</span>
                     </a>
                 </li>
                 <li>
-                    <a href="utenze.html" class="nav-item-link" id="navUtenze">
-                        <i class="bi bi-people-fill"></i>
-                        <span>Utenze</span>
+                    <a href="utenze.html" class="nav-item-link" id="navUtenze" title="Utenze"><i class="bi bi-people-fill"></i><span class="nav-label">Utenze</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-item-link" id="navCalendario">
-                        <i class="bi bi-calendar3"></i>
-                        <span>Calendario</span>
+                    <a href="#" class="nav-item-link" id="navCalendario" title="Calendario"><i class="bi bi-calendar3"></i><span class="nav-label">Calendario</span>
                     </a>
                 </li>
             </ul>
@@ -79,6 +76,28 @@
 
         <!-- CONTENUTO PRINCIPALE -->
         <main class="main-content">
+
+            <!-- RUBICK TOP BAR -->
+            <div class="rubick-top-bar">
+                <nav class="rubick-breadcrumb" aria-label="breadcrumb">
+                    <span class="breadcrumb-root"><i class="bi bi-mortarboard-fill me-1 text-primary"></i>ITS Manager</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-section">Segreteria</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <a href="dashboard.html" class="breadcrumb-section" style="text-decoration:none;">Corsi</a>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-current">Nuovo Corso</span>
+                </nav>
+                <div class="rubick-top-bar-actions">
+                    <div class="rubick-icon-badge" title="Notifiche">
+                        <i class="bi bi-bell"></i>
+                        <span class="rubick-badge-dot"></span>
+                    </div>
+                    <div class="rubick-user-avatar" title="Segreteria Didattica">
+                        SD
+                    </div>
+                </div>
+            </div>
 
             <!-- BREADCRUMB + TITOLO -->
             <div class="nc-page-header">
@@ -190,7 +209,7 @@
                                 <label for="etichettaEdizione" class="nc-label">Etichetta Edizione</label>
                                 <div class="nc-input-wrapper">
                                     <i class="bi bi-tag-fill nc-input-icon"></i>
-                                    <input type="text" id="etichettaEdizione" class="nc-input" placeholder="Es. Gruppo A, Turno Mattina, Sede Roma…" maxlength="100">
+                                    <input type="text" id="etichettaEdizione" class="nc-input" placeholder="Es. Gruppo A, Turno Mattina, Sede Roma..." maxlength="100">
                                 </div>
                                 <span class="nc-field-hint">Facoltativa — utile per distinguere edizioni parallele dello stesso corso.</span>
                             </div>
@@ -224,7 +243,7 @@
                                     <div class="nc-field-group">
                                         <label for="oreStage" class="nc-label">Ore Stage <span class="nc-required">*</span></label>
                                         <input type="number" id="oreStage" class="form-control nc-input py-2" min="0" placeholder="Es. 400" required>
-                                        <span class="nc-field-hint" style="font-size:0.75rem;">Obbligatorio (≥ 0)</span>
+                                        <span class="nc-field-hint" style="font-size:0.75rem;">Obbligatorio (&ge; 0)</span>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -276,7 +295,7 @@
                             <i class="bi bi-info-circle-fill"></i>
                             <div>
                                 <strong>Operazione Sequenziale</strong>
-                                <p>Il sistema verificherà tutti i campi prima di creare l'Edizione nel database (e, se richiesto, il nuovo corso a catalogo).</p>
+                                <p>Il sistema verificher&agrave; tutti i campi prima di creare l'Edizione nel database (e, se richiesto, il nuovo corso a catalogo).</p>
                             </div>
                         </div>
 
@@ -301,43 +320,90 @@
                     </form>
                 </div>
 
-                <!-- COLONNA DESTRA: anteprima -->
+                <!-- COLONNA DESTRA: anteprima e riepilogo avanzato -->
                 <div class="nc-preview-panel">
                     <div class="nc-preview-header">
-                        <i class="bi bi-eye"></i>
-                        <span>Anteprima card</span>
+                        <i class="bi bi-eye-fill"></i>
+                        <span>Riepilogo & Anteprima Corso</span>
                     </div>
-                    <p class="nc-preview-hint">Così apparirà il corso nella dashboard</p>
+                    <p class="nc-preview-hint">Anteprima in tempo reale della scheda corso ed edizione</p>
 
+                    <!-- CARD ANTEPRIMA POTENZIATA -->
                     <div class="nc-preview-card" id="previewCard">
                         <div class="nc-preview-card-top">
-                            <div class="nc-preview-badge">
-                                <span class="course-badge active">Nuovo</span>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="preview-badge-status" id="previewStatusBadge">
+                                    <i class="bi bi-mortarboard-fill me-1"></i>Nuovo Corso
+                                </span>
+                                <span class="preview-badge-edition" id="previewEditionBadge">
+                                    Edizione Attiva
+                                </span>
                             </div>
                             <h3 class="nc-preview-title" id="previewTitle">Nome del corso</h3>
                         </div>
                         <div class="nc-preview-card-body">
-                            <p class="nc-preview-desc" id="previewDesc">La descrizione del corso apparirà qui...</p>
-                            <div class="nc-preview-meta">
-                                <div class="meta-item">
-                                    <div class="meta-icon"><i class="bi bi-clock-history"></i></div>
+                            <!-- Descrizione -->
+                            <p class="nc-preview-desc" id="previewDesc">La descrizione del percorso formativo apparirà qui...</p>
+
+                            <!-- Date del corso -->
+                            <div class="preview-dates-box mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-calendar-range text-primary fs-5"></i>
                                     <div>
-                                        <p class="meta-text-val">—</p>
-                                        <p class="meta-text-lbl">Ore Totali</p>
+                                        <div class="preview-dates-label">Periodo Didattico</div>
+                                        <div class="preview-dates-val" id="previewDatesVal">Date da definire</div>
                                     </div>
                                 </div>
-                                <div class="meta-item">
-                                    <div class="meta-icon"><i class="bi bi-briefcase"></i></div>
-                                    <div>
-                                        <p class="meta-text-val">—</p>
-                                        <p class="meta-text-lbl">Ore Stage</p>
-                                    </div>
+                                <span class="badge bg-light text-secondary border" id="previewDaysCount">0 gg lav.</span>
+                            </div>
+
+                            <!-- Griglia Metriche: 4 box -->
+                            <div class="nc-metrics-grid mb-3">
+                                <div class="nc-metric-card primary">
+                                    <div class="metric-icon"><i class="bi bi-clock-history"></i></div>
+                                    <div class="metric-val" id="previewOreTotali">—</div>
+                                    <div class="metric-lbl">Ore Totali</div>
+                                </div>
+                                <div class="nc-metric-card">
+                                    <div class="metric-icon"><i class="bi bi-easel2"></i></div>
+                                    <div class="metric-val" id="previewOreAula">—</div>
+                                    <div class="metric-lbl">Ore Aula</div>
+                                </div>
+                                <div class="nc-metric-card">
+                                    <div class="metric-icon"><i class="bi bi-briefcase"></i></div>
+                                    <div class="metric-val" id="previewOreStage">—</div>
+                                    <div class="metric-lbl">Ore Stage</div>
+                                </div>
+                                <div class="nc-metric-card">
+                                    <div class="metric-icon"><i class="bi bi-percent"></i></div>
+                                    <div class="metric-val" id="previewAssenza">20%</div>
+                                    <div class="metric-lbl">Max Assenza</div>
+                                </div>
+                            </div>
+
+                            <!-- Dettagli Parametri Frequenza -->
+                            <div class="preview-parameters-pill mb-2">
+                                <div class="param-chip" id="previewTollIngresso">
+                                    <i class="bi bi-box-arrow-in-right text-primary me-1"></i>Toll. Entrata: <strong>15 min</strong>
+                                </div>
+                                <div class="param-chip" id="previewTollUscita">
+                                    <i class="bi bi-box-arrow-right text-primary me-1"></i>Toll. Uscita: <strong>15 min</strong>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- CHECKLIST CAMPI -->
+                    <!-- PROGRESSO E CHECKLIST -->
+                    <div class="nc-progress-box mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small fw-bold text-dark">Completamento Scheda</span>
+                            <span class="small fw-bold text-primary" id="previewProgressPercent">0%</span>
+                        </div>
+                        <div class="progress" style="height: 6px; border-radius: 4px; background: #e2e8f0;">
+                            <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" id="previewProgressBar" style="width: 0%; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+
                     <div class="nc-checklist">
                         <div class="nc-checklist-item" id="checkCorso">
                             <i class="bi bi-circle nc-check-icon"></i>
@@ -345,11 +411,11 @@
                         </div>
                         <div class="nc-checklist-item" id="checkDate">
                             <i class="bi bi-circle nc-check-icon"></i>
-                            <span>Date impostate</span>
+                            <span>Date e periodo validi</span>
                         </div>
                         <div class="nc-checklist-item" id="checkOre">
                             <i class="bi bi-circle nc-check-icon"></i>
-                            <span>Monte ore definito</span>
+                            <span>Monte ore coerente</span>
                         </div>
                     </div>
                 </div>
@@ -366,6 +432,9 @@
 
     <!-- Auth + logica pagina -->
     <script src="../shared/auth.js"></script>
-    <script src="nuovo-corso.js?v=2.2"></script>
+    <script src="nuovo-corso.js?v=3.0"></script>
 </body>
 </html>
+
+
+

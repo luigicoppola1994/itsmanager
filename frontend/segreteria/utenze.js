@@ -1,13 +1,12 @@
 // ============================================================
-// utenze.js — Gestione Utenze (CRUD completo)
+// utenze.js - Gestione Utenze (CRUD completo)
 // ============================================================
 
-let allUtenti   = [];   // cache completa
-let ruoliMap    = {};   // id_ruolo → { Nome, ... }
+let allUtenti   = [];
+let ruoliMap    = {};
 let activeFilter = 'all';
-let editingId    = null; // null = creazione, number = modifica
+let editingId    = null;
 
-// ── Mapping nome ruolo → chiave CSS e label leggibile ──
 const RUOLO_STYLE = {
     'segreteria':  { cls: 'segreteria', icon: 'bi-shield-lock',    label: 'Segreteria' },
     'docente':     { cls: 'docente',    icon: 'bi-person-video3',  label: 'Docente'    },
@@ -20,25 +19,22 @@ function getRuoloStyle(nomeRuolo) {
     return RUOLO_STYLE[key] || { cls: 'default', icon: 'bi-person', label: nomeRuolo || 'N/D' };
 }
 
-// ── Inizializzazione ──
+// Inizializzazione
 document.addEventListener('DOMContentLoaded', async () => {
-    // Logout
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.addEventListener('click', logout);
 
-    // Ricerca live
     const searchInput = document.getElementById('searchInput');
     if (searchInput) searchInput.addEventListener('input', () => renderGrid());
 
-    // Submit form modal
-    document.getElementById('utenteForm').addEventListener('submit', handleFormSubmit);
+    document.getElementById('utenteForm')?.addEventListener('submit', handleFormSubmit);
+    document.getElementById('userInfoForm')?.addEventListener('submit', handleUserInfoSubmit);
 
-    // Carica ruoli e utenti
     await loadRuoli();
     await loadUtenti();
 });
 
-// ── Carica ruoli dal backend e popola la select ──
+// Carica ruoli dal backend e popola la select
 async function loadRuoli() {
     try {
         const res = await fetchAutenticata(`${API_URL}/ruoli`);
@@ -47,21 +43,34 @@ async function loadRuoli() {
 
         ruoliMap = {};
         const select = document.getElementById('editRuolo');
-        select.innerHTML = '<option value="">— Seleziona ruolo —</option>';
+        if (select) select.innerHTML = '<option value="">-- Seleziona ruolo --</option>';
+
+        const infoSelect = document.getElementById('infoRuolo');
+        if (infoSelect) infoSelect.innerHTML = '<option value="">-- Seleziona ruolo --</option>';
 
         ruoli.forEach(r => {
             ruoliMap[r.id_ruolo] = r;
+            // Escludi super_admin dalla selezione
+            if ((r.Nome || '').toLowerCase() === 'super_admin') return;
+
             const opt = document.createElement('option');
             opt.value = r.id_ruolo;
             opt.textContent = getRuoloStyle(r.Nome).label;
-            select.appendChild(opt);
+            if (select) select.appendChild(opt);
+
+            if (infoSelect) {
+                const optInfo = document.createElement('option');
+                optInfo.value = r.id_ruolo;
+                optInfo.textContent = getRuoloStyle(r.Nome).label;
+                infoSelect.appendChild(optInfo);
+            }
         });
     } catch (e) {
         console.error('Errore caricamento ruoli:', e);
     }
 }
 
-// ── Carica tutti gli utenti ──
+// Carica tutti gli utenti
 async function loadUtenti() {
     try {
         const res = await fetchAutenticata(`${API_URL}/users`);
@@ -75,7 +84,7 @@ async function loadUtenti() {
     }
 }
 
-// ── Aggiorna i contatori delle chip ──
+// Aggiorna i contatori delle chip
 function updateStats() {
     const counts = { segreteria: 0, docente: 0, studente: 0 };
     allUtenti.forEach(u => {
@@ -96,7 +105,7 @@ function getRuoloNome(u) {
     return '';
 }
 
-// ── Filtra e render ──
+// Filtra e render
 function setFilter(el) {
     document.querySelectorAll('.stat-chip').forEach(c => c.classList.remove('active'));
     el.classList.add('active');
@@ -126,7 +135,7 @@ function renderGrid() {
 
         return matchSearch && matchFilter;
     });
-    
+
     if (count) count.textContent = `${filtered.length} utent${filtered.length === 1 ? 'e' : 'i'} trovat${filtered.length === 1 ? 'o' : 'i'}`;
 
     if (filtered.length === 0) {
@@ -149,15 +158,15 @@ function renderUserRow(u, index) {
     const ruoloNome  = getRuoloNome(u);
     const style      = getRuoloStyle(ruoloNome);
     const initials   = getInitials(u.Nome, u.Cognome);
-    
-    let dataNascitaFormatted = '—';
+
+    let dataNascitaFormatted = '\u2014';
     if (u.Data_Nascita) {
         const d = new Date(u.Data_Nascita);
         dataNascitaFormatted = isNaN(d) ? u.Data_Nascita : d.toLocaleDateString('it-IT');
     }
-    
-    const safeName = u.Nome.replace(/'/g, "\\'");
-    const safeSurname = u.Cognome.replace(/'/g, "\\'");
+
+    const safeName = (u.Nome || '').replace(/'/g, "\\'");
+    const safeSurname = (u.Cognome || '').replace(/'/g, "\\'");
 
     return `
         <tr>
@@ -169,7 +178,7 @@ function renderUserRow(u, index) {
                     <div class="user-avatar-inline">${initials}</div>
                     <div>
                         <div class="name">${u.Nome} ${u.Cognome}</div>
-                        <div class="email">${u.Email || '—'}</div>
+                        <div class="email">${u.Email || '\u2014'}</div>
                     </div>
                 </div>
             </td>
@@ -180,7 +189,7 @@ function renderUserRow(u, index) {
             </td>
             <td>
                 <span class="fw-semibold text-secondary" style="font-size: 0.85rem; letter-spacing: 0.5px;">
-                    ${u.Codice_Fiscale || '—'}
+                    ${u.Codice_Fiscale || '\u2014'}
                 </span>
             </td>
             <td>
@@ -188,9 +197,10 @@ function renderUserRow(u, index) {
             </td>
             <td>
                 <div class="d-flex gap-2 justify-content-center">
-                    <button class="btn-action-icon" onclick="openEditModal(${u.id_utente})" title="Modifica Utente">
-                        <i class="bi bi-pencil-fill"></i>
+                    <button class="btn-action-icon info" onclick="openUserInfoModal(${u.id_utente})" title="Scheda Completa Utente">
+                        <i class="bi bi-info-circle-fill"></i>
                     </button>
+                    <a href="nuovo-utente.html?id=${u.id_utente}" class="btn-action-icon" title="Modifica Utente"><i class="bi bi-pencil-fill"></i></a>
                     <button class="btn-action-icon danger" onclick="deleteUtente(${u.id_utente}, '${safeName} ${safeSurname}')" title="Elimina Utente">
                         <i class="bi bi-trash3-fill"></i>
                     </button>
@@ -199,7 +209,7 @@ function renderUserRow(u, index) {
         </tr>`;
 }
 
-// ── Apri modal CREA ──
+// Apri modal CREA
 function openCreateModal() {
     editingId = null;
     document.getElementById('modalTitleText').textContent = 'Aggiungi Utente';
@@ -213,7 +223,7 @@ function openCreateModal() {
     modal.show();
 }
 
-// ── Apri modal MODIFICA ──
+// Apri modal MODIFICA
 function openEditModal(id) {
     const u = allUtenti.find(x => x.id_utente === id);
     if (!u) return;
@@ -237,7 +247,7 @@ function openEditModal(id) {
     modal.show();
 }
 
-// ── Submit form (CREATE o UPDATE) ──
+// Submit form (CREATE o UPDATE)
 async function handleFormSubmit(e) {
     e.preventDefault();
 
@@ -257,11 +267,10 @@ async function handleFormSubmit(e) {
     const isCreating = !editingId;
 
     if (isCreating && !password) {
-        showToast('La password è obbligatoria per il nuovo utente.', true);
+        showToast('La password \u00e8 obbligatoria per il nuovo utente.', true);
         return;
     }
 
-    // Recupera il ruolo corrente dell'utente per update (serve per schema UtenteCreate)
     const uCorrente = editingId ? allUtenti.find(x => x.id_utente === editingId) : null;
 
     const payload = {
@@ -297,9 +306,7 @@ async function handleFormSubmit(e) {
             throw new Error(data.detail || data.error || 'Errore durante il salvataggio.');
         }
 
-        // Chiudi modal
         bootstrap.Modal.getInstance(document.getElementById('utenteModal'))?.hide();
-
         showToast(isCreating ? 'Utente creato con successo!' : 'Utente aggiornato con successo!');
         await loadUtenti();
 
@@ -308,9 +315,9 @@ async function handleFormSubmit(e) {
     }
 }
 
-// ── DELETE ──
+// DELETE
 async function deleteUtente(id, nomeCompleto) {
-    if (!confirm(`Eliminare l'utente "${nomeCompleto}"? L'operazione è irreversibile.`)) return;
+    if (!confirm(`Eliminare l'utente "${nomeCompleto}"? L'operazione \u00e8 irreversibile.`)) return;
 
     try {
         const res = await fetchAutenticata(`${API_URL}/users/${id}`, { method: 'DELETE' });
@@ -325,11 +332,158 @@ async function deleteUtente(id, nomeCompleto) {
     }
 }
 
-// ── Toast helper ──
+// Toast helper
 function showToast(msg, isError = false) {
     const toast = document.getElementById('toast');
     if (!toast) return;
     toast.textContent = msg;
     toast.className = `toast show${isError ? ' error' : ''}`;
     setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+// Toggle visualizzazione password
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    const icon = btn.querySelector('i');
+    if (icon) {
+        icon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+    }
+}
+
+// Apri modal SCHEDA COMPLETA UTENTE (INFO & EDIT)
+function openUserInfoModal(id) {
+    const u = allUtenti.find(x => x.id_utente === id);
+    if (!u) {
+        showToast('Utente non trovato.', true);
+        return;
+    }
+
+    const initials = getInitials(u.Nome, u.Cognome);
+    const ruoloNome = getRuoloNome(u);
+    const style = getRuoloStyle(ruoloNome);
+
+    const avatarEl = document.getElementById('infoUserAvatar');
+    if (avatarEl) avatarEl.textContent = initials;
+
+    const nameEl = document.getElementById('infoUserFullname');
+    if (nameEl) nameEl.textContent = `${u.Nome || ''} ${u.Cognome || ''}`.trim() || 'Utente';
+
+    const roleBadge = document.getElementById('infoUserRoleBadge');
+    if (roleBadge) {
+        roleBadge.className = `user-role-tag ${style.cls}`;
+        roleBadge.innerHTML = `<i class="bi ${style.icon}"></i> ${style.label}`;
+    }
+
+    const emailEl = document.getElementById('infoUserEmailText');
+    if (emailEl) emailEl.textContent = u.Email || '\u2014';
+
+    const idEl = document.getElementById('infoUserIdText');
+    if (idEl) idEl.textContent = `#${u.id_utente}`;
+
+    const primoAccessoBadge = document.getElementById('infoUserPrimoAccessoBadge');
+    if (primoAccessoBadge) {
+        if (u.Primo_Accesso) {
+            primoAccessoBadge.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>Primo Accesso: Da effettuare';
+        } else {
+            primoAccessoBadge.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i>Primo Accesso: Completato';
+        }
+    }
+
+    document.getElementById('infoUtenteId').value = u.id_utente;
+    document.getElementById('infoNome').value = u.Nome || '';
+    document.getElementById('infoCognome').value = u.Cognome || '';
+    document.getElementById('infoGenere').value = u.Genere || '';
+    document.getElementById('infoCF').value = u.Codice_Fiscale || '';
+    document.getElementById('infoDataNascita').value = u.Data_Nascita || '';
+    document.getElementById('infoCittaNascita').value = u.Citta_Nascita || '';
+
+    document.getElementById('infoIndirizzo').value = u.Indirizzo_Residenza || '';
+    document.getElementById('infoCittaResidenza').value = u.Citta_Residenza || '';
+    document.getElementById('infoCap').value = u.Cap_Residenza || '';
+    document.getElementById('infoProvincia').value = u.Provincia_Residenza || '';
+    document.getElementById('infoTelefono').value = u.Telefono || '';
+
+    document.getElementById('infoEmail').value = u.Email || '';
+    document.getElementById('infoRuolo').value = u.id_ruolo || '';
+    document.getElementById('infoPassword').value = '';
+
+    const primoAccessoCheck = document.getElementById('infoPrimoAccesso');
+    if (primoAccessoCheck) {
+        primoAccessoCheck.checked = !!u.Primo_Accesso;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('userInfoModal'));
+    modal.show();
+}
+
+// Submit della Scheda Completa Utente
+async function handleUserInfoSubmit(e) {
+    e.preventDefault();
+
+    const id = parseInt(document.getElementById('infoUtenteId').value);
+    const uCorrente = allUtenti.find(x => x.id_utente === id);
+    if (!id || !uCorrente) {
+        showToast('Utente non trovato.', true);
+        return;
+    }
+
+    const nome = document.getElementById('infoNome').value.trim();
+    const cognome = document.getElementById('infoCognome').value.trim();
+    const email = document.getElementById('infoEmail').value.trim();
+    const ruolo = parseInt(document.getElementById('infoRuolo').value);
+    const password = document.getElementById('infoPassword').value;
+
+    if (!nome || !cognome || !email || !ruolo) {
+        showToast('Nome, cognome, email e ruolo sono obbligatori.', true);
+        return;
+    }
+
+    const saveBtn = document.getElementById('btnSaveUserInfo');
+    const originalBtnContent = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvataggio...';
+
+    const payload = {
+        Nome: nome,
+        Cognome: cognome,
+        Email: email,
+        id_ruolo: ruolo,
+        Password: password ? password : (uCorrente.Password || ''),
+        Genere: document.getElementById('infoGenere').value || null,
+        Codice_Fiscale: document.getElementById('infoCF').value.trim().toUpperCase() || null,
+        Data_Nascita: document.getElementById('infoDataNascita').value || null,
+        Citta_Nascita: document.getElementById('infoCittaNascita').value.trim() || null,
+        Indirizzo_Residenza: document.getElementById('infoIndirizzo').value.trim() || null,
+        Citta_Residenza: document.getElementById('infoCittaResidenza').value.trim() || null,
+        Cap_Residenza: document.getElementById('infoCap').value.trim() || null,
+        Provincia_Residenza: document.getElementById('infoProvincia').value.trim().toUpperCase() || null,
+        Telefono: document.getElementById('infoTelefono').value.trim() || null,
+        Primo_Accesso: document.getElementById('infoPrimoAccesso').checked
+    };
+
+    try {
+        const res = await fetchAutenticata(`${API_URL}/users/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || data.error || 'Errore durante il salvataggio dei dati.');
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('userInfoModal'))?.hide();
+        showToast('Scheda utente aggiornata con successo!');
+        await loadUtenti();
+    } catch (err) {
+        console.error('Errore salvataggio scheda utente:', err);
+        showToast(err.message || 'Errore di comunicazione col server.', true);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalBtnContent;
+    }
 }

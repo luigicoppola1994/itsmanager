@@ -7,7 +7,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="../assets/bootstrap.min.css" rel="stylesheet">
@@ -15,10 +15,10 @@
 
     <!-- Custom Segreteria CSS -->
     <link rel="stylesheet" href="../shared/styles.css?v=2.1">
-    <link rel="stylesheet" href="segreteria.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=3.0">
 
     <style>
-        /* ── Role tag pill — stesso stile dei badge di stato ── */
+        /* --”€--”€ Role tag pill — stesso stile dei badge di stato --”€--”€ */
         .user-role-tag {
             display: inline-flex;
             align-items: center;
@@ -36,7 +36,7 @@
         .user-role-tag.studente   { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; }
         .user-role-tag.default    { background:#f8fafc; color:#64748b; border:1px solid #e2e8f0; }
 
-        /* ── Avatar iniziali inline ── */
+        /* --”€--”€ Avatar iniziali inline --”€--”€ */
         .user-avatar-inline {
             width: 34px;
             height: 34px;
@@ -52,7 +52,7 @@
             letter-spacing: -0.5px;
         }
 
-        /* ── Nome + email impilati ── */
+        /* --”€--”€ Nome + email impilati --”€--”€ */
         .user-name-cell {
             display: flex;
             align-items: center;
@@ -61,7 +61,7 @@
         .user-name-cell .name { font-weight: 700; color: var(--text-main); font-size: 0.93rem; }
         .user-name-cell .email { font-size: 0.8rem; color: var(--text-muted); }
 
-        /* ── Filter chips ── */
+        /* --”€--”€ Filter chips --”€--”€ */
         .stat-chip {
             display: inline-flex;
             align-items: center;
@@ -98,11 +98,15 @@
         <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo">
+                <div class="sidebar-brand-block">
+                    <div class="sidebar-logo-container">
+                        <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo" class="sidebar-logo-img">
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <h2 class="sidebar-brand-title">ITS MANAGER</h2>
+                        <span class="sidebar-brand-subtitle">Gestionale Didattico</span>
+                    </div>
                 </div>
-                <h2 class="sidebar-brand-title">ITS Manager</h2>
-                <span class="sidebar-brand-subtitle">Gestionale IT</span>
             </div>
 
             <div class="sidebar-user">
@@ -117,27 +121,19 @@
 
             <ul class="sidebar-nav">
                 <li>
-                    <a href="dashboard.html" class="nav-item-link" id="navCorsi">
-                        <i class="bi bi-journal-bookmark-fill"></i>
-                        <span>Corsi</span>
+                    <a href="dashboard.html" class="nav-item-link" id="navCorsi" title="Corsi"><i class="bi bi-journal-bookmark-fill"></i><span class="nav-label">Corsi</span>
                     </a>
                 </li>
                 <li>
-                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico">
-                        <i class="bi bi-book-half"></i>
-                        <span>Piano Didattico</span>
+                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" title="Piano Didattico"><i class="bi bi-book-half"></i><span class="nav-label">Piano Didattico</span>
                     </a>
                 </li>
                 <li>
-                    <a href="utenze.html" class="nav-item-link active" id="navUtenze">
-                        <i class="bi bi-people-fill"></i>
-                        <span>Utenze</span>
+                    <a href="utenze.html" class="nav-item-link active" id="navUtenze" title="Utenze"><i class="bi bi-people-fill"></i><span class="nav-label">Utenze</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-item-link" id="navCalendario">
-                        <i class="bi bi-calendar3"></i>
-                        <span>Calendario</span>
+                    <a href="#" class="nav-item-link" id="navCalendario" title="Calendario"><i class="bi bi-calendar3"></i><span class="nav-label">Calendario</span>
                     </a>
                 </li>
             </ul>
@@ -153,6 +149,30 @@
         <!-- MAIN CONTENT -->
         <main class="main-content">
 
+            <!-- RUBICK TOP BAR -->
+            <div class="rubick-top-bar">
+                <nav class="rubick-breadcrumb" aria-label="breadcrumb">
+                    <span class="breadcrumb-root"><i class="bi bi-mortarboard-fill me-1 text-primary"></i>ITS Manager</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-section">Segreteria</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-current">Utenze</span>
+                </nav>
+                <div class="rubick-top-bar-actions">
+                    <div class="rubick-quick-search">
+                        <input type="text" id="topNavSearch" placeholder="Cerca nel portale..." oninput="const s = document.getElementById('searchInput'); if(s) { s.value = this.value; renderGrid(); }">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <div class="rubick-icon-badge" title="Notifiche">
+                        <i class="bi bi-bell"></i>
+                        <span class="rubick-badge-dot"></span>
+                    </div>
+                    <div class="rubick-user-avatar" title="Segreteria Didattica">
+                        SD
+                    </div>
+                </div>
+            </div>
+
             <!-- TOP ACTION BAR -->
             <div class="top-action-bar">
                 <div class="page-header-info">
@@ -167,10 +187,10 @@
                         <input type="text" id="searchInput" placeholder="Cerca per nome, cognome o email...">
                         <i class="bi bi-search"></i>
                     </div>
-                    <button class="btn-add-course" id="btnNuovoUtente" onclick="openCreateModal()">
+                    <a href="nuovo-utente.html" class="btn-add-course" id="btnNuovoUtente" style="text-decoration: none;">
                         <i class="bi bi-person-plus-fill fs-5"></i>
                         <span>Aggiungi utente</span>
-                    </button>
+                    </a>
                 </div>
             </div>
 
@@ -204,7 +224,7 @@
                             <th>Ruolo</th>
                             <th>Codice Fiscale</th>
                             <th>Data Nascita</th>
-                            <th style="width:90px; text-align:center;">Azioni</th>
+                            <th style="width:125px; text-align:center;">Azioni</th>
                         </tr>
                     </thead>
                     <tbody id="utenzeBody">
@@ -271,7 +291,7 @@
                                     Password <span class="text-danger" id="pwdRequired">*</span>
                                     <small class="text-muted fw-normal" id="pwdHint" style="display:none;">(lascia vuoto per non modificarla)</small>
                                 </label>
-                                <input type="password" id="editPassword" class="form-control" placeholder="••••••••" autocomplete="new-password">
+                                <input type="password" id="editPassword" class="form-control" placeholder="--€¢--€¢--€¢--€¢--€¢--€¢--€¢--€¢" autocomplete="new-password">
                             </div>
                         </div>
 
@@ -298,6 +318,169 @@
         </div>
     </div>
 
+    <!-- ─── MODAL: SCHEDA DETTAGLIATA UTENTE (INFO & MODIFICA COMPLETA) ─── -->
+    <div class="modal fade" id="userInfoModal" tabindex="-1" aria-labelledby="userInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <div class="modal-header bg-white border-bottom px-4 py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="p-2 rounded-3 bg-primary-subtle text-primary">
+                            <i class="bi bi-person-lines-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0" id="userInfoModalLabel">Scheda Completa Utente</h5>
+                            <small class="text-muted">Visualizza e modifica tutti i campi anagrafici, di residenza e di accesso nel DB</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                </div>
+                
+                <form id="userInfoForm">
+                    <div class="modal-body px-4 py-4" style="background: #f8fafc;">
+                        <input type="hidden" id="infoUtenteId">
+
+                        <!-- Header Card con Info sintetiche & Avatar -->
+                        <div class="user-info-header-card">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="user-info-avatar-large" id="infoUserAvatar">
+                                    --
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                        <h4 class="fw-bold text-dark mb-0" id="infoUserFullname">Nome Cognome</h4>
+                                        <span class="user-role-tag default" id="infoUserRoleBadge">Ruolo</span>
+                                    </div>
+                                    <div class="text-muted small d-flex align-items-center gap-3 flex-wrap">
+                                        <span><i class="bi bi-envelope me-1 text-primary"></i><span id="infoUserEmailText">—</span></span>
+                                        <span><i class="bi bi-hash text-muted"></i>ID: <strong id="infoUserIdText">—</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill fw-semibold shadow-sm" id="infoUserPrimoAccessoBadge">
+                                    <i class="bi bi-shield-check me-1 text-primary"></i>Primo Accesso
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Sezione 1: Dati Anagrafici -->
+                        <div class="user-info-card-block">
+                            <div class="user-info-section-title">
+                                <i class="bi bi-person-vcard text-primary fs-6"></i> Dati Anagrafici
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="infoNome" class="form-label fw-semibold small">Nome <span class="text-danger">*</span></label>
+                                    <input type="text" id="infoNome" class="form-control" placeholder="Nome" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="infoCognome" class="form-label fw-semibold small">Cognome <span class="text-danger">*</span></label>
+                                    <input type="text" id="infoCognome" class="form-control" placeholder="Cognome" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="infoGenere" class="form-label fw-semibold small">Genere</label>
+                                    <select id="infoGenere" class="form-select">
+                                        <option value="">Non specificato</option>
+                                        <option value="Maschio">Maschio</option>
+                                        <option value="Femmina">Femmina</option>
+                                        <option value="Altro">Altro</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="infoCF" class="form-label fw-semibold small">Codice Fiscale</label>
+                                    <input type="text" id="infoCF" class="form-control text-uppercase" placeholder="Codice Fiscale (16 car.)" maxlength="16">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="infoDataNascita" class="form-label fw-semibold small">Data di Nascita</label>
+                                    <input type="date" id="infoDataNascita" class="form-control">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="infoCittaNascita" class="form-label fw-semibold small">Città di Nascita</label>
+                                    <input type="text" id="infoCittaNascita" class="form-control" placeholder="Es. Roma">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sezione 2: Residenza e Recapiti -->
+                        <div class="user-info-card-block">
+                            <div class="user-info-section-title">
+                                <i class="bi bi-geo-alt text-primary fs-6"></i> Residenza e Recapiti
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="infoIndirizzo" class="form-label fw-semibold small">Indirizzo di Residenza</label>
+                                    <input type="text" id="infoIndirizzo" class="form-control" placeholder="Via / Piazza e civico">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="infoCittaResidenza" class="form-label fw-semibold small">Città di Residenza</label>
+                                    <input type="text" id="infoCittaResidenza" class="form-control" placeholder="Es. Milano">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="infoCap" class="form-label fw-semibold small">CAP</label>
+                                    <input type="text" id="infoCap" class="form-control" placeholder="Es. 00100" maxlength="10">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="infoProvincia" class="form-label fw-semibold small">Provincia (Sigla)</label>
+                                    <input type="text" id="infoProvincia" class="form-control text-uppercase" placeholder="Es. RM" maxlength="2">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="infoTelefono" class="form-label fw-semibold small">Telefono / Cellulare</label>
+                                    <input type="tel" id="infoTelefono" class="form-control" placeholder="+39 333 1234567">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sezione 3: Credenziali e Ruolo di Sistema -->
+                        <div class="user-info-card-block">
+                            <div class="user-info-section-title">
+                                <i class="bi bi-shield-lock text-primary fs-6"></i> Credenziali & Accesso Sistema
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="infoEmail" class="form-label fw-semibold small">Email di Accesso <span class="text-danger">*</span></label>
+                                    <input type="email" id="infoEmail" class="form-control" placeholder="utente@itsmanager.it" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="infoRuolo" class="form-label fw-semibold small">Ruolo Utente <span class="text-danger">*</span></label>
+                                    <select id="infoRuolo" class="form-select" required>
+                                        <option value="">— Seleziona ruolo —</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="infoPassword" class="form-label fw-semibold small">
+                                        Nuova Password 
+                                        <small class="text-muted fw-normal">(lascia vuoto per non modificarla)</small>
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" id="infoPassword" class="form-control" placeholder="Imposta nuova password..." autocomplete="new-password">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('infoPassword', this)">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-center">
+                                    <div class="form-check form-switch pt-3">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="infoPrimoAccesso">
+                                        <label class="form-check-label fw-semibold small" for="infoPrimoAccesso">
+                                            Primo Accesso attivo (obbligo cambio password al login)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer bg-white px-4 py-3 border-top">
+                        <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Chiudi</button>
+                        <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSaveUserInfo">
+                            <i class="bi bi-check2-circle me-1"></i> Salva Modifiche
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
@@ -305,6 +488,9 @@
     <script src="../assets/bootstrap.bundle.min.js"></script>
     <!-- Auth + logic -->
     <script src="../shared/auth.js"></script>
-    <script src="utenze.js?v=1.1"></script>
+    <script src="utenze.js?v=2.0"></script>
 </body>
 </html>
+
+
+

@@ -1,3 +1,7 @@
+﻿// ============================================================
+// piano-didattico.js — Gestione Piano Didattico e Moduli
+// ============================================================
+
 document.addEventListener('DOMContentLoaded', () => {
     // Collega logout
     const logoutBtn = document.getElementById('logoutBtn');
@@ -29,16 +33,18 @@ async function initPianoDidattico() {
             renderPianoDidattico(filteredUf);
         });
     }
-
-    // Attach form listeners
-    document.getElementById('ufForm').addEventListener('submit', handleUfSubmit);
-    document.getElementById('moduloForm').addEventListener('submit', handleModuloSubmit);
 }
 
 // Carica Unità Formative e Moduli dal backend
 async function loadPianoDidatticoData() {
     const container = document.getElementById('pianoDidatticoContainer');
-    if (container) container.innerHTML = '<p class="text-center w-100 mt-5"><span class="spinner-border text-primary" role="status"></span><br>Caricamento Piano Didattico in corso...</p>';
+    if (container) {
+        container.innerHTML = `
+            <div class="text-center w-100 py-5">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <p class="text-muted fw-semibold">Caricamento Piano Didattico in corso...</p>
+            </div>`;
+    }
 
     try {
         const [ufRes, moduliRes] = await Promise.all([
@@ -64,30 +70,15 @@ async function loadPianoDidatticoData() {
                 }
             });
 
-            populateUfSelect();
             renderPianoDidattico(unitaFormativeList);
         } else {
             console.error("Errore recupero piano didattico", await ufRes.text(), await moduliRes.text());
-            if (container) container.innerHTML = '<p class="text-danger text-center w-100">Errore durante il caricamento dei dati dal server.</p>';
+            if (container) container.innerHTML = '<p class="text-danger text-center w-100 py-5">Errore durante il caricamento dei dati dal server.</p>';
         }
     } catch (err) {
         console.error("Errore di rete", err);
-        if (container) container.innerHTML = '<p class="text-danger text-center w-100">Errore di connessione al server.</p>';
+        if (container) container.innerHTML = '<p class="text-danger text-center w-100 py-5">Errore di connessione al server.</p>';
     }
-}
-
-// Popola il menu a tendina delle UF nei Modali
-function populateUfSelect() {
-    const select = document.getElementById('moduloUfSelect');
-    if (!select) return;
-
-    select.innerHTML = '<option value="">-- Seleziona Unità Formativa --</option>';
-    unitaFormativeList.forEach(uf => {
-        const opt = document.createElement('option');
-        opt.value = uf.id_unita_formativa;
-        opt.textContent = uf.Nome;
-        select.appendChild(opt);
-    });
 }
 
 // Rendering delle Unità Formative e dei Moduli
@@ -97,10 +88,13 @@ function renderPianoDidattico(list) {
 
     if (list.length === 0) {
         container.innerHTML = `
-            <div class="no-results">
-                <i class="bi bi-book-half"></i>
-                <h3>Nessuna Unità Formativa trovata</h3>
-                <p>Crea la tua prima Unità Formativa cliccando su "+ Nuova Unità Formativa".</p>
+            <div class="no-results text-center py-5 bg-white rounded-3 border">
+                <i class="bi bi-book-half display-4 text-muted mb-3 d-block"></i>
+                <h4 class="fw-bold text-dark">Nessuna Unità Formativa trovata</h4>
+                <p class="text-muted mb-4">Inizia a configurare il piano didattico creando la prima Unità Formativa.</p>
+                <a href="nuova-uf.html" class="btn btn-primary fw-bold px-4 py-2">
+                    <i class="bi bi-plus-lg me-1"></i> Crea Nuova Unità Formativa
+                </a>
             </div>
         `;
         return;
@@ -114,9 +108,9 @@ function renderPianoDidattico(list) {
             ? `
                 <div class="p-3 text-center bg-light border rounded-3 text-muted">
                     <span class="small"><i class="bi bi-info-circle me-1 text-primary"></i>Nessun modulo didattico associato a questa Unità Formativa.</span>
-                    <button class="btn btn-sm btn-link text-primary fw-bold text-decoration-none p-0 ms-2" onclick="openModuloModal(null, ${uf.id_unita_formativa})">
+                    <a href="nuovo-modulo.html?uf_id=${uf.id_unita_formativa}" class="btn btn-sm btn-link text-primary fw-bold text-decoration-none ms-2">
                         + Aggiungi Modulo
-                    </button>
+                    </a>
                 </div>
             `
             : moduli.map(m => `
@@ -125,16 +119,16 @@ function renderPianoDidattico(list) {
                         <div class="modulo-title-text">
                             <i class="bi bi-file-earmark-code-fill text-primary"></i>
                             <span>${m.Nome}</span>
-                            <span class="text-muted small fw-normal ms-2">(ID Modulo: #${m.id_modulo})</span>
+                            <span class="text-muted small fw-normal ms-2">(ID: #${m.id_modulo})</span>
                         </div>
                         ${m.Descrizione ? `<div class="text-muted small ms-4 mt-1">${m.Descrizione}</div>` : ''}
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
-                        <button class="btn-action-icon" title="Modifica Modulo" onclick="openModuloModal(${m.id_modulo})">
+                        <a href="nuovo-modulo.html?id=${m.id_modulo}" class="btn-action-icon" title="Modifica Modulo">
                             <i class="bi bi-pencil-fill"></i>
-                        </button>
-                        <button class="btn-action-icon danger" title="Elimina Modulo" onclick="deleteModulo(${m.id_modulo})">
+                        </a>
+                        <button class="btn-action-icon danger" title="Elimina Modulo" onclick="deleteModulo(${m.id_modulo}, '${m.Nome.replace(/'/g, "\\'")}')">
                             <i class="bi bi-trash3-fill"></i>
                         </button>
                     </div>
@@ -149,17 +143,18 @@ function renderPianoDidattico(list) {
                         <span>${uf.Nome}</span>
                     </div>
 
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1.5 fw-bold me-2">
-                            <i class="bi bi-collection-fill me-1"></i>${numModuli} ${numModuli === 1 ? 'Modulo' : 'Moduli'}
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="uf-tag-pill" style="font-size:0.75rem;">
+                            <i class="bi bi-collection-fill" style="margin-right:4px;"></i>${numModuli} ${numModuli === 1 ? 'Modulo' : 'Moduli'}
                         </span>
-                        <button class="btn btn-sm btn-outline-primary fw-semibold rounded-2" onclick="openModuloModal(null, ${uf.id_unita_formativa})">
-                            <i class="bi bi-plus-lg me-1"></i>Aggiungi Modulo
-                        </button>
-                        <button class="btn-action-icon" title="Modifica UF" onclick="openUfModal(${uf.id_unita_formativa})">
+                        <a href="nuovo-modulo.html?uf_id=${uf.id_unita_formativa}" class="btn-outline-course" style="text-decoration:none;">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>Aggiungi Modulo</span>
+                        </a>
+                        <a href="nuova-uf.html?id=${uf.id_unita_formativa}" class="btn-action-icon" title="Modifica Unità Formativa">
                             <i class="bi bi-pencil-fill"></i>
-                        </button>
-                        <button class="btn-action-icon danger" title="Elimina UF" onclick="deleteUf(${uf.id_unita_formativa})">
+                        </a>
+                        <button class="btn-action-icon danger" title="Elimina Unità Formativa" onclick="deleteUf(${uf.id_unita_formativa}, '${uf.Nome.replace(/'/g, "\\'")}')">
                             <i class="bi bi-trash3-fill"></i>
                         </button>
                     </div>
@@ -167,8 +162,8 @@ function renderPianoDidattico(list) {
 
                 ${uf.Descrizione ? `<p class="text-muted mb-3 fs-6"><i class="bi bi-info-circle me-1 text-muted"></i>${uf.Descrizione}</p>` : ''}
 
-                <div class="mt-3">
-                    <div class="text-uppercase small fw-bold text-muted mb-2 tracking-wider">Moduli Didattici</div>
+                <div style="margin-top:16px;">
+                    <div style="text-transform:uppercase; font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:8px; letter-spacing:0.06em;">Moduli Didattici</div>
                     ${moduliHtml}
                 </div>
             </div>
@@ -176,173 +171,69 @@ function renderPianoDidattico(list) {
     }).join('');
 }
 
-// Open UF Modal (Nuova o Modifica)
-window.openUfModal = function(id = null) {
-    const title = document.getElementById('ufModalLabel');
-    const idInput = document.getElementById('ufId');
-    const nomeInput = document.getElementById('ufNome');
-    const descInput = document.getElementById('ufDescrizione');
-
-    if (id && ufMap[id]) {
-        title.innerHTML = `<i class="bi bi-pencil-square text-primary me-2"></i>Modifica Unità Formativa`;
-        idInput.value = id;
-        nomeInput.value = ufMap[id].Nome;
-        descInput.value = ufMap[id].Descrizione || '';
-    } else {
-        title.innerHTML = `<i class="bi bi-journal-plus text-primary me-2"></i>Nuova Unità Formativa`;
-        idInput.value = '';
-        nomeInput.value = '';
-        descInput.value = '';
-    }
-};
-
-// Open Modulo Modal (Nuovo o Modifica)
-window.openModuloModal = function(id = null, ufId = null) {
-    const title = document.getElementById('moduloModalLabel');
-    const idInput = document.getElementById('moduloId');
-    const ufSelect = document.getElementById('moduloUfSelect');
-    const nomeInput = document.getElementById('moduloNome');
-    const descInput = document.getElementById('moduloDescrizione');
-
-    const modalEl = document.getElementById('moduloModal');
-    const bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-
-    if (id) {
-        const modulo = moduliList.find(m => m.id_modulo === id);
-        if (modulo) {
-            title.innerHTML = `<i class="bi bi-pencil-square text-primary me-2"></i>Modifica Modulo Didattico`;
-            idInput.value = id;
-            ufSelect.value = modulo.id_unita_formativa;
-            nomeInput.value = modulo.Nome;
-            descInput.value = modulo.Descrizione || '';
-        }
-    } else {
-        title.innerHTML = `<i class="bi bi-file-earmark-plus text-primary me-2"></i>Nuovo Modulo Didattico`;
-        idInput.value = '';
-        ufSelect.value = ufId ? ufId : '';
-        nomeInput.value = '';
-        descInput.value = '';
-    }
-
-    bsModal.show();
-};
-
-// Salvataggio Unità Formativa (POST o PUT)
-async function handleUfSubmit(e) {
-    e.preventDefault();
-    const id = document.getElementById('ufId').value;
-    const nome = document.getElementById('ufNome').value.trim();
-    const descrizione = document.getElementById('ufDescrizione').value.trim();
-
-    if (!nome) return;
-
-    const payload = { Nome: nome, Descrizione: descrizione ? descrizione : null };
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? `${API_URL}/unita_formative/${id}` : `${API_URL}/unita_formative`;
-
-    try {
-        const response = await fetchAutenticata(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-            const modalEl = document.getElementById('ufModal');
-            const bsModal = bootstrap.Modal.getInstance(modalEl);
-            if (bsModal) bsModal.hide();
-
-            showToast(id ? "Unità Formativa aggiornata con successo." : "Nuova Unità Formativa creata con successo.");
-            await loadPianoDidatticoData();
-        } else {
-            const err = await response.json();
-            showToast(err.detail || "Errore durante il salvataggio", true);
-        }
-    } catch (err) {
-        showToast("Errore di rete durante il salvataggio", true);
-    }
-}
-
-// Salvataggio Modulo (POST o PUT)
-async function handleModuloSubmit(e) {
-    e.preventDefault();
-    const id = document.getElementById('moduloId').value;
-    const idUf = document.getElementById('moduloUfSelect').value;
-    const nome = document.getElementById('moduloNome').value.trim();
-    const descrizione = document.getElementById('moduloDescrizione').value.trim();
-
-    if (!nome || !idUf) return;
-
-    const payload = {
-        Nome: nome,
-        Descrizione: descrizione ? descrizione : null,
-        id_unita_formativa: parseInt(idUf)
-    };
-
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? `${API_URL}/moduli/${id}` : `${API_URL}/moduli`;
-
-    try {
-        const response = await fetchAutenticata(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-            const modalEl = document.getElementById('moduloModal');
-            const bsModal = bootstrap.Modal.getInstance(modalEl);
-            if (bsModal) bsModal.hide();
-
-            showToast(id ? "Modulo aggiornato con successo." : "Nuovo Modulo creato con successo.");
-            await loadPianoDidatticoData();
-        } else {
-            const err = await response.json();
-            showToast(err.detail || "Errore durante il salvataggio", true);
-        }
-    } catch (err) {
-        showToast("Errore di rete durante il salvataggio", true);
-    }
-}
-
 // Elimina Unità Formativa
-window.deleteUf = async function(id) {
-    if (confirm(`Sei sicuro di voler eliminare l'Unità Formativa #${id}? I moduli associati potrebbero essere influenzati.`)) {
-        try {
-            const response = await fetchAutenticata(`${API_URL}/unita_formative/${id}`, {
-                method: 'DELETE'
-            });
+window.deleteUf = async function(id, nome = '') {
+    const uf = ufMap[id];
+    const numModuli = uf?.moduli?.length || 0;
+    
+    let msg = `Sei sicuro di voler eliminare l'Unità Formativa "${nome || '#' + id}"?`;
+    if (numModuli > 0) {
+        msg += `\nAttenzione: sono presenti ${numModuli} moduli collegati.`;
+    }
 
-            if (response.ok) {
-                showToast("Unità Formativa eliminata con successo.");
-                await loadPianoDidatticoData();
-            } else {
-                const err = await response.json();
-                showToast(err.detail || "Errore durante l'eliminazione dell'UF", true);
-            }
-        } catch (err) {
-            showToast("Errore di rete durante l'eliminazione", true);
+    if (!confirm(msg)) return;
+
+    try {
+        const res = await fetchAutenticata(`${API_URL}/unita_formative/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            showToast('Unità Formativa eliminata con successo.');
+            await loadPianoDidatticoData();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            showToast(err.detail || 'Impossibile eliminare l\'Unità Formativa.', true);
         }
+    } catch (e) {
+        console.error(e);
+        showToast('Errore di connessione con il server.', true);
     }
 };
 
 // Elimina Modulo
-window.deleteModulo = async function(id) {
-    if (confirm(`Sei sicuro di voler eliminare il Modulo #${id}?`)) {
-        try {
-            const response = await fetchAutenticata(`${API_URL}/moduli/${id}`, {
-                method: 'DELETE'
-            });
+window.deleteModulo = async function(id, nome = '') {
+    if (!confirm(`Sei sicuro di voler eliminare il Modulo "${nome || '#' + id}"?`)) return;
 
-            if (response.ok) {
-                showToast("Modulo eliminato con successo.");
-                await loadPianoDidatticoData();
-            } else {
-                const err = await response.json();
-                showToast(err.detail || "Errore durante l'eliminazione del Modulo", true);
-            }
-        } catch (err) {
-            showToast("Errore di rete durante l'eliminazione", true);
+    try {
+        const res = await fetchAutenticata(`${API_URL}/moduli/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            showToast('Modulo eliminato con successo.');
+            await loadPianoDidatticoData();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            showToast(err.detail || 'Impossibile eliminare il modulo.', true);
         }
+    } catch (e) {
+        console.error(e);
+        showToast('Errore di connessione con il server.', true);
     }
 };
+
+function showToast(msg, isError = false) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.className = 'toast show ' + (isError ? 'error' : 'success');
+    setTimeout(() => {
+        toast.className = 'toast';
+    }, 3500);
+}

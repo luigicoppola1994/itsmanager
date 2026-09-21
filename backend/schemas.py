@@ -77,6 +77,29 @@ class UtenteResponse(UtenteBase):
                                 # (in versioni vecchie si chiamava orm_mode = True)
 
 
+# ------------------------------------------------------------------------------
+# SCHEMA AGGIORNAMENTO: UtenteUpdate
+# Usato come tipo nei metodi PUT per aggiornare un utente esistente.
+# Tutti i campi sono opzionali; la password viene aggiornata solo se specificata.
+# ------------------------------------------------------------------------------
+class UtenteUpdate(BaseModel):
+    Nome: Optional[str] = None
+    Cognome: Optional[str] = None
+    Email: Optional[str] = None
+    Password: Optional[str] = None
+    id_ruolo: Optional[int] = None
+    Genere: Optional[str] = None
+    Codice_Fiscale: Optional[str] = None
+    Data_Nascita: Optional[str] = None
+    Citta_Nascita: Optional[str] = None
+    Indirizzo_Residenza: Optional[str] = None
+    Citta_Residenza: Optional[str] = None
+    Cap_Residenza: Optional[str] = None
+    Provincia_Residenza: Optional[str] = None
+    Telefono: Optional[str] = None
+    Primo_Accesso: Optional[bool] = None
+
+
 # ==============================================================================
 # DOVE AGGIUNGERE NUOVI SCHEMI:
 # Sotto questo commento, aggiungi schemi per le altre tabelle del DB.

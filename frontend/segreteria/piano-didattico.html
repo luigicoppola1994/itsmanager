@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITS Manager - Segreteria | Piano Didattico</title>
+    <title>ITS Manager - Piano Didattico & Moduli</title>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="../assets/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/bootstrap-icons.css" rel="stylesheet">
-    
+
     <!-- Custom Segreteria CSS -->
-    <link rel="stylesheet" href="../shared/styles.css">
-    <link rel="stylesheet" href="segreteria.css">
+    <link rel="stylesheet" href="../shared/styles.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=3.0">
 </head>
 <body>
 
@@ -23,11 +24,15 @@
         <!-- SIDEBAR A SINISTRA -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo">
+                <div class="sidebar-brand-block">
+                    <div class="sidebar-logo-container">
+                        <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo" class="sidebar-logo-img">
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <h2 class="sidebar-brand-title">ITS MANAGER</h2>
+                        <span class="sidebar-brand-subtitle">Gestionale Didattico</span>
+                    </div>
                 </div>
-                <h2 class="sidebar-brand-title">ITS Manager</h2>
-                <span class="sidebar-brand-subtitle">Gestionale IT</span>
             </div>
 
             <div class="sidebar-user">
@@ -42,27 +47,27 @@
 
             <ul class="sidebar-nav">
                 <li>
-                    <a href="dashboard.html" class="nav-item-link" id="navCorsi">
+                    <a href="dashboard.html" class="nav-item-link" id="navCorsi" title="Corsi">
                         <i class="bi bi-journal-bookmark-fill"></i>
-                        <span>Corsi</span>
+                        <span class="nav-label">Corsi</span>
                     </a>
                 </li>
                 <li>
-                    <a href="piano-didattico.html" class="nav-item-link active" id="navPianoDidattico">
+                    <a href="piano-didattico.html" class="nav-item-link active" id="navPianoDidattico" title="Piano Didattico">
                         <i class="bi bi-book-half"></i>
-                        <span>Piano Didattico</span>
+                        <span class="nav-label">Piano Didattico</span>
                     </a>
                 </li>
                 <li>
-                    <a href="utenze.html" class="nav-item-link" id="navUtenze">
+                    <a href="utenze.html" class="nav-item-link" id="navUtenze" title="Utenze">
                         <i class="bi bi-people-fill"></i>
-                        <span>Utenze</span>
+                        <span class="nav-label">Utenze</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-item-link" id="navCalendario">
+                    <a href="#" class="nav-item-link" id="navCalendario" title="Calendario">
                         <i class="bi bi-calendar3"></i>
-                        <span>Calendario</span>
+                        <span class="nav-label">Calendario</span>
                     </a>
                 </li>
             </ul>
@@ -75,15 +80,37 @@
             </div>
         </aside>
 
-        <!-- AREA CONTENUTO PRINCIPALE -->
+        <!-- MAIN CONTENT -->
         <main class="main-content">
+
+            <!-- RUBICK TOP BAR -->
+            <div class="rubick-top-bar">
+                <nav class="rubick-breadcrumb" aria-label="breadcrumb">
+                    <span class="breadcrumb-root"><i class="bi bi-mortarboard-fill me-1 text-primary"></i>ITS Manager</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-section">Segreteria</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-current">Piano Didattico</span>
+                </nav>
+                <div class="rubick-top-bar-actions">
+                    <div class="rubick-icon-badge" title="Notifiche">
+                        <i class="bi bi-bell"></i>
+                        <span class="rubick-badge-dot"></span>
+                    </div>
+                    <div class="rubick-user-avatar" title="Segreteria Didattica">
+                        SD
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOP ACTION BAR -->
             <div class="top-action-bar">
                 <div class="page-header-info">
                     <h1>
                         <i class="bi bi-book-half text-primary"></i>
                         Piano Didattico & Moduli
                     </h1>
-                    <p>Gestione delle Unità Formative (UF) e delle relative materie/moduli d'insegnamento</p>
+                    <p>Gestione delle Unità Formative (UF) e delle relative materie/moduli didattici</p>
                 </div>
 
                 <div class="header-controls">
@@ -94,14 +121,14 @@
                     </div>
 
                     <!-- BOTTONI AZIONE -->
-                    <button class="btn btn-outline-primary fw-bold px-3 py-2 rounded-3" data-bs-toggle="modal" data-bs-target="#ufModal" onclick="openUfModal()">
-                        <i class="bi bi-plus-lg me-1"></i>
-                        <span>+ Nuova Unità Formativa</span>
-                    </button>
-                    <button class="btn btn-primary fw-bold px-3 py-2 rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#moduloModal" onclick="openModuloModal()">
-                        <i class="bi bi-plus-circle-fill me-1"></i>
-                        <span>+ Nuovo Modulo</span>
-                    </button>
+                    <a href="nuova-uf.html" class="btn-outline-course" style="text-decoration: none;">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Nuova Unità Formativa</span>
+                    </a>
+                    <a href="nuovo-modulo.html" class="btn-add-course" style="text-decoration: none;">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Nuovo Modulo</span>
+                    </a>
                 </div>
             </div>
 
@@ -112,78 +139,14 @@
         </main>
     </div>
 
-    <!-- MODAL: CREA / MODIFICA UNITÀ FORMATIVA -->
-    <div class="modal fade" id="ufModal" tabindex="-1" aria-labelledby="ufModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="ufModalLabel"><i class="bi bi-journal-plus text-primary me-2"></i>Nuova Unità Formativa</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="ufForm">
-                    <div class="modal-body">
-                        <input type="hidden" id="ufId">
-                        <div class="mb-3">
-                            <label for="ufNome" class="form-label fw-bold">Nome Unità Formativa <span class="text-danger">*</span></label>
-                            <input type="text" id="ufNome" class="form-control" placeholder="Es. UF1 - Architetture Software & Web" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="ufDescrizione" class="form-label fw-bold">Descrizione</label>
-                            <textarea id="ufDescrizione" class="form-control" rows="3" placeholder="Descrizione sintetica delle competenze fornite da questa UF..."></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Annulla</button>
-                        <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSaveUf">Salva Unità Formativa</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
 
-    <!-- MODAL: CREA / MODIFICA MODULO -->
-    <div class="modal fade" id="moduloModal" tabindex="-1" aria-labelledby="moduloModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="moduloModalLabel"><i class="bi bi-file-earmark-plus text-primary me-2"></i>Nuovo Modulo Didattico</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="moduloForm">
-                    <div class="modal-body">
-                        <input type="hidden" id="moduloId">
-                        <div class="mb-3">
-                            <label for="moduloUfSelect" class="form-label fw-bold">Unità Formativa di appartenenza <span class="text-danger">*</span></label>
-                            <select id="moduloUfSelect" class="form-select py-2" required>
-                                <option value="">-- Seleziona Unità Formativa --</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="moduloNome" class="form-label fw-bold">Nome del Modulo <span class="text-danger">*</span></label>
-                            <input type="text" id="moduloNome" class="form-control" placeholder="Es. Programmazione Python & FastAPI" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="moduloDescrizione" class="form-label fw-bold">Descrizione</label>
-                            <textarea id="moduloDescrizione" class="form-control" rows="3" placeholder="Dettaglio degli argomenti trattati nel modulo..."></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Annulla</button>
-                        <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSaveModulo">Salva Modulo</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- TOAST NOTIFICHE -->
-    <div class="toast" id="toast">Operazione completata!</div>
-
-    <!-- Bootstrap JS Bundle -->
+    <!-- Bootstrap JS -->
     <script src="../assets/bootstrap.bundle.min.js"></script>
-
-    <!-- Scripts Autenticazione e Logica Piano Didattico -->
+    <!-- Script condiviso di autenticazione -->
     <script src="../shared/auth.js"></script>
-    <script src="piano-didattico.js"></script>
+    <!-- Logica della dashboard Piano Didattico -->
+    <script src="piano-didattico.js?v=2.0"></script>
 </body>
 </html>

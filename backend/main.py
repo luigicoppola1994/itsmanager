@@ -273,43 +273,55 @@ def create_user(user: schemas.UtenteCreate, db: Session = Depends(get_db), curre
     return nuovo_utente
 
 @app.put("/users/{id_utente}", response_model=schemas.UtenteResponse)
-def update_user(id_utente: int, user_data: schemas.UtenteCreate, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
-    """Aggiorna un utente esistente."""
+def update_user(id_utente: int, user_data: schemas.UtenteUpdate, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
+    """Aggiorna un utente esistente con tutti i campi previsti nel database."""
     user = db.query(models.Utente).filter(models.Utente.id_utente == id_utente).first()
     if user is None:
         raise HTTPException(status_code=404, detail="Utente non trovato")
     
     # Verifica email duplicata
-    if user_data.Email != user.Email:
+    if user_data.Email is not None and user_data.Email != user.Email:
         db_user = db.query(models.Utente).filter(models.Utente.Email == user_data.Email).first()
         if db_user:
             raise HTTPException(status_code=400, detail="Email già registrata")
+        user.Email = user_data.Email
     
-    # Verifica ruolo
-    ruolo = db.query(models.Ruolo).filter(models.Ruolo.id_ruolo == user_data.id_ruolo).first()
-    if not ruolo:
-        raise HTTPException(status_code=400, detail="Ruolo specificato non valido")
+    # Verifica ruolo se specificato
+    if user_data.id_ruolo is not None:
+        ruolo = db.query(models.Ruolo).filter(models.Ruolo.id_ruolo == user_data.id_ruolo).first()
+        if not ruolo:
+            raise HTTPException(status_code=400, detail="Ruolo specificato non valido")
+        user.id_ruolo = user_data.id_ruolo
     
-    user.Nome = user_data.Nome
-    user.Cognome = user_data.Cognome
-    user.Email = user_data.Email
+    if user_data.Nome is not None:
+        user.Nome = user_data.Nome.strip()
+    if user_data.Cognome is not None:
+        user.Cognome = user_data.Cognome.strip()
     
-    # Se la password viene cambiata
-    if user_data.Password != user.Password:
+    # Se la password viene cambiata ed è non vuota e non è l'hash corrente
+    if user_data.Password and user_data.Password.strip() and user_data.Password != user.Password:
         user.Password = auth.get_password_hash(user_data.Password)
     
-    user.id_ruolo = user_data.id_ruolo
-    user.Genere = user_data.Genere
-    user.Codice_Fiscale = user_data.Codice_Fiscale
-    user.Data_Nascita = user_data.Data_Nascita
-    user.Citta_Nascita = user_data.Citta_Nascita
-    user.Indirizzo_Residenza = user_data.Indirizzo_Residenza
-    user.Citta_Residenza = user_data.Citta_Residenza
-    user.Cap_Residenza = user_data.Cap_Residenza
-    user.Provincia_Residenza = user_data.Provincia_Residenza
-    user.Telefono = user_data.Telefono
+    if user_data.Genere is not None:
+        user.Genere = user_data.Genere.strip() if user_data.Genere and user_data.Genere.strip() else None
+    if user_data.Codice_Fiscale is not None:
+        user.Codice_Fiscale = user_data.Codice_Fiscale.strip().upper() if user_data.Codice_Fiscale and user_data.Codice_Fiscale.strip() else None
+    if user_data.Data_Nascita is not None:
+        user.Data_Nascita = user_data.Data_Nascita if user_data.Data_Nascita and str(user_data.Data_Nascita).strip() else None
+    if user_data.Citta_Nascita is not None:
+        user.Citta_Nascita = user_data.Citta_Nascita.strip() if user_data.Citta_Nascita and user_data.Citta_Nascita.strip() else None
+    if user_data.Indirizzo_Residenza is not None:
+        user.Indirizzo_Residenza = user_data.Indirizzo_Residenza.strip() if user_data.Indirizzo_Residenza and user_data.Indirizzo_Residenza.strip() else None
+    if user_data.Citta_Residenza is not None:
+        user.Citta_Residenza = user_data.Citta_Residenza.strip() if user_data.Citta_Residenza and user_data.Citta_Residenza.strip() else None
+    if user_data.Cap_Residenza is not None:
+        user.Cap_Residenza = user_data.Cap_Residenza.strip() if user_data.Cap_Residenza and user_data.Cap_Residenza.strip() else None
+    if user_data.Provincia_Residenza is not None:
+        user.Provincia_Residenza = user_data.Provincia_Residenza.strip().upper() if user_data.Provincia_Residenza and user_data.Provincia_Residenza.strip() else None
+    if user_data.Telefono is not None:
+        user.Telefono = user_data.Telefono.strip() if user_data.Telefono and user_data.Telefono.strip() else None
     if user_data.Primo_Accesso is not None:
-        user.Primo_Accesso = user_data.Primo_Accesso
+        user.Primo_Accesso = bool(user_data.Primo_Accesso)
         
     db.commit()
     db.refresh(user)
