@@ -36,6 +36,7 @@ class UtenteBase(BaseModel):
     Codice_Fiscale: Optional[str] = None
     Data_Nascita: Optional[str] = None    # Stringa ISO (es. "1990-05-15") o None
     Citta_Nascita: Optional[str] = None
+    Provincia_Nascita: Optional[str] = None
     Indirizzo_Residenza: Optional[str] = None
     Citta_Residenza: Optional[str] = None
     Cap_Residenza: Optional[str] = None
@@ -71,6 +72,8 @@ class UtenteCreate(UtenteBase):
 class UtenteResponse(UtenteBase):
     id_utente: int             # ID generato automaticamente dal database
     Primo_Accesso: Optional[bool] = None
+    # Override: il DB restituisce datetime.date, non una stringa
+    Data_Nascita: Optional[date] = None
 
     class Config:
         from_attributes = True  # Necessario per convertire oggetti SQLAlchemy in Pydantic
@@ -92,6 +95,7 @@ class UtenteUpdate(BaseModel):
     Codice_Fiscale: Optional[str] = None
     Data_Nascita: Optional[str] = None
     Citta_Nascita: Optional[str] = None
+    Provincia_Nascita: Optional[str] = None
     Indirizzo_Residenza: Optional[str] = None
     Citta_Residenza: Optional[str] = None
     Cap_Residenza: Optional[str] = None

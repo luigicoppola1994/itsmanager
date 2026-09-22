@@ -394,9 +394,13 @@
                                     <label for="infoDataNascita" class="form-label fw-semibold small">Data di Nascita</label>
                                     <input type="date" id="infoDataNascita" class="form-control">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label for="infoCittaNascita" class="form-label fw-semibold small">Città di Nascita</label>
-                                    <input type="text" id="infoCittaNascita" class="form-control" placeholder="Es. Roma">
+                                    <input type="text" id="infoCittaNascita" class="form-control" placeholder="Es. Roma" list="comuniList" autocomplete="off">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="infoProvinciaNascita" class="form-label fw-semibold small">Prov. Nascita</label>
+                                    <input type="text" id="infoProvinciaNascita" class="form-control text-uppercase" placeholder="Es. RM" maxlength="2" readonly>
                                 </div>
                             </div>
                         </div>
@@ -413,7 +417,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="infoCittaResidenza" class="form-label fw-semibold small">Città di Residenza</label>
-                                    <input type="text" id="infoCittaResidenza" class="form-control" placeholder="Es. Milano">
+                                    <input type="text" id="infoCittaResidenza" class="form-control" placeholder="Es. Milano" list="comuniList" autocomplete="off">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="infoCap" class="form-label fw-semibold small">CAP</label>
@@ -421,7 +425,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label for="infoProvincia" class="form-label fw-semibold small">Provincia (Sigla)</label>
-                                    <input type="text" id="infoProvincia" class="form-control text-uppercase" placeholder="Es. RM" maxlength="2">
+                                    <input type="text" id="infoProvincia" class="form-control text-uppercase" placeholder="Es. RM" maxlength="2" list="provinceList" autocomplete="off">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="infoTelefono" class="form-label fw-semibold small">Telefono / Cellulare</label>
@@ -476,6 +480,10 @@
                             <i class="bi bi-check2-circle me-1"></i> Salva Modifiche
                         </button>
                     </div>
+
+                    <!-- DATALISTS PER AUTOCOMPLETAMENTO -->
+                    <datalist id="comuniList"></datalist>
+                    <datalist id="provinceList"></datalist>
                 </form>
             </div>
         </div>

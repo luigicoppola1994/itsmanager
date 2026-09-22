@@ -181,14 +181,29 @@
 
                             <div class="col-md-6">
                                 <div class="nc-field-group">
-                                    <label class="nc-label" for="userPassword">
-                                        <span id="labelPassword">Password Temporanea</span> <span class="nc-required" id="pwdRequiredStar">*</span>
-                                    </label>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="nc-label mb-0" for="userPassword">
+                                            <span id="labelPassword">Password Temporanea</span> <span class="nc-required" id="pwdRequiredStar">*</span>
+                                        </label>
+                                        <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 fw-semibold" id="btnGeneratePassword" style="font-size: 0.8rem; color: var(--primary-color);">
+                                            <i class="bi bi-magic me-1"></i>Genera Password
+                                        </button>
+                                    </div>
                                     <div class="input-group">
                                         <input type="password" id="userPassword" class="form-control" placeholder="Inserisci password..." autocomplete="new-password">
-                                        <button class="btn btn-outline-secondary" type="button" id="btnTogglePassword" title="Mostra/Nascondi password">
+                                        <button class="btn btn-outline-secondary btn-sm px-2" type="button" id="btnTogglePassword" title="Mostra/Nascondi password">
                                             <i class="bi bi-eye" id="eyeIcon"></i>
                                         </button>
+                                    </div>
+                                    <!-- Password Strength Bar -->
+                                    <div class="password-strength-container mt-2" id="pwdStrengthWrapper" style="display: none;">
+                                        <div class="progress" style="height: 6px; border-radius: 4px; background-color: #e9ecef;">
+                                            <div class="progress-bar" id="pwdStrengthBar" role="progressbar" style="width: 0%; transition: width 0.3s ease, background-color 0.3s ease;"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-1">
+                                            <small class="fw-bold" id="pwdStrengthText" style="font-size: 0.75rem; color: #6c757d;">Robustezza: —</small>
+                                            <small class="text-muted" id="pwdStrengthHint" style="font-size: 0.75rem;">Min. 8 caratteri</small>
+                                        </div>
                                     </div>
                                     <div class="nc-field-hint" id="pwdHint" style="display: none;">Lascia vuoto per mantenere la password esistente.</div>
                                     <div class="nc-field-error" id="errPassword"></div>
@@ -240,34 +255,68 @@
 
                             <div class="col-md-4">
                                 <div class="nc-field-group">
-                                    <label class="nc-label" for="userGenere">Genere</label>
-                                    <select id="userGenere" class="nc-input">
-                                        <option value="">Non specificato</option>
+                                    <label class="nc-label" for="userGenere">Genere <span class="nc-required">*</span></label>
+                                    <select id="userGenere" class="nc-input" required>
+                                        <option value="">-- Seleziona --</option>
                                         <option value="Maschio">Maschio</option>
                                         <option value="Femmina">Femmina</option>
                                         <option value="Altro">Altro</option>
                                     </select>
+                                    <div class="nc-field-error" id="errGenere"></div>
                                 </div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="nc-field-group">
-                                    <label class="nc-label" for="userCF">Codice Fiscale</label>
-                                    <input type="text" id="userCF" class="nc-input text-uppercase" placeholder="RSSMRA90A01H501Z" maxlength="16">
+                                    <label class="nc-label" for="userCF">Codice Fiscale <span class="nc-required">*</span></label>
+                                    <input type="text" id="userCF" class="nc-input text-uppercase" placeholder="RSSMRA90A01H501Z" maxlength="16" required>
+                                    <div class="nc-field-error" id="errCF"></div>
                                 </div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="nc-field-group">
-                                    <label class="nc-label" for="userDataNascita">Data di Nascita</label>
-                                    <input type="date" id="userDataNascita" class="nc-input">
+                                    <label class="nc-label" for="userDataNascita">Data di Nascita <span class="nc-required">*</span></label>
+                                    <input type="date" id="userDataNascita" class="nc-input" required>
+                                    <div class="nc-field-error" id="errDataNascita"></div>
                                 </div>
                             </div>
 
-                            <div class="col-md-6">
+                            <!-- SELETTORE NAZIONALITÀ (Posizionato sotto a Genere, prima dei dati di luogo) -->
+                            <div class="col-12 mt-3 mb-2">
                                 <div class="nc-field-group">
-                                    <label class="nc-label" for="userCittaNascita">Città di Nascita</label>
-                                    <input type="text" id="userCittaNascita" class="nc-input" placeholder="Es. Roma">
+                                    <label class="nc-label mb-1">Nazionalità <span class="nc-required">*</span></label>
+                                    <div class="d-flex gap-4 align-items-center p-2 rounded border bg-light" style="max-width: 380px;">
+                                        <div class="form-check form-check-inline m-0">
+                                            <input class="form-check-input" type="radio" name="userNazionalita" id="nazItaliana" value="italiana" checked>
+                                            <label class="form-check-label fw-semibold text-dark" for="nazItaliana">
+                                                <i class="bi bi-flag-fill text-primary me-1"></i> Italiana
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-inline m-0">
+                                            <input class="form-check-input" type="radio" name="userNazionalita" id="nazAltro" value="altro">
+                                            <label class="form-check-label fw-semibold text-dark" for="nazAltro">
+                                                <i class="bi bi-globe text-secondary me-1"></i> Altro / Estera
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- DATI DI LUOGO -->
+                            <div class="col-md-8" id="colCittaNascita">
+                                <div class="nc-field-group">
+                                    <label class="nc-label" for="userCittaNascita">Città di Nascita <span class="nc-required">*</span></label>
+                                    <input type="text" id="userCittaNascita" class="nc-input" placeholder="Es. Roma" list="comuniList" autocomplete="off" required>
+                                    <div class="nc-field-error" id="errCittaNascita"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4" id="colProvinciaNascita">
+                                <div class="nc-field-group">
+                                    <label class="nc-label" for="userProvinciaNascita">Provincia Nascita <span class="nc-required">*</span></label>
+                                    <input type="text" id="userProvinciaNascita" class="nc-input text-uppercase" placeholder="Es. RM" maxlength="2" readonly required>
+                                    <div class="nc-field-error" id="errProvinciaNascita"></div>
                                 </div>
                             </div>
                         </div>
@@ -281,36 +330,41 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-8">
                                 <div class="nc-field-group">
-                                    <label class="nc-label" for="userIndirizzo">Indirizzo di Residenza</label>
-                                    <input type="text" id="userIndirizzo" class="nc-input" placeholder="Via / Piazza e civico">
+                                    <label class="nc-label" for="userIndirizzo">Indirizzo di Residenza <span class="nc-required">*</span></label>
+                                    <input type="text" id="userIndirizzo" class="nc-input" placeholder="Via / Piazza e civico" required>
+                                    <div class="nc-field-error" id="errIndirizzo"></div>
                                 </div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="nc-field-group">
-                                    <label class="nc-label" for="userTelefono">Telefono / Cellulare</label>
-                                    <input type="tel" id="userTelefono" class="nc-input" placeholder="+39 333 1234567">
+                                    <label class="nc-label" for="userTelefono">Telefono / Cellulare <span class="nc-required">*</span></label>
+                                    <input type="tel" id="userTelefono" class="nc-input" placeholder="+39 333 1234567" required>
+                                    <div class="nc-field-error" id="errTelefono"></div>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="nc-field-group">
-                                    <label class="nc-label" for="userCittaResidenza">Città di Residenza</label>
-                                    <input type="text" id="userCittaResidenza" class="nc-input" placeholder="Es. Milano">
+                                    <label class="nc-label" for="userCittaResidenza">Città di Residenza <span class="nc-required">*</span></label>
+                                    <input type="text" id="userCittaResidenza" class="nc-input" placeholder="Es. Milano" list="comuniList" autocomplete="off" required>
+                                    <div class="nc-field-error" id="errCittaResidenza"></div>
                                 </div>
                             </div>
 
                             <div class="col-md-3">
                                 <div class="nc-field-group">
-                                    <label class="nc-label" for="userCap">CAP</label>
-                                    <input type="text" id="userCap" class="nc-input" placeholder="Es. 20100" maxlength="10">
+                                    <label class="nc-label" for="userCap">CAP <span class="nc-required">*</span></label>
+                                    <input type="text" id="userCap" class="nc-input" placeholder="Es. 20100" maxlength="10" required>
+                                    <div class="nc-field-error" id="errCap"></div>
                                 </div>
                             </div>
 
                             <div class="col-md-3">
                                 <div class="nc-field-group">
-                                    <label class="nc-label" for="userProvincia">Provincia (Sigla)</label>
-                                    <input type="text" id="userProvincia" class="nc-input text-uppercase" placeholder="Es. MI" maxlength="2">
+                                    <label class="nc-label" for="userProvincia">Provincia (Sigla) <span class="nc-required">*</span></label>
+                                    <input type="text" id="userProvincia" class="nc-input text-uppercase" placeholder="Es. MI" maxlength="2" list="provinceList" autocomplete="off" readonly required>
+                                    <div class="nc-field-error" id="errProvincia"></div>
                                 </div>
                             </div>
                         </div>
@@ -332,6 +386,10 @@
                                 </span>
                             </button>
                         </div>
+
+                        <!-- DATALISTS PER AUTOCOMPLETAMENTO -->
+                        <datalist id="comuniList"></datalist>
+                        <datalist id="provinceList"></datalist>
                     </form>
                 </div>
 

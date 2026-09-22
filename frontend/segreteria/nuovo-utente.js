@@ -25,6 +25,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Password visibility toggle
     document.getElementById('btnTogglePassword')?.addEventListener('click', togglePasswordVisibility);
 
+    // Password generator & strength meter
+    document.getElementById('btnGeneratePassword')?.addEventListener('click', () => {
+        const pwdInput = document.getElementById('userPassword');
+        if (pwdInput) {
+            const newPwd = generateRandomPassword();
+            pwdInput.value = newPwd;
+            pwdInput.type = 'text';
+            const icon = document.getElementById('eyeIcon');
+            if (icon) icon.className = 'bi bi-eye-slash';
+            updatePasswordStrength();
+            updatePreview();
+        }
+    });
+
+    document.getElementById('userPassword')?.addEventListener('input', updatePasswordStrength);
+
+    // Setup Nazionalità Toggle
+    setupNazionalitaToggle();
+
     // Gestione Query Params
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('id');
@@ -37,6 +56,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Setup live preview
     setupLivePreview();
+
+    // Setup autocomplete per provincia e comuni
+    setupAutocomplete();
 
     // Form submit
     const form = document.getElementById('utenteForm');
@@ -140,6 +162,7 @@ async function initEditMode(id) {
         document.getElementById('userCF').value = existingUser.Codice_Fiscale || '';
         document.getElementById('userDataNascita').value = existingUser.Data_Nascita || '';
         document.getElementById('userCittaNascita').value = existingUser.Citta_Nascita || '';
+        document.getElementById('userProvinciaNascita').value = existingUser.Provincia_Nascita || '';
 
         document.getElementById('userIndirizzo').value = existingUser.Indirizzo_Residenza || '';
         document.getElementById('userTelefono').value = existingUser.Telefono || '';
@@ -206,29 +229,217 @@ function updatePreview() {
     document.getElementById('checkPassword')?.classList.toggle('filled', pwdConfigured);
 }
 
+// ============================================================
+// Validazione Codice Fiscale (Regex + CIN Checksum)
+// ============================================================
+function validateCodiceFiscale(cf) {
+    if (!cf || typeof cf !== 'string') return false;
+    const cleanCF = cf.trim().toUpperCase();
+    const pattern = /^[A-Z]{6}[0-9]{2}[A-EHLMPRST][0-9]{2}[A-Z][0-9]{3}[A-Z]$/;
+    if (!pattern.test(cleanCF)) return false;
+
+    const setOdd = {
+        '0': 1, '1': 0, '2': 5, '3': 7, '4': 9, '5': 13, '6': 15, '7': 17, '8': 19, '9': 21,
+        'A': 1, 'B': 0, 'C': 5, 'D': 7, 'E': 9, 'F': 13, 'G': 15, 'H': 17, 'I': 19, 'J': 21,
+        'K': 2, 'L': 4, 'M': 18, 'N': 20, 'O': 11, 'P': 3, 'Q': 6, 'R': 8, 'S': 12, 'T': 14,
+        'U': 16, 'V': 10, 'W': 22, 'X': 25, 'Y': 24, 'Z': 23
+    };
+    const setEven = {
+        '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+        'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9,
+        'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19,
+        'U': 20, 'V': 21, 'W': 22, 'X': 23, 'Y': 24, 'Z': 25
+    };
+
+    let s = 0;
+    for (let i = 0; i < 15; i++) {
+        const char = cleanCF.charAt(i);
+        s += (i % 2 === 0) ? (setOdd[char] ?? 0) : (setEven[char] ?? 0);
+    }
+    const expectedChar = String.fromCharCode(65 + (s % 26));
+    return cleanCF.charAt(15) === expectedChar;
+}
+
+// ============================================================
+// Password Generator & Strength Meter
+// ============================================================
+function generateRandomPassword() {
+    const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const lowercase = 'abcdefghijkmnopqrstuvwxyz';
+    const numbers   = '23456789';
+    const symbols   = '!@#$%&*';
+    const allChars  = uppercase + lowercase + numbers + symbols;
+
+    let pwd = '';
+    pwd += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
+    pwd += lowercase.charAt(Math.floor(Math.random() * lowercase.length));
+    pwd += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    pwd += symbols.charAt(Math.floor(Math.random() * symbols.length));
+
+    for (let i = 4; i < 12; i++) {
+        pwd += allChars.charAt(Math.floor(Math.random() * allChars.length));
+    }
+    return pwd.split('').sort(() => 0.5 - Math.random()).join('');
+}
+
+function updatePasswordStrength() {
+    const input   = document.getElementById('userPassword');
+    const wrapper = document.getElementById('pwdStrengthWrapper');
+    const bar     = document.getElementById('pwdStrengthBar');
+    const text    = document.getElementById('pwdStrengthText');
+
+    if (!input || !wrapper || !bar || !text) return;
+    const pwd = input.value;
+    if (!pwd) {
+        wrapper.style.display = 'none';
+        return;
+    }
+
+    wrapper.style.display = 'block';
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (pwd.length >= 12) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+    if (score <= 2) {
+        bar.style.width = '33%';
+        bar.style.backgroundColor = '#dc3545';
+        text.textContent = 'Robustezza: Debole';
+        text.style.color = '#dc3545';
+    } else if (score <= 4) {
+        bar.style.width = '66%';
+        bar.style.backgroundColor = '#ffc107';
+        text.textContent = 'Robustezza: Media';
+        text.style.color = '#b58100';
+    } else {
+        bar.style.width = '100%';
+        bar.style.backgroundColor = '#198754';
+        text.textContent = 'Robustezza: Forte';
+        text.style.color = '#198754';
+    }
+}
+
+// ============================================================
+// Setup Toggle Nazionalità (Italiana vs Altro)
+// ============================================================
+function setupNazionalitaToggle() {
+    const radItaliana = document.getElementById('nazItaliana');
+    const radAltro     = document.getElementById('nazAltro');
+
+    function applyNazionalita() {
+        const isItaliana = radItaliana ? radItaliana.checked : true;
+        const cittaNascita        = document.getElementById('userCittaNascita');
+        const provNascita         = document.getElementById('userProvinciaNascita');
+        const cittaResidenza      = document.getElementById('userCittaResidenza');
+        const provResidenza       = document.getElementById('userProvincia');
+        const colCittaNascita     = document.getElementById('colCittaNascita');
+        const colProvinciaNascita = document.getElementById('colProvinciaNascita');
+        const errProvNascita      = document.getElementById('errProvinciaNascita');
+
+        if (isItaliana) {
+            if (colProvinciaNascita) colProvinciaNascita.style.display = 'block';
+            if (colCittaNascita) colCittaNascita.className = 'col-md-8';
+
+            if (cittaNascita) {
+                cittaNascita.setAttribute('list', 'comuniList');
+                cittaNascita.setAttribute('autocomplete', 'off');
+            }
+            if (provNascita) {
+                provNascita.readOnly = true;
+                provNascita.required = true;
+                provNascita.placeholder = 'Es. RM';
+            }
+            if (cittaResidenza) {
+                cittaResidenza.setAttribute('list', 'comuniList');
+                cittaResidenza.setAttribute('autocomplete', 'off');
+            }
+            if (provResidenza) {
+                provResidenza.readOnly = true;
+                provResidenza.setAttribute('list', 'provinceList');
+                provResidenza.placeholder = 'Es. MI';
+            }
+        } else {
+            // Se di altra nazionalità, non far inserire la PROVINCIA DI NASCITA
+            if (colProvinciaNascita) colProvinciaNascita.style.display = 'none';
+            if (colCittaNascita) colCittaNascita.className = 'col-md-12';
+
+            if (provNascita) {
+                provNascita.value = '';
+                provNascita.required = false;
+            }
+            if (errProvNascita) errProvNascita.textContent = '';
+
+            if (cittaNascita) {
+                cittaNascita.removeAttribute('list');
+                cittaNascita.removeAttribute('autocomplete');
+            }
+            if (cittaResidenza) {
+                cittaResidenza.removeAttribute('list');
+                cittaResidenza.removeAttribute('autocomplete');
+            }
+            if (provResidenza) {
+                provResidenza.readOnly = false;
+                provResidenza.removeAttribute('list');
+                provResidenza.placeholder = 'Stato/Prov. Estera';
+            }
+        }
+    }
+
+    if (radItaliana) radItaliana.addEventListener('change', applyNazionalita);
+    if (radAltro)     radAltro.addEventListener('change', applyNazionalita);
+    applyNazionalita();
+}
+
 async function handleSubmit(e) {
     e.preventDefault();
 
-    const nome     = document.getElementById('userNome')?.value.trim();
-    const cognome  = document.getElementById('userCognome')?.value.trim();
-    const email    = document.getElementById('userEmail')?.value.trim();
-    const ruolo    = document.getElementById('userRuolo')?.value;
-    const password = document.getElementById('userPassword')?.value;
+    const nome             = document.getElementById('userNome')?.value.trim();
+    const cognome          = document.getElementById('userCognome')?.value.trim();
+    const email            = document.getElementById('userEmail')?.value.trim();
+    const ruolo            = document.getElementById('userRuolo')?.value;
+    const password         = document.getElementById('userPassword')?.value;
+    const genere           = document.getElementById('userGenere')?.value;
+    const cf               = document.getElementById('userCF')?.value.trim().toUpperCase();
+    const dataNascita      = document.getElementById('userDataNascita')?.value;
+    const cittaNascita     = document.getElementById('userCittaNascita')?.value.trim();
+    const provinciaNascita = document.getElementById('userProvinciaNascita')?.value.trim().toUpperCase();
+    const indirizzo        = document.getElementById('userIndirizzo')?.value.trim();
+    const telefono         = document.getElementById('userTelefono')?.value.trim();
+    const cittaResidenza   = document.getElementById('userCittaResidenza')?.value.trim();
+    const cap              = document.getElementById('userCap')?.value.trim();
+    const provincia        = document.getElementById('userProvincia')?.value.trim().toUpperCase();
 
-    const errNome     = document.getElementById('errNome');
-    const errCognome  = document.getElementById('errCognome');
-    const errEmail    = document.getElementById('errEmail');
-    const errRuolo    = document.getElementById('errRuolo');
-    const errPassword = document.getElementById('errPassword');
+    const radItaliana = document.getElementById('nazItaliana');
+    const isItaliana  = radItaliana ? radItaliana.checked : true;
 
-    if (errNome) errNome.textContent = '';
-    if (errCognome) errCognome.textContent = '';
-    if (errEmail) errEmail.textContent = '';
-    if (errRuolo) errRuolo.textContent = '';
-    if (errPassword) errPassword.textContent = '';
+    const errNome             = document.getElementById('errNome');
+    const errCognome          = document.getElementById('errCognome');
+    const errEmail            = document.getElementById('errEmail');
+    const errRuolo            = document.getElementById('errRuolo');
+    const errPassword         = document.getElementById('errPassword');
+    const errGenere           = document.getElementById('errGenere');
+    const errCF               = document.getElementById('errCF');
+    const errDataNascita      = document.getElementById('errDataNascita');
+    const errCittaNascita     = document.getElementById('errCittaNascita');
+    const errProvinciaNascita = document.getElementById('errProvinciaNascita');
+    const errIndirizzo        = document.getElementById('errIndirizzo');
+    const errTelefono         = document.getElementById('errTelefono');
+    const errCittaResidenza   = document.getElementById('errCittaResidenza');
+    const errCap              = document.getElementById('errCap');
+    const errProvincia        = document.getElementById('errProvincia');
+
+    const errElements = [
+        errNome, errCognome, errEmail, errRuolo, errPassword, errGenere, errCF,
+        errDataNascita, errCittaNascita, errProvinciaNascita, errIndirizzo, errTelefono,
+        errCittaResidenza, errCap, errProvincia
+    ];
+    errElements.forEach(el => { if (el) el.textContent = ''; });
 
     let hasErrors = false;
 
+    // STEP 1 Validation
     if (!nome) {
         if (errNome) errNome.textContent = 'Il nome è obbligatorio.';
         hasErrors = true;
@@ -250,7 +461,57 @@ async function handleSubmit(e) {
         hasErrors = true;
     }
 
-    if (hasErrors) return;
+    // STEP 2 Dati Anagrafici Validation
+    if (!genere) {
+        if (errGenere) errGenere.textContent = 'Il genere è obbligatorio.';
+        hasErrors = true;
+    }
+    if (!cf) {
+        if (errCF) errCF.textContent = 'Il codice fiscale è obbligatorio.';
+        hasErrors = true;
+    } else if (!validateCodiceFiscale(cf)) {
+        if (errCF) errCF.textContent = 'Codice Fiscale non valido (formato o carattere di controllo errati).';
+        hasErrors = true;
+    }
+    if (!dataNascita) {
+        if (errDataNascita) errDataNascita.textContent = 'La data di nascita è obbligatoria.';
+        hasErrors = true;
+    }
+    if (!cittaNascita) {
+        if (errCittaNascita) errCittaNascita.textContent = 'La città di nascita è obbligatoria.';
+        hasErrors = true;
+    }
+    if (isItaliana && !provinciaNascita) {
+        if (errProvinciaNascita) errProvinciaNascita.textContent = 'La provincia di nascita è obbligatoria.';
+        hasErrors = true;
+    }
+
+    // STEP 3 Residenza Validation
+    if (!indirizzo) {
+        if (errIndirizzo) errIndirizzo.textContent = 'L\'indirizzo di residenza è obbligatorio.';
+        hasErrors = true;
+    }
+    if (!telefono) {
+        if (errTelefono) errTelefono.textContent = 'Il numero di telefono è obbligatorio.';
+        hasErrors = true;
+    }
+    if (!cittaResidenza) {
+        if (errCittaResidenza) errCittaResidenza.textContent = 'La città di residenza è obbligatoria.';
+        hasErrors = true;
+    }
+    if (!cap) {
+        if (errCap) errCap.textContent = 'Il CAP è obbligatorio.';
+        hasErrors = true;
+    }
+    if (!provincia) {
+        if (errProvincia) errProvincia.textContent = 'La provincia di residenza è obbligatoria.';
+        hasErrors = true;
+    }
+
+    if (hasErrors) {
+        showToast('Compila tutti i campi obbligatori correttamente.', true);
+        return;
+    }
 
     const btnSubmit  = document.getElementById('btnSubmitUtente');
     const btnText    = document.getElementById('btnSubmitText');
@@ -270,6 +531,7 @@ async function handleSubmit(e) {
         Codice_Fiscale: document.getElementById('userCF')?.value.trim().toUpperCase() || null,
         Data_Nascita: document.getElementById('userDataNascita')?.value || null,
         Citta_Nascita: document.getElementById('userCittaNascita')?.value.trim() || null,
+        Provincia_Nascita: document.getElementById('userProvinciaNascita')?.value.trim().toUpperCase() || null,
         Indirizzo_Residenza: document.getElementById('userIndirizzo')?.value.trim() || null,
         Citta_Residenza: document.getElementById('userCittaResidenza')?.value.trim() || null,
         Cap_Residenza: document.getElementById('userCap')?.value.trim() || null,
@@ -315,4 +577,90 @@ function showToast(msg, isError = false) {
     setTimeout(() => {
         toast.className = 'toast';
     }, 3500);
+}
+
+// ============================================================
+// Autocomplete Dati Comuni e Province
+// ============================================================
+async function setupAutocomplete() {
+    // 1. Carica tutte le province (sono circa 110) al caricamento della pagina
+    try {
+        const res = await fetch(`${API_URL}/proxy/province`);
+        if (res.ok) {
+            const json = await res.json();
+            const dlProv = document.getElementById('provinceList');
+            if (dlProv && json.data) {
+                json.data.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.sigla; // Il valore effettivo nell'input
+                    opt.textContent = p.nome; // Mostra "Roma", "Milano" nel menu a tendina
+                    dlProv.appendChild(opt);
+                });
+            }
+        }
+    } catch (e) {
+        console.error('Errore caricamento province:', e);
+    }
+
+    // 2. Autocomplete dinamico per i comuni
+    let searchTimeout;
+    let lastFetchedComuni = []; // Variabile per memorizzare l'ultimo risultato
+
+    async function fetchComuni(query) {
+        if (!query || query.length < 2) return;
+        try {
+            const res = await fetch(`${API_URL}/proxy/comuni?q=${encodeURIComponent(query)}`);
+            if (res.ok) {
+                const json = await res.json();
+                const dlComuni = document.getElementById('comuniList');
+                if (dlComuni && json.data) {
+                    dlComuni.innerHTML = '';
+                    lastFetchedComuni = json.data; // Memorizza i dati
+                    json.data.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.nome;
+                        if (c.sigla_provincia) {
+                            opt.textContent = `${c.nome} (${c.sigla_provincia})`;
+                        }
+                        dlComuni.appendChild(opt);
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('Errore ricerca comuni:', e);
+        }
+    }
+
+    const cittaInputs = ['userCittaNascita', 'userCittaResidenza'];
+    cittaInputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            // Evento input per cercare i comuni mentre si digita
+            input.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+                searchTimeout = setTimeout(() => {
+                    fetchComuni(query);
+                }, 300); // Debounce per evitare troppe chiamate API
+            });
+
+            // Evento change per autocompletare la provincia (quando l'utente clicca un'opzione)
+            input.addEventListener('change', (e) => {
+                const selectedValue = e.target.value;
+                const match = lastFetchedComuni.find(c => c.nome.toLowerCase() === selectedValue.toLowerCase());
+                if (match && match.sigla_provincia) {
+                    // Mappa ogni input città al campo provincia corrispondente
+                    let provId = null;
+                    if (id === 'userCittaResidenza') provId = 'userProvincia';
+                    if (id === 'userCittaNascita')   provId = 'userProvinciaNascita';
+                    if (provId) {
+                        const provInput = document.getElementById(provId);
+                        if (provInput) {
+                            provInput.value = match.sigla_provincia;
+                        }
+                    }
+                }
+            });
+        }
+    });
 }

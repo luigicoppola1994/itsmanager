@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadRuoli();
     await loadUtenti();
+    
+    // Setup autocomplete per provincia e comuni
+    setupAutocomplete();
 });
 
 // Carica ruoli dal backend e popola la select
@@ -169,7 +172,7 @@ function renderUserRow(u, index) {
     const safeSurname = (u.Cognome || '').replace(/'/g, "\\'");
 
     return `
-        <tr>
+        <tr style="cursor: pointer;" onclick="if (!event.target.closest('button, a')) window.location.href='nuovo-utente.html?id=${u.id_utente}'">
             <td>
                 <span class="edition-id-pill">${index + 1}</span>
             </td>
@@ -177,7 +180,7 @@ function renderUserRow(u, index) {
                 <div class="user-name-cell">
                     <div class="user-avatar-inline">${initials}</div>
                     <div>
-                        <div class="name">${u.Nome} ${u.Cognome}</div>
+                        <div class="name"><a href="nuovo-utente.html?id=${u.id_utente}" class="text-decoration-none text-dark fw-bold">${u.Nome} ${u.Cognome}</a></div>
                         <div class="email">${u.Email || '\u2014'}</div>
                     </div>
                 </div>
@@ -197,9 +200,9 @@ function renderUserRow(u, index) {
             </td>
             <td>
                 <div class="d-flex gap-2 justify-content-center">
-                    <button class="btn-action-icon info" onclick="openUserInfoModal(${u.id_utente})" title="Scheda Completa Utente">
+                    <a href="nuovo-utente.html?id=${u.id_utente}" class="btn-action-icon info" title="Scheda Completa Utente">
                         <i class="bi bi-info-circle-fill"></i>
-                    </button>
+                    </a>
                     <a href="nuovo-utente.html?id=${u.id_utente}" class="btn-action-icon" title="Modifica Utente"><i class="bi bi-pencil-fill"></i></a>
                     <button class="btn-action-icon danger" onclick="deleteUtente(${u.id_utente}, '${safeName} ${safeSurname}')" title="Elimina Utente">
                         <i class="bi bi-trash3-fill"></i>
@@ -354,69 +357,9 @@ function togglePasswordVisibility(inputId, btn) {
 }
 
 // Apri modal SCHEDA COMPLETA UTENTE (INFO & EDIT)
+// Apri scheda utente in-page (non popup modal)
 function openUserInfoModal(id) {
-    const u = allUtenti.find(x => x.id_utente === id);
-    if (!u) {
-        showToast('Utente non trovato.', true);
-        return;
-    }
-
-    const initials = getInitials(u.Nome, u.Cognome);
-    const ruoloNome = getRuoloNome(u);
-    const style = getRuoloStyle(ruoloNome);
-
-    const avatarEl = document.getElementById('infoUserAvatar');
-    if (avatarEl) avatarEl.textContent = initials;
-
-    const nameEl = document.getElementById('infoUserFullname');
-    if (nameEl) nameEl.textContent = `${u.Nome || ''} ${u.Cognome || ''}`.trim() || 'Utente';
-
-    const roleBadge = document.getElementById('infoUserRoleBadge');
-    if (roleBadge) {
-        roleBadge.className = `user-role-tag ${style.cls}`;
-        roleBadge.innerHTML = `<i class="bi ${style.icon}"></i> ${style.label}`;
-    }
-
-    const emailEl = document.getElementById('infoUserEmailText');
-    if (emailEl) emailEl.textContent = u.Email || '\u2014';
-
-    const idEl = document.getElementById('infoUserIdText');
-    if (idEl) idEl.textContent = `#${u.id_utente}`;
-
-    const primoAccessoBadge = document.getElementById('infoUserPrimoAccessoBadge');
-    if (primoAccessoBadge) {
-        if (u.Primo_Accesso) {
-            primoAccessoBadge.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>Primo Accesso: Da effettuare';
-        } else {
-            primoAccessoBadge.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i>Primo Accesso: Completato';
-        }
-    }
-
-    document.getElementById('infoUtenteId').value = u.id_utente;
-    document.getElementById('infoNome').value = u.Nome || '';
-    document.getElementById('infoCognome').value = u.Cognome || '';
-    document.getElementById('infoGenere').value = u.Genere || '';
-    document.getElementById('infoCF').value = u.Codice_Fiscale || '';
-    document.getElementById('infoDataNascita').value = u.Data_Nascita || '';
-    document.getElementById('infoCittaNascita').value = u.Citta_Nascita || '';
-
-    document.getElementById('infoIndirizzo').value = u.Indirizzo_Residenza || '';
-    document.getElementById('infoCittaResidenza').value = u.Citta_Residenza || '';
-    document.getElementById('infoCap').value = u.Cap_Residenza || '';
-    document.getElementById('infoProvincia').value = u.Provincia_Residenza || '';
-    document.getElementById('infoTelefono').value = u.Telefono || '';
-
-    document.getElementById('infoEmail').value = u.Email || '';
-    document.getElementById('infoRuolo').value = u.id_ruolo || '';
-    document.getElementById('infoPassword').value = '';
-
-    const primoAccessoCheck = document.getElementById('infoPrimoAccesso');
-    if (primoAccessoCheck) {
-        primoAccessoCheck.checked = !!u.Primo_Accesso;
-    }
-
-    const modal = new bootstrap.Modal(document.getElementById('userInfoModal'));
-    modal.show();
+    window.location.href = `nuovo-utente.html?id=${id}`;
 }
 
 // Submit della Scheda Completa Utente
@@ -456,6 +399,7 @@ async function handleUserInfoSubmit(e) {
         Codice_Fiscale: document.getElementById('infoCF').value.trim().toUpperCase() || null,
         Data_Nascita: document.getElementById('infoDataNascita').value || null,
         Citta_Nascita: document.getElementById('infoCittaNascita').value.trim() || null,
+        Provincia_Nascita: document.getElementById('infoProvinciaNascita').value.trim().toUpperCase() || null,
         Indirizzo_Residenza: document.getElementById('infoIndirizzo').value.trim() || null,
         Citta_Residenza: document.getElementById('infoCittaResidenza').value.trim() || null,
         Cap_Residenza: document.getElementById('infoCap').value.trim() || null,
@@ -486,4 +430,87 @@ async function handleUserInfoSubmit(e) {
         saveBtn.disabled = false;
         saveBtn.innerHTML = originalBtnContent;
     }
+}
+
+// ============================================================
+// Autocomplete Dati Comuni e Province
+// ============================================================
+async function setupAutocomplete() {
+    try {
+        const res = await fetch(`${API_URL}/proxy/province`);
+        if (res.ok) {
+            const json = await res.json();
+            const dlProv = document.getElementById('provinceList');
+            if (dlProv && json.data) {
+                json.data.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.sigla;
+                    opt.textContent = p.nome;
+                    dlProv.appendChild(opt);
+                });
+            }
+        }
+    } catch (e) {
+        console.error('Errore caricamento province:', e);
+    }
+
+    let searchTimeout;
+    let lastFetchedComuni = []; // Variabile per memorizzare l'ultimo risultato
+
+    async function fetchComuni(query) {
+        if (!query || query.length < 2) return;
+        try {
+            const res = await fetch(`${API_URL}/proxy/comuni?q=${encodeURIComponent(query)}`);
+            if (res.ok) {
+                const json = await res.json();
+                const dlComuni = document.getElementById('comuniList');
+                if (dlComuni && json.data) {
+                    dlComuni.innerHTML = '';
+                    lastFetchedComuni = json.data; // Memorizza i dati
+                    json.data.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.nome;
+                        if (c.sigla_provincia) {
+                            opt.textContent = `${c.nome} (${c.sigla_provincia})`;
+                        }
+                        dlComuni.appendChild(opt);
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('Errore ricerca comuni:', e);
+        }
+    }
+
+    const cittaInputs = ['infoCittaNascita', 'infoCittaResidenza'];
+    cittaInputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            // Evento input per cercare i comuni mentre si digita
+            input.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+                searchTimeout = setTimeout(() => {
+                    fetchComuni(query);
+                }, 300);
+            });
+
+            // Evento change per autocompletare la provincia
+            input.addEventListener('change', (e) => {
+                const selectedValue = e.target.value;
+                const match = lastFetchedComuni.find(c => c.nome.toLowerCase() === selectedValue.toLowerCase());
+                if (match && match.sigla_provincia) {
+                    let provId = null;
+                    if (id === 'infoCittaResidenza') provId = 'infoProvincia';
+                    if (id === 'infoCittaNascita')   provId = 'infoProvinciaNascita';
+                    if (provId) {
+                        const provInput = document.getElementById(provId);
+                        if (provInput) {
+                            provInput.value = match.sigla_provincia;
+                        }
+                    }
+                }
+            });
+        }
+    });
 }

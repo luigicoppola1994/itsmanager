@@ -260,6 +260,7 @@ def create_user(user: schemas.UtenteCreate, db: Session = Depends(get_db), curre
         Codice_Fiscale=user.Codice_Fiscale,
         Data_Nascita=user.Data_Nascita,
         Citta_Nascita=user.Citta_Nascita,
+        Provincia_Nascita=user.Provincia_Nascita,
         Indirizzo_Residenza=user.Indirizzo_Residenza,
         Citta_Residenza=user.Citta_Residenza,
         Cap_Residenza=user.Cap_Residenza,
@@ -310,6 +311,8 @@ def update_user(id_utente: int, user_data: schemas.UtenteUpdate, db: Session = D
         user.Data_Nascita = user_data.Data_Nascita if user_data.Data_Nascita and str(user_data.Data_Nascita).strip() else None
     if user_data.Citta_Nascita is not None:
         user.Citta_Nascita = user_data.Citta_Nascita.strip() if user_data.Citta_Nascita and user_data.Citta_Nascita.strip() else None
+    if user_data.Provincia_Nascita is not None:
+        user.Provincia_Nascita = user_data.Provincia_Nascita.strip().upper() if user_data.Provincia_Nascita and user_data.Provincia_Nascita.strip() else None
     if user_data.Indirizzo_Residenza is not None:
         user.Indirizzo_Residenza = user_data.Indirizzo_Residenza.strip() if user_data.Indirizzo_Residenza and user_data.Indirizzo_Residenza.strip() else None
     if user_data.Citta_Residenza is not None:
@@ -818,6 +821,27 @@ def delete_unita_formativa(id_unita_formativa: int, db: Session = Depends(get_db
     db.delete(uf)
     db.commit()
     return {"message": "Unità formativa eliminata con successo"}
+
+# ==============================================================================
+# ENDPOINT PROXY PER AUTOCOMPLETAMENTO COMUNI/PROVINCE
+# Bypass CORS
+# ==============================================================================
+import urllib.request
+import urllib.parse
+import json
+
+@app.get("/proxy/province")
+def proxy_province():
+    req = urllib.request.Request("https://daticomuni.it/api/v1/province?limit=150", headers={'User-Agent': 'Mozilla/5.0'})
+    with urllib.request.urlopen(req) as response:
+        return json.loads(response.read().decode())
+
+@app.get("/proxy/comuni")
+def proxy_comuni(q: str):
+    q_enc = urllib.parse.quote(q)
+    req = urllib.request.Request(f"https://daticomuni.it/api/v1/search?q={q_enc}", headers={'User-Agent': 'Mozilla/5.0'})
+    with urllib.request.urlopen(req) as response:
+        return json.loads(response.read().decode())
 
 
 # --- Endpoint per i Moduli ---

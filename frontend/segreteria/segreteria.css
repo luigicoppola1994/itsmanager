@@ -1,18 +1,30 @@
-﻿:root {
+:root {
     --sidebar-width: 258px;
     --sidebar-collapsed-width: 68px;
-    --primary-color: #4682B4;        /* Bootstrap/Enterprise primary blue */
+    --primary-color: #4682B4;
+    /* Bootstrap/Enterprise primary blue */
     --primary-hover: #3a6f9f;
-    --primary-light: #dbeafe;         /* Azzurro chiarissimo per hover/badge attivi */        /* Azzurro chiarissimo solo per gli hover degli item attivi */
-    --secondary-color: #6c757d;      /* Grigio neutro scuro */
-    --sidebar-bg: #4682B4;           /* Sidebar: bianca pura */
-    --sidebar-border: rgba(255,255,255,0.15);       /* Bordi: grigio neutro standard */
-    --app-bg: #f4f5f7;               /* Sfondo esterno: grigio chiaro neutro puro */
-    --body-bg: #f8f9fa;              /* Sfondo canvas: grigio chiarissimo neutro */
-    --card-bg: #ffffff;              /* Card: bianche pure */
-    --border-color: #e9ecef;         /* Bordi interni: grigio neutro leggero */
-    --text-main: #212529;            /* Testo: quasi nero */
-    --text-muted: #6c757d;           /* Testo secondario: grigio */
+    --primary-light: #dbeafe;
+    /* Azzurro chiarissimo per hover/badge attivi */
+    /* Azzurro chiarissimo solo per gli hover degli item attivi */
+    --secondary-color: #6c757d;
+    /* Grigio neutro scuro */
+    --sidebar-bg: #4682B4;
+    /* Sidebar: bianca pura */
+    --sidebar-border: rgba(255, 255, 255, 0.15);
+    /* Bordi: grigio neutro standard */
+    --app-bg: #f4f5f7;
+    /* Sfondo esterno: grigio chiaro neutro puro */
+    --body-bg: #f8f9fa;
+    /* Sfondo canvas: grigio chiarissimo neutro */
+    --card-bg: #ffffff;
+    /* Card: bianche pure */
+    --border-color: #e9ecef;
+    /* Bordi interni: grigio neutro leggero */
+    --text-main: #212529;
+    /* Testo: quasi nero */
+    --text-muted: #6c757d;
+    /* Testo secondario: grigio */
     --danger: #dc3545;
     --danger-hover: #bb2d3b;
     --success: #198754;
@@ -63,7 +75,8 @@ body {
     align-items: center;
     gap: 12px;
     text-align: left;
-    background: #3a6f9f;`n    border-bottom: rgba(255,255,255,0.15);
+    background: #3a6f9f;
+    border-bottom: rgba(255, 255, 255, 0.15);
 }
 
 .sidebar-logo {
@@ -284,7 +297,8 @@ body {
     font-weight: 500;
 }
 
-.breadcrumb-root, .breadcrumb-section {
+.breadcrumb-root,
+.breadcrumb-section {
     color: #64748b;
 }
 
@@ -452,7 +466,7 @@ body {
     box-shadow: 0 0 0 4px rgba(70, 130, 180, 0.12);
 }
 
-.search-box input:focus + i {
+.search-box input:focus+i {
     color: var(--primary-color);
 }
 
@@ -557,8 +571,15 @@ body {
 }
 
 @keyframes dropdownFade {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .course-desc-subtitle {
@@ -896,8 +917,15 @@ body {
 }
 
 @keyframes modalPop {
-    from { opacity: 0; transform: scale(0.95) translateY(-10px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 .modal-header {
@@ -1139,6 +1167,7 @@ body {
     font-size: 0.8rem;
     transition: all 0.2s ease;
 }
+
 .sidebar-toggle-btn:hover {
     background: var(--primary-light);
     color: var(--primary-color);
@@ -1163,49 +1192,60 @@ body {
 .sidebar.collapsed {
     width: var(--sidebar-collapsed-width);
 }
+
 .sidebar.collapsed .sidebar-brand-text {
     opacity: 0;
     pointer-events: none;
     width: 0;
 }
+
 .sidebar.collapsed .sidebar-toggle-btn {
     margin-left: 0;
     margin-top: 0;
 }
+
 .sidebar.collapsed .sidebar-header {
     justify-content: center;
     gap: 0;
     padding: 16px 0;
 }
+
 .sidebar.collapsed .nav-label {
     opacity: 0;
     width: 0;
     overflow: hidden;
 }
+
 .sidebar.collapsed .nav-item-link {
     justify-content: center;
     gap: 0;
     margin: 2px 6px;
     padding: 11px 0;
 }
+
 .sidebar.collapsed .nav-item-link i {
     font-size: 1.25rem;
 }
+
 .sidebar.collapsed .sidebar-user {
     justify-content: center;
     margin: 10px 6px;
     padding: 10px 0;
 }
+
 .sidebar.collapsed .user-details {
     display: none;
 }
+
 .sidebar.collapsed .btn-logout {
     justify-content: center;
     gap: 0;
 }
+
 .sidebar.collapsed .btn-logout span {
     display: none;
 }
+
 .sidebar.collapsed .sidebar-footer {
     padding: 12px 6px 18px 6px;
 }
@@ -1226,7 +1266,7 @@ body {
     white-space: nowrap;
     z-index: 9999;
     pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Main content margin quando sidebar è collassata */
@@ -1248,70 +1288,89 @@ body {
     border-color: #4682B4 !important;
     color: #ffffff !important;
 }
-.btn-primary:hover, .btn-primary:focus {
+
+.btn-primary:hover,
+.btn-primary:focus {
     background-color: #3a6f9f !important;
     border-color: #3a6f9f !important;
 }
+
 .btn-outline-primary {
     color: #4682B4 !important;
     border-color: #4682B4 !important;
 }
+
 .btn-outline-primary:hover {
     background-color: #4682B4 !important;
     border-color: #4682B4 !important;
     color: #ffffff !important;
 }
+
 *:focus-visible {
     outline: 2px solid #4682B4 !important;
     outline-offset: 2px;
 }
+
 .form-control:focus,
 .form-select:focus {
     border-color: #4682B4 !important;
     box-shadow: 0 0 0 3px rgba(70, 130, 180, 0.2) !important;
 }
+
 a {
     color: #4682B4;
 }
+
 a:hover {
     color: #3a6f9f;
 }
+
 .badge.bg-primary,
 .badge-primary {
     background-color: #4682B4 !important;
 }
+
 .top-bar {
     border-bottom-color: rgba(70, 130, 180, 0.15) !important;
 }
+
 .stat-card-icon,
 .stat-icon {
     background-color: rgba(70, 130, 180, 0.12) !important;
     color: #4682B4 !important;
 }
+
 .uf-tag-pill {
     color: #4682B4 !important;
     background: #dbeafe !important;
     border-color: rgba(70, 130, 180, 0.2) !important;
 }
+
 .uf-card-header {
     border-bottom-color: #4682B4 !important;
 }
+
 .btn-create-modal {
     background-color: #4682B4 !important;
 }
+
 .btn-create-modal:hover {
     background-color: #3a6f9f !important;
 }
+
 .btn-outline-course {
     color: #4682B4 !important;
     border-color: #4682B4 !important;
 }
+
 .btn-outline-course:hover {
     background-color: #dbeafe !important;
 }
+
 ::-webkit-scrollbar-thumb {
     background: rgba(70, 130, 180, 0.35) !important;
 }
+
 ::-webkit-scrollbar-thumb:hover {
     background: #4682B4 !important;
 }
@@ -1327,7 +1386,9 @@ a:hover {
     display: flex !important;
     flex-direction: column !important;
     position: fixed !important;
-    top: 0; bottom: 0; left: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
     z-index: 1000 !important;
     transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
     overflow: visible !important;
@@ -1712,4 +1773,48 @@ a:hover {
 
 .app-wrapper.sidebar-collapsed .main-content {
     margin-left: 72px !important;
+}
+
+/* ============================================================
+   AESTHETIC REFINEMENTS — BUTTON SIZING & EYE TOGGLE
+   ============================================================ */
+/* Sleek, compact password toggle button */
+#btnTogglePassword {
+    padding: 2px 10px !important;
+    font-size: 0.85rem !important;
+    border-color: #cbd5e1 !important;
+    background-color: #f8fafc !important;
+    color: #64748b !important;
+    box-shadow: none !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    border-top-right-radius: 6px !important;
+    border-bottom-right-radius: 6px !important;
+}
+
+#btnTogglePassword:hover {
+    background-color: #e2e8f0 !important;
+    color: var(--primary-color) !important;
+}
+
+/* Size fix per i pulsanti Salva e Annulla delle pagine e delle modali */
+.btn-nc-submit, 
+.btn-nc-cancel,
+.btn-primary,
+.btn-add-course,
+.modal-footer button,
+.nc-form-actions button,
+.nc-form-actions a {
+    padding: 6px 16px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    min-height: 36px !important;
+    height: auto !important;
+}
+
+.btn-nc-submit i,
+.btn-primary i,
+.btn-nc-cancel i {
+    font-size: 0.92rem !important;
 }
