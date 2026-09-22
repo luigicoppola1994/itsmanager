@@ -990,11 +990,32 @@ def get_lezione(id_lezione: int, db: Session = Depends(get_db), current_user: mo
         raise HTTPException(status_code=404, detail="Lezione non trovata")
     return lezione
 
+def extract_sql_error_message(e: Exception) -> str:
+    """Estrae un messaggio di errore chiaro e leggibile da eccezioni SQL e Trigger."""
+    raw_str = str(e)
+    if hasattr(e, 'orig'):
+        orig = getattr(e, 'orig')
+        if hasattr(orig, 'args') and len(orig.args) > 1:
+            raw_str = str(orig.args[1])
+        else:
+            raw_str = str(orig)
+    
+    # Cerca l'inizio di 'Errore:' o 'Errore in modifica:' fino a fine frase/virgolette
+    import re
+    match = re.search(r"Errore[^'\"\r\n]*", raw_str, re.IGNORECASE)
+    if match:
+        clean = match.group(0).strip().rstrip("'\"`")
+        return clean
+    
+    if "foreign key constraint" in raw_str.lower():
+        return "Impossibile salvare la lezione: riferimento non valido a modulo, docente o corso."
+    
+    return raw_str
+
 @app.post("/calendario", response_model=schemas.CalendarioResponse, status_code=status.HTTP_201_CREATED)
 def create_lezione(lezione: schemas.CalendarioCreate, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
     """Crea una nuova lezione nel calendario. I trigger SQL validano automaticamente
     ruolo docente, conflitti orari e budget ore delle unità formative."""
-    # Verifica che il corso attivo non sia archiviato
     corso_attivo = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == lezione.id_corso_attivo).first()
     if corso_attivo is None:
         raise HTTPException(status_code=400, detail="Corso attivo non trovato")
@@ -1017,16 +1038,8 @@ def create_lezione(lezione: schemas.CalendarioCreate, db: Session = Depends(get_
         return nuova_lezione
     except Exception as e:
         db.rollback()
-        # Estrae il messaggio dal trigger SQL (MySQL DataError/OperationalError)
-        msg = str(e.orig) if hasattr(e, 'orig') else str(e)
-        # Pulisce il messaggio SQL per renderlo leggibile
-        if "MESSAGE_TEXT" in msg or "45000" in msg or "Errore" in msg.lower():
-            # Cerca il testo del messaggio tra le virgolette
-            import re
-            match = re.search(r"'([^']*Errore[^']*)'", msg)
-            if match:
-                msg = match.group(1)
-        raise HTTPException(status_code=400, detail=msg)
+        error_msg = extract_sql_error_message(e)
+        raise HTTPException(status_code=400, detail=error_msg)
 
 @app.put("/calendario/{id_lezione}", response_model=schemas.CalendarioResponse)
 def update_lezione(id_lezione: int, lezione_data: schemas.CalendarioCreate, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -1053,12 +1066,8 @@ def update_lezione(id_lezione: int, lezione_data: schemas.CalendarioCreate, db: 
         return lezione
     except Exception as e:
         db.rollback()
-        msg = str(e.orig) if hasattr(e, 'orig') else str(e)
-        import re
-        match = re.search(r"'([^']*Errore[^']*)'", msg)
-        if match:
-            msg = match.group(1)
-        raise HTTPException(status_code=400, detail=msg)
+        error_msg = extract_sql_error_message(e)
+        raise HTTPException(status_code=400, detail=error_msg)
 
 @app.delete("/calendario/{id_lezione}")
 def delete_lezione(id_lezione: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):

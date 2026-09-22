@@ -74,6 +74,7 @@ class UtenteResponse(UtenteBase):
     Primo_Accesso: Optional[bool] = None
     # Override: il DB restituisce datetime.date, non una stringa
     Data_Nascita: Optional[date] = None
+    ruolo: Optional[RuoloResponse] = None
 
     class Config:
         from_attributes = True  # Necessario per convertire oggetti SQLAlchemy in Pydantic
