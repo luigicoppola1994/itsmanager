@@ -40,8 +40,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Listeners calendario
     document.getElementById('btnNuovaLezione')?.addEventListener('click', () => openLezioneModal());
+    document.getElementById('btnProgrammaSettimana')?.addEventListener('click', () => openSettimanaModal());
     document.getElementById('lezioneForm')?.addEventListener('submit', handleLezioneFormSubmit);
+    document.getElementById('settimanaForm')?.addEventListener('submit', handleSettimanaFormSubmit);
     document.getElementById('btnDeleteLezione')?.addEventListener('click', handleDeleteLezione);
+    document.getElementById('btnToggleOrariDifferenziati')?.addEventListener('click', toggleOrariDifferenziati);
 
     // Filtro docente
     document.getElementById('selectDocenteFiltro')?.addEventListener('change', refreshCalendarEvents);
@@ -52,6 +55,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Budget bar sul cambio modulo
     document.getElementById('modalModulo')?.addEventListener('change', updateModalBudgetInfo);
+
+    // Change listeners per anteprima programmazione settimanale
+    ['settimanaDataInizio', 'settimanaNumeroSettimane', 'settimanaOraInizio', 'settimanaOraFine', 'diffMarInizio', 'diffMarFine', 'diffGioInizio', 'diffGioFine'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', updateSettimanaPreview);
+    });
+    document.querySelectorAll('.chk-giorno').forEach(chk => chk.addEventListener('change', updateSettimanaPreview));
 });
 
 // ═══════════════════════════════════════════════════
@@ -262,10 +271,16 @@ async function loadDocenti() {
     }
 }
 
+let unitaFormativeList = [];
+
 async function loadModuli() {
     try {
-        const res = await fetchAutenticata(`${API_URL}/moduli`);
-        if (res.ok) moduliList = await res.json();
+        const [resM, resUf] = await Promise.all([
+            fetchAutenticata(`${API_URL}/moduli`),
+            fetchAutenticata(`${API_URL}/unita_formative`)
+        ]);
+        if (resM.ok) moduliList = await resM.json();
+        if (resUf.ok) unitaFormativeList = await resUf.json();
     } catch (e) {}
 }
 
@@ -279,21 +294,18 @@ async function loadPianoStudio(idCorsoAttivo) {
         console.error('Errore piano studio:', e);
     }
 
-    // Carica anche UF per avere i nomi
-    try {
-        const resUf = await fetchAutenticata(`${API_URL}/unita_formative`);
-        if (resUf.ok) {
-            const ufList = await resUf.json();
-            pianostudioList = pianostudioList.map(ps => {
-                const uf = ufList.find(u => u.id_unita_formativa === ps.id_unita_formativa);
-                return { ...ps, uf_nome: uf ? uf.Nome : `UF #${ps.id_unita_formativa}` };
-            });
-        }
-    } catch (e) {}
+    if (!moduliList.length || !unitaFormativeList.length) {
+        await loadModuli();
+    }
+
+    pianostudioList = pianostudioList.map(ps => {
+        const uf = unitaFormativeList.find(u => u.id_unita_formativa === ps.id_unita_formativa);
+        return { ...ps, uf_nome: uf ? uf.Nome : `UF #${ps.id_unita_formativa}` };
+    });
 
     // Popola la select moduli filtrata per UF del corso
     await populateModalModuli(idCorsoAttivo);
-    // Renderizza sidebar budget (senza dati lezioni per ora, aggiorna dopo)
+    // Renderizza sidebar budget
     renderOreSidebar({});
 }
 
@@ -301,35 +313,41 @@ async function populateModalModuli(idCorsoAttivo) {
     const sel = document.getElementById('modalModulo');
     if (!sel) return;
 
-    // Ottieni UF del corso attivo
-    const ufIds = pianostudioList.map(ps => ps.id_unita_formativa);
-    // Filtra moduli per queste UF
-    const moduliFiltrati = moduliList.filter(m => ufIds.includes(m.id_unita_formativa));
-
     let opts = '<option value="">-- Seleziona modulo --</option>';
 
-    if (moduliFiltrati.length) {
-        // Raggruppa per UF
-        const grouped = {};
-        moduliFiltrati.forEach(m => {
-            const ps = pianostudioList.find(ps => ps.id_unita_formativa === m.id_unita_formativa);
-            const ufNome = ps ? ps.uf_nome : `UF #${m.id_unita_formativa}`;
-            if (!grouped[ufNome]) grouped[ufNome] = [];
-            grouped[ufNome].push(m);
+    if (pianostudioList && pianostudioList.length > 0) {
+        const ufMap = {};
+        pianostudioList.forEach(ps => {
+            ufMap[ps.id_unita_formativa] = ps;
         });
 
-        Object.entries(grouped).forEach(([ufNome, moduli]) => {
-            opts += `<optgroup label="${ufNome}">`;
-            moduli.forEach(m => {
-                opts += `<option value="${m.id_modulo}">${m.Nome}</option>`;
+        const filteredModuli = moduliList.filter(m => ufMap[m.id_unita_formativa]);
+
+        if (filteredModuli.length > 0) {
+            const grouped = {};
+            filteredModuli.forEach(m => {
+                const ps = ufMap[m.id_unita_formativa];
+                const ufObj = unitaFormativeList.find(u => u.id_unita_formativa === m.id_unita_formativa);
+                const ufNome = ps.uf_nome || (ufObj ? ufObj.Nome : `Unità Formativa #${m.id_unita_formativa}`);
+                const oreLabel = ps.ore_dedicate ? ` (${ps.ore_dedicate}h)` : '';
+                const groupKey = `${ufNome}${oreLabel}`;
+
+                if (!grouped[groupKey]) grouped[groupKey] = [];
+                grouped[groupKey].push(m);
             });
-            opts += `</optgroup>`;
-        });
+
+            Object.entries(grouped).forEach(([groupLabel, moduli]) => {
+                opts += `<optgroup label="${groupLabel}">`;
+                moduli.forEach(m => {
+                    opts += `<option value="${m.id_modulo}">${m.Nome}</option>`;
+                });
+                opts += `</optgroup>`;
+            });
+        } else {
+            opts += `<option value="" disabled>Nessun modulo a catalogo associato alle UF di questa edizione</option>`;
+        }
     } else {
-        // Fallback: tutti i moduli
-        moduliList.forEach(m => {
-            opts += `<option value="${m.id_modulo}">${m.Nome}</option>`;
-        });
+        opts += `<option value="" disabled>Nessuna Unità Formativa associata a questa edizione del corso</option>`;
     }
 
     sel.innerHTML = opts;
@@ -432,7 +450,9 @@ function initFullCalendar() {
 
         // Click evento → modifica
         eventClick: (info) => {
-            openLezioneModal(info.event.extendedProps);
+            const props = info.event.extendedProps || {};
+            const eventId = info.event.id || props.id || props.id_lezione;
+            openLezioneModal({ ...props, id: eventId });
         },
 
         // Drag & drop
@@ -604,11 +624,13 @@ function openLezioneModal(lezioneData = null, presetData = null) {
     document.getElementById('durataCalcAlert').style.display = 'none';
     hideModalError();
 
-    if (lezioneData) {
+    const targetId = lezioneData ? (lezioneData.id || lezioneData.id_lezione) : null;
+
+    if (lezioneData && targetId) {
         // Modalità MODIFICA
-        currentEditingLezioneId = lezioneData.id;
-        document.getElementById('lezioneId').value      = lezioneData.id;
-        document.getElementById('modalTitleText').textContent = `Modifica Lezione #${lezioneData.id}`;
+        currentEditingLezioneId = targetId;
+        document.getElementById('lezioneId').value      = targetId;
+        document.getElementById('modalTitleText').textContent = `Modifica Lezione #${targetId}`;
         document.getElementById('btnDeleteLezione').style.display = 'inline-block';
         document.getElementById('modalModulo').value    = lezioneData.id_modulo || '';
         document.getElementById('modalDocente').value   = lezioneData.id_utente || '';
@@ -699,7 +721,8 @@ async function handleLezioneFormSubmit(e) {
     e.preventDefault();
     hideModalError();
 
-    const idLezione     = document.getElementById('lezioneId')?.value;
+    const rawIdLezione  = document.getElementById('lezioneId')?.value || currentEditingLezioneId;
+    const idLezione     = (rawIdLezione !== null && rawIdLezione !== undefined && String(rawIdLezione).trim() !== '' && String(rawIdLezione) !== 'null' && String(rawIdLezione) !== 'undefined') ? String(rawIdLezione).trim() : null;
     const idModulo      = parseInt(document.getElementById('modalModulo')?.value);
     const idDocente     = parseInt(document.getElementById('modalDocente')?.value);
     const dataLezione   = document.getElementById('modalData')?.value;
@@ -915,3 +938,221 @@ function showToast(msg, isError = false) {
     toast.className = `toast show${isError ? ' error' : ''}`;
     setTimeout(() => toast.classList.remove('show'), 3500);
 }
+
+// ═══════════════════════════════════════════════════
+//  MODALE PROGRAMMAZIONE SETTIMANALE IN 1 STEP
+// ═══════════════════════════════════════════════════
+
+function showSettimanaError(msg) {
+    const errAlert = document.getElementById('settimanaAlertError');
+    const errTxt   = document.getElementById('settimanaAlertErrorText');
+    if (!errAlert || !errTxt) return;
+    errTxt.textContent = msg;
+    errAlert.style.setProperty('display', 'flex', 'important');
+}
+
+function hideSettimanaError() {
+    const errAlert = document.getElementById('settimanaAlertError');
+    if (errAlert) errAlert.style.setProperty('display', 'none', 'important');
+}
+
+function toggleOrariDifferenziati() {
+    const box = document.getElementById('boxOrariDifferenziati');
+    if (!box) return;
+    const isHidden = box.style.display === 'none';
+    box.style.display = isHidden ? 'block' : 'none';
+    document.getElementById('labelToggleDiff').textContent = isHidden ? 'Usa orario unico standard' : 'Personalizza orari (es. Mar e Gio 9-15)';
+    updateSettimanaPreview();
+}
+
+async function openSettimanaModal() {
+    const modalEl = document.getElementById('settimanaModal');
+    if (!modalEl) return;
+
+    document.getElementById('settimanaForm').reset();
+    hideSettimanaError();
+
+    // Popola moduli e docenti
+    populateSettimanaModuli();
+    populateSettimanaDocenti();
+
+    // Data inizio default: inizio edizione o lunedì corrente
+    let defaultStart = selectedCorsoAttivo?.data_inizio;
+    if (!defaultStart) {
+        defaultStart = new Date().toISOString().split('T')[0];
+    }
+    document.getElementById('settimanaDataInizio').value = defaultStart;
+    if (selectedCorsoAttivo?.data_inizio) document.getElementById('settimanaDataInizio').min = selectedCorsoAttivo.data_inizio;
+    if (selectedCorsoAttivo?.data_fine)   document.getElementById('settimanaDataInizio').max = selectedCorsoAttivo.data_fine;
+
+    // Reset checkboxes
+    document.querySelectorAll('.chk-giorno').forEach(chk => {
+        chk.checked = parseInt(chk.value) < 5; // Lun-Ven true, Sab-Dom false
+    });
+
+    document.getElementById('boxOrariDifferenziati').style.display = 'none';
+    document.getElementById('labelToggleDiff').textContent = 'Personalizza orari (es. Mar e Gio 9-15)';
+
+    updateSettimanaPreview();
+    new bootstrap.Modal(modalEl).show();
+}
+
+function populateSettimanaModuli() {
+    const sel = document.getElementById('settimanaModulo');
+    if (!sel) return;
+    sel.innerHTML = document.getElementById('modalModulo')?.innerHTML || '<option value="">-- Seleziona modulo --</option>';
+}
+
+function populateSettimanaDocenti() {
+    const sel = document.getElementById('settimanaDocente');
+    if (!sel) return;
+    sel.innerHTML = document.getElementById('modalDocente')?.innerHTML || '<option value="">-- Seleziona docente --</option>';
+}
+
+function updateSettimanaPreview() {
+    hideSettimanaError();
+    const previewTxt = document.getElementById('settimanaPreviewText');
+    if (!previewTxt) return;
+
+    const dInizioStr = document.getElementById('settimanaDataInizio')?.value;
+    const nWeeks = parseInt(document.getElementById('settimanaNumeroSettimane')?.value || 1);
+    const oraInizioDef = document.getElementById('settimanaOraInizio')?.value;
+    const oraFineDef   = document.getElementById('settimanaOraFine')?.value;
+
+    if (!dInizioStr || !oraInizioDef || !oraFineDef) {
+        previewTxt.textContent = 'Riepilogo: Compila data e orario per l\'anteprima.';
+        return;
+    }
+
+    const isDiffActive = document.getElementById('boxOrariDifferenziati')?.style.display !== 'none';
+    const checkedDays = Array.from(document.querySelectorAll('.chk-giorno:checked')).map(c => parseInt(c.value));
+
+    let nLezioni = 0;
+    let nMinutiTotali = 0;
+
+    const startDate = new Date(dInizioStr);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + (nWeeks * 7) - 1);
+
+    let curr = new Date(startDate);
+    while (curr <= endDate) {
+        const wd = (curr.getDay() + 6) % 7; // 0 = Lun, 6 = Dom
+        if (checkedDays.includes(wd)) {
+            nLezioni++;
+            let iStr = oraInizioDef;
+            let fStr = oraFineDef;
+
+            if (isDiffActive) {
+                if (wd === 1) { // Mar
+                    iStr = document.getElementById('diffMarInizio')?.value || oraInizioDef;
+                    fStr = document.getElementById('diffMarFine')?.value || oraFineDef;
+                } else if (wd === 3) { // Gio
+                    iStr = document.getElementById('diffGioInizio')?.value || oraInizioDef;
+                    fStr = document.getElementById('diffGioFine')?.value || oraFineDef;
+                }
+            }
+
+            const [hI, mI] = iStr.split(':').map(Number);
+            const [hF, mF] = fStr.split(':').map(Number);
+            nMinutiTotali += Math.max(0, (hF * 60 + mF) - (hI * 60 + mI));
+        }
+        curr.setDate(curr.getDate() + 1);
+    }
+
+    previewTxt.textContent = `Verranno create ${nLezioni} lezioni per un totale di ${minutiToOre(nMinutiTotali)} in ${nWeeks} settiman${nWeeks === 1 ? 'a' : 'e'}.`;
+}
+
+async function handleSettimanaFormSubmit(e) {
+    e.preventDefault();
+    hideSettimanaError();
+
+    if (!selectedCorsoAttivo) {
+        showSettimanaError('Nessuna edizione di corso selezionata.');
+        return;
+    }
+
+    const idModulo   = parseInt(document.getElementById('settimanaModulo')?.value);
+    const idDocente  = parseInt(document.getElementById('settimanaDocente')?.value);
+    const dInizio    = document.getElementById('settimanaDataInizio')?.value;
+    const nWeeks     = parseInt(document.getElementById('settimanaNumeroSettimane')?.value || 1);
+    const oraInizio  = document.getElementById('settimanaOraInizio')?.value;
+    const oraFine    = document.getElementById('settimanaOraFine')?.value;
+    const note       = document.getElementById('settimanaNote')?.value?.trim();
+
+    if (!idModulo || !idDocente || !dInizio || !oraInizio || !oraFine) {
+        showSettimanaError('Compila tutti i campi obbligatori (Modulo, Docente, Data Inizio, Ora Inizio, Ora Fine).');
+        return;
+    }
+    if (oraInizio >= oraFine) {
+        showSettimanaError('L\'ora di inizio deve essere precedente all\'ora di fine.');
+        return;
+    }
+
+    const checkedDays = Array.from(document.querySelectorAll('.chk-giorno:checked')).map(c => parseInt(c.value));
+    if (!checkedDays.length) {
+        showSettimanaError('Seleziona almeno un giorno della settimana.');
+        return;
+    }
+
+    const isDiffActive = document.getElementById('boxOrariDifferenziati')?.style.display !== 'none';
+    let orariDiff = null;
+
+    if (isDiffActive) {
+        orariDiff = {};
+        const marI = document.getElementById('diffMarInizio')?.value;
+        const marF = document.getElementById('diffMarFine')?.value;
+        const gioI = document.getElementById('diffGioInizio')?.value;
+        const gioF = document.getElementById('diffGioFine')?.value;
+
+        if (marI && marF) {
+            orariDiff['1'] = { attivo: checkedDays.includes(1), ora_inizio: `${marI}:00`, ora_fine: `${marF}:00` };
+        }
+        if (gioI && gioF) {
+            orariDiff['3'] = { attivo: checkedDays.includes(3), ora_inizio: `${gioI}:00`, ora_fine: `${gioF}:00` };
+        }
+    }
+
+    const payload = {
+        id_corso_attivo: selectedCorsoAttivo.id_corso_attivo,
+        id_modulo: idModulo,
+        id_utente: idDocente,
+        data_inizio: dInizio,
+        numero_settimane: nWeeks,
+        ora_inizio_default: `${oraInizio}:00`,
+        ora_fine_default: `${oraFine}:00`,
+        giorni_attivi: checkedDays,
+        orari_differenziati: orariDiff,
+        note: note || null
+    };
+
+    const saveBtn = document.getElementById('btnSaveSettimana');
+    saveBtn.disabled = true;
+
+    try {
+        const res = await fetchAutenticata(`${API_URL}/calendario/settimanale`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const errorReason = await parseApiError(res);
+            showSettimanaError(errorReason);
+            showToast(errorReason, true);
+            return;
+        }
+
+        const data = await res.json();
+        bootstrap.Modal.getInstance(document.getElementById('settimanaModal'))?.hide();
+        showToast(data.messaggio || `Programmate ${data.lezioni_create} lezioni con successo!`);
+        await refreshCalendarEvents();
+
+    } catch (err) {
+        const msg = err.message || 'Errore durante la creazione delle lezioni settimanali.';
+        showSettimanaError(msg);
+        showToast(msg, true);
+    } finally {
+        saveBtn.disabled = false;
+    }
+}
+

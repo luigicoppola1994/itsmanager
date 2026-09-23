@@ -62,7 +62,71 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mappa per salvare i corsi caricati (per recuperare la descrizione)
     let corsiEsistentiMap = {};
 
-    // 3. Inizializzazione: Carica corsi esistenti
+    // 3. Inizializzazione: Carica corsi esistenti ed Unità Formative
+    let allUnitaFormative = [];
+
+    async function loadUnitaFormative() {
+        const container = document.getElementById('ufPianoStudioList');
+        if (!container) return;
+
+        try {
+            const [resUf, resM] = await Promise.all([
+                fetchAutenticata(`${API_URL}/unita_formative`),
+                fetchAutenticata(`${API_URL}/moduli`)
+            ]);
+
+            if (resUf.ok && resM.ok) {
+                allUnitaFormative = await resUf.json();
+                const moduliList = await resM.json();
+
+                if (!allUnitaFormative.length) {
+                    container.innerHTML = '<div class="alert alert-light border small text-muted mb-0">Nessuna Unità Formativa a catalogo. <a href="nuova-uf.html" class="fw-bold">Crea una UF</a></div>';
+                    return;
+                }
+
+                container.innerHTML = allUnitaFormative.map(uf => {
+                    const ufModuli = moduliList.filter(m => m.id_unita_formativa === uf.id_unita_formativa);
+                    const modCount = ufModuli.length;
+                    return `
+                        <div class="card p-3 border mb-2 uf-item-card" style="background:#ffffff; border-radius:10px;">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input chk-uf-piano" type="checkbox" value="${uf.id_unita_formativa}" id="chkUf_${uf.id_unita_formativa}" data-uf-id="${uf.id_unita_formativa}">
+                                    <label class="form-check-label fw-bold text-dark" for="chkUf_${uf.id_unita_formativa}">
+                                        ${uf.Nome}
+                                        <span class="badge bg-light text-secondary border ms-2 font-monospace" style="font-size:0.75rem;">${modCount} modul${modCount === 1 ? 'o' : 'i'}</span>
+                                    </label>
+                                </div>
+                                <div class="d-flex align-items-center gap-2" style="max-width: 200px;">
+                                    <label for="oreUf_${uf.id_unita_formativa}" class="small text-muted mb-0 fw-semibold">Ore:</label>
+                                    <input type="number" id="oreUf_${uf.id_unita_formativa}" class="form-control form-control-sm input-ore-uf" min="1" max="1000" value="100" placeholder="Ore" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Listener per attivare/disattivare l'input ore
+                container.querySelectorAll('.chk-uf-piano').forEach(chk => {
+                    chk.addEventListener('change', (e) => {
+                        const ufId = e.target.dataset.ufId;
+                        const oreInput = document.getElementById(`oreUf_${ufId}`);
+                        if (oreInput) {
+                            oreInput.disabled = !e.target.checked;
+                        }
+                    });
+                });
+
+            } else {
+                container.innerHTML = '<div class="text-danger small">Impossibile caricare le Unità Formative.</div>';
+            }
+        } catch (e) {
+            console.error('Errore UF:', e);
+            container.innerHTML = '<div class="text-danger small">Errore di connessione.</div>';
+        }
+    }
+    loadUnitaFormative();
+
     async function loadCorsiEsistenti() {
         try {
             const urlParams = new URLSearchParams(window.location.search);
@@ -96,6 +160,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     loadCorsiEsistenti();
+
+    async function salvaPianoStudioEdizione(idCorsoAttivo) {
+        if (!idCorsoAttivo) return;
+        const checkedUfs = Array.from(document.querySelectorAll('.chk-uf-piano:checked'));
+        for (const chk of checkedUfs) {
+            const ufId = parseInt(chk.value);
+            const oreInput = document.getElementById(`oreUf_${ufId}`);
+            const oreVal = parseInt(oreInput ? oreInput.value : 100) || 100;
+
+            try {
+                await fetchAutenticata(`${API_URL}/piano-studio`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_corso_attivo: idCorsoAttivo,
+                        id_unita_formativa: ufId,
+                        ore_dedicate: oreVal
+                    })
+                });
+            } catch (e) {
+                console.error(`Errore salvataggio piano studio per UF #${ufId}:`, e);
+            }
+        }
+    }
 
     // 4. Gestione Toggle Modalità
     function toggleMode() {
@@ -522,6 +610,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(detail);
                 }
 
+                const resData = await response.json();
+                const idCorsoAttivo = resData?.edizione?.id_corso_attivo;
+                if (idCorsoAttivo) {
+                    await salvaPianoStudioEdizione(idCorsoAttivo);
+                }
+
                 showToastCustom('Corso ed Edizione creati con successo!', 'success');
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
@@ -553,6 +647,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const err = await responseEdizione.json();
                     const detail = err.detail || err.error || 'Errore nella creazione dell\'edizione.';
                     throw new Error(detail);
+                }
+
+                const resEdizioneData = await responseEdizione.json();
+                const idCorsoAttivo = resEdizioneData?.id_corso_attivo;
+                if (idCorsoAttivo) {
+                    await salvaPianoStudioEdizione(idCorsoAttivo);
                 }
 
                 showToastCustom('Edizione del corso creata con successo!', 'success');

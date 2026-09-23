@@ -846,6 +846,9 @@
                             <button type="button" class="btn btn-primary btn-sm" id="btnNuovaLezione">
                                 <i class="bi bi-calendar-plus me-1"></i>Aggiungi Lezione
                             </button>
+                            <button type="button" class="btn btn-success btn-sm ms-2" id="btnProgrammaSettimana">
+                                <i class="bi bi-calendar-range me-1"></i>Programma Settimana (1 Step)
+                            </button>
                         </div>
                         <div id="calendar"></div>
                     </div>
@@ -989,6 +992,163 @@
                                 <i class="bi bi-check2-circle me-1"></i> Salva Lezione
                             </button>
                         </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── MODAL: PROGRAMMAZIONE SETTIMANALE IN 1 STEP ─── -->
+    <div class="modal fade" id="settimanaModal" tabindex="-1" aria-labelledby="settimanaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+                <div class="modal-header px-4 py-3" style="background: linear-gradient(135deg, #059669, #10b981);">
+                    <h5 class="modal-title fw-bold text-white" id="settimanaModalLabel">
+                        <i class="bi bi-calendar-range me-2"></i>
+                        <span>Programma Settimana (In 1 Step)</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                </div>
+
+                <div class="px-4 py-2 d-flex align-items-center gap-2" style="background: #f0fdf4; border-bottom: 1px solid #d1fae5;">
+                    <i class="bi bi-magic text-success"></i>
+                    <span class="small fw-semibold text-success-emphasis">Genera automaticamente tutte le lezioni per una o più settimane.</span>
+                </div>
+
+                <form id="settimanaForm">
+                    <div class="modal-body px-4 py-4" style="background: #f8fafc;">
+                        <!-- ALERT ERRORE -->
+                        <div class="alert alert-danger d-flex align-items-start gap-2 mb-3" id="settimanaAlertError" style="display: none !important; border-radius: 10px;">
+                            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" style="font-size: 1.1rem;"></i>
+                            <div id="settimanaAlertErrorText" class="small fw-semibold" style="line-height: 1.4;"></div>
+                        </div>
+
+                        <!-- Modulo & Docente -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="settimanaModulo" class="form-label fw-semibold small">Modulo Didattico <span class="text-danger">*</span></label>
+                                <select id="settimanaModulo" class="form-select" required>
+                                    <option value="">-- Seleziona modulo --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="settimanaDocente" class="form-label fw-semibold small">Docente <span class="text-danger">*</span></label>
+                                <select id="settimanaDocente" class="form-select" required>
+                                    <option value="">-- Seleziona docente --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Data Inizio Settimana & Numero Settimane -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="settimanaDataInizio" class="form-label fw-semibold small">Data Inizio Periodo / Settimana <span class="text-danger">*</span></label>
+                                <input type="date" id="settimanaDataInizio" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="settimanaNumeroSettimane" class="form-label fw-semibold small">Durata (Numero Settimane)</label>
+                                <select id="settimanaNumeroSettimane" class="form-select">
+                                    <option value="1" selected>1 Settimana</option>
+                                    <option value="2">2 Settimane consecutive</option>
+                                    <option value="3">3 Settimane consecutive</option>
+                                    <option value="4">4 Settimane consecutive</option>
+                                    <option value="6">6 Settimane consecutive</option>
+                                    <option value="8">8 Settimane consecutive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Orario Unico Standard -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="settimanaOraInizio" class="form-label fw-semibold small">Ora Inizio Standard <span class="text-danger">*</span></label>
+                                <input type="time" id="settimanaOraInizio" class="form-control" value="09:00" step="900" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="settimanaOraFine" class="form-label fw-semibold small">Ora Fine Standard <span class="text-danger">*</span></label>
+                                <input type="time" id="settimanaOraFine" class="form-control" value="14:00" step="900" required>
+                            </div>
+                        </div>
+
+                        <!-- Giorni della settimana attivi -->
+                        <div class="card p-3 border mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="fw-bold small text-dark mb-0"><i class="bi bi-calendar-week me-1"></i> Giorni di Lezione Nella Settimana</label>
+                                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="btnToggleOrariDifferenziati">
+                                    <i class="bi bi-clock-history me-1"></i><span id="labelToggleDiff">Personalizza orari (es. Mar e Gio 9-15)</span>
+                                </button>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="0" id="chkLun" checked>
+                                    <label class="form-check-label small fw-semibold" for="chkLun">Lun</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="1" id="chkMar" checked>
+                                    <label class="form-check-label small fw-semibold" for="chkMar">Mar</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="2" id="chkMer" checked>
+                                    <label class="form-check-label small fw-semibold" for="chkMer">Mer</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="3" id="chkGio" checked>
+                                    <label class="form-check-label small fw-semibold" for="chkGio">Gio</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="4" id="chkVen" checked>
+                                    <label class="form-check-label small fw-semibold" for="chkVen">Ven</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="5" id="chkSab">
+                                    <label class="form-check-label small fw-semibold text-muted" for="chkSab">Sab</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="6" id="chkDom">
+                                    <label class="form-check-label small fw-semibold text-muted" for="chkDom">Dom</label>
+                                </div>
+                            </div>
+
+                            <!-- Sezione Orari Differenziati Facoltativa -->
+                            <div id="boxOrariDifferenziati" class="mt-3 pt-3 border-top" style="display: none;">
+                                <div class="small text-muted mb-2">Imposta orari specifici per singoli giorni:</div>
+                                <div class="row g-2">
+                                    <div class="col-md-6 d-flex align-items-center gap-2">
+                                        <span class="badge bg-secondary">Mar:</span>
+                                        <input type="time" id="diffMarInizio" class="form-control form-control-sm" value="09:00">
+                                        <span>-</span>
+                                        <input type="time" id="diffMarFine" class="form-control form-control-sm" value="15:00">
+                                    </div>
+                                    <div class="col-md-6 d-flex align-items-center gap-2">
+                                        <span class="badge bg-secondary">Gio:</span>
+                                        <input type="time" id="diffGioInizio" class="form-control form-control-sm" value="09:00">
+                                        <span>-</span>
+                                        <input type="time" id="diffGioFine" class="form-control form-control-sm" value="15:00">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Note / Aula -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <label for="settimanaNote" class="form-label fw-semibold small">Aula / Note (opzionale)</label>
+                                <input type="text" id="settimanaNote" class="form-control" placeholder="Es. Aula 2 - Lab. Informatica">
+                            </div>
+                        </div>
+
+                        <!-- Box Anteprima -->
+                        <div class="alert alert-success border py-2 px-3 m-0 d-flex align-items-center gap-2" id="settimanaPreviewAlert">
+                            <i class="bi bi-calculator text-success"></i>
+                            <span class="small fw-semibold" id="settimanaPreviewText">Riepilogo: —</span>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer bg-white px-4 py-3 border-top d-flex justify-content-between">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Annulla</button>
+                        <button type="submit" class="btn btn-success fw-bold" id="btnSaveSettimana">
+                            <i class="bi bi-magic me-1"></i> Programma Settimana
+                        </button>
                     </div>
                 </form>
             </div>

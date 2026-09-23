@@ -14,9 +14,25 @@
 # 3. Crea una classe Response (per le risposte GET) che aggiunge i campi del DB (es. id)
 # ==============================================================================
 
+from __future__ import annotations
 from pydantic import BaseModel, model_validator  # Classe base di Pydantic e validatore per gli schemi
-from typing import Optional     # Permette di dichiarare campi opzionali (possono essere None)
+from typing import Optional, List, Dict     # Permette di dichiarare campi opzionali, liste e dizionari
 from datetime import date, time  # Tipo date e time per i campi data/orario
+
+
+# --- Schema per la tabella Ruoli ---
+class RuoloBase(BaseModel):
+    Nome: str
+    Descrizione: Optional[str] = None
+
+class RuoloCreate(RuoloBase):
+    pass
+
+class RuoloResponse(RuoloBase):
+    id_ruolo: int
+    class Config:
+        from_attributes = True
+
 
 
 # ------------------------------------------------------------------------------
@@ -110,20 +126,6 @@ class UtenteUpdate(BaseModel):
 # Sotto questo commento, aggiungi schemi per le altre tabelle del DB.
 # Segui il pattern Base/Create/Response per ogni entità.
 # ==============================================================================
-
-
-# --- Schema per la tabella Ruoli ---
-class RuoloBase(BaseModel):
-    Nome: str
-    Descrizione: Optional[str] = None
-
-class RuoloCreate(RuoloBase):
-    pass
-
-class RuoloResponse(RuoloBase):
-    id_ruolo: int
-    class Config:
-        from_attributes = True
 
 
 # --- Schema per la tabella Corsi ---
@@ -243,3 +245,23 @@ class CalendarioResponse(CalendarioBase):
     id: int
     class Config:
         from_attributes = True
+
+
+class OrarioGiornoSettimana(BaseModel):
+    attivo: bool = True
+    ora_inizio: Optional[time] = None
+    ora_fine: Optional[time] = None
+
+class CalendarioSettimanaleCreate(BaseModel):
+    id_corso_attivo: int
+    id_modulo: int
+    id_utente: int
+    data_inizio: date
+    data_fine: Optional[date] = None
+    numero_settimane: Optional[int] = 1
+    ora_inizio_default: time
+    ora_fine_default: time
+    giorni_attivi: Optional[List[int]] = [0, 1, 2, 3, 4]  # 0=Lunedì ... 4=Venerdì
+    orari_differenziati: Optional[Dict[str, OrarioGiornoSettimana]] = None
+    note: Optional[str] = None
+

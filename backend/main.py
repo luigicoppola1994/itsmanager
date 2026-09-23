@@ -982,6 +982,133 @@ def get_calendario(
         query = query.filter(models.Calendario.id_utente == id_utente)
     return query.order_by(models.Calendario.data, models.Calendario.ora_inizio).all()
 
+
+class CalendarioSettimanaleResponse(BaseModel):
+    lezioni_create: int
+    ore_totali: float
+    lezioni: List[schemas.CalendarioResponse]
+    messaggio: str
+
+@app.post("/calendario/settimanale", response_model=CalendarioSettimanaleResponse, status_code=status.HTTP_201_CREATED)
+def create_lezioni_settimanali(
+    payload: schemas.CalendarioSettimanaleCreate,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """
+    Crea in batch un'intera settimana (o N settimane) di lezioni per un modulo e docente.
+    Gestisce orari standard ed eventuali orari differenziati per specifico giorno della settimana.
+    Valida il periodo dell'edizione del corso attivo, budget ore dell'UF e vincoli.
+    """
+    corso_attivo = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == payload.id_corso_attivo).first()
+    if corso_attivo is None:
+        raise HTTPException(status_code=400, detail="Corso attivo non trovato")
+    if corso_attivo.archiviato:
+        raise HTTPException(status_code=400, detail="Impossibile aggiungere lezioni: il corso è archiviato")
+
+    modulo = db.query(models.Modulo).filter(models.Modulo.id_modulo == payload.id_modulo).first()
+    if not modulo:
+        raise HTTPException(status_code=400, detail="Modulo non trovato")
+
+    ensure_piano_studio_associazione(payload.id_corso_attivo, payload.id_modulo, db)
+
+    # Determina l'intervallo di date
+    d_inizio = payload.data_inizio
+    if payload.data_fine:
+        d_fine = payload.data_fine
+    else:
+        n_settimane = max(payload.numero_settimane or 1, 1)
+        d_fine = d_inizio + timedelta(days=(n_settimane * 7) - 1)
+
+    if d_inizio > d_fine:
+        raise HTTPException(status_code=400, detail="La data di inizio non può essere successiva alla data di fine.")
+
+    if corso_attivo.data_inizio and d_inizio < corso_attivo.data_inizio:
+        raise HTTPException(
+            status_code=400,
+            detail=f"La data di inizio ({d_inizio.strftime('%d/%m/%Y')}) è precedente all'inizio dell'edizione ({corso_attivo.data_inizio.strftime('%d/%m/%Y')})."
+        )
+    if corso_attivo.data_fine and d_fine > corso_attivo.data_fine:
+        raise HTTPException(
+            status_code=400,
+            detail=f"La data di fine ({d_fine.strftime('%d/%m/%Y')}) supera la fine dell'edizione ({corso_attivo.data_fine.strftime('%d/%m/%Y')})."
+        )
+
+    giorni_abilitati = set(payload.giorni_attivi if payload.giorni_attivi is not None else [0, 1, 2, 3, 4])
+    orari_diff = payload.orari_differenziati or {}
+
+    lezioni_da_creare = []
+    curr_date = d_inizio
+
+    while curr_date <= d_fine:
+        wd = curr_date.weekday()  # 0 = Lunedì, 6 = Domenica
+        str_wd = str(wd)
+        
+        is_active = False
+        ora_i = payload.ora_inizio_default
+        ora_f = payload.ora_fine_default
+
+        if str_wd in orari_diff:
+            cfg = orari_diff[str_wd]
+            if cfg.attivo:
+                is_active = True
+                if cfg.ora_inizio:
+                    ora_i = cfg.ora_inizio
+                if cfg.ora_fine:
+                    ora_f = cfg.ora_fine
+            else:
+                is_active = False
+        elif wd in giorni_abilitati:
+            is_active = True
+
+        if is_active:
+            if ora_i >= ora_f:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"L'ora di inizio ({ora_i}) deve essere precedente all'ora di fine ({ora_f}) per la data {curr_date.strftime('%d/%m/%Y')}."
+                )
+
+            lez = models.Calendario(
+                data=curr_date,
+                ora_inizio=ora_i,
+                ora_fine=ora_f,
+                id_modulo=payload.id_modulo,
+                id_utente=payload.id_utente,
+                id_corso_attivo=payload.id_corso_attivo,
+                note=payload.note
+            )
+            lezioni_da_creare.append(lez)
+
+        curr_date += timedelta(days=1)
+
+    if not lezioni_da_creare:
+        raise HTTPException(status_code=400, detail="Nessuna lezione generata per le opzioni selezionate.")
+
+    try:
+        db.add_all(lezioni_da_creare)
+        db.commit()
+        for l in lezioni_da_creare:
+            db.refresh(l)
+
+        totale_minuti = sum(
+            (l.ora_fine.hour * 60 + l.ora_fine.minute) - (l.ora_inizio.hour * 60 + l.ora_inizio.minute)
+            for l in lezioni_da_creare
+        )
+        totale_ore = round(totale_minuti / 60, 2)
+
+        return {
+            "lezioni_create": len(lezioni_da_creare),
+            "ore_totali": totale_ore,
+            "lezioni": lezioni_da_creare,
+            "messaggio": f"Generate con successo {len(lezioni_da_creare)} lezioni per un totale di {totale_ore}h."
+        }
+
+    except Exception as e:
+        db.rollback()
+        error_msg = extract_sql_error_message(e)
+        raise HTTPException(status_code=400, detail=error_msg)
+
+
 @app.get("/calendario/{id_lezione}", response_model=schemas.CalendarioResponse)
 def get_lezione(id_lezione: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
     """Restituisce una lezione specifica tramite ID."""
@@ -989,6 +1116,36 @@ def get_lezione(id_lezione: int, db: Session = Depends(get_db), current_user: mo
     if lezione is None:
         raise HTTPException(status_code=404, detail="Lezione non trovata")
     return lezione
+
+def ensure_piano_studio_associazione(id_corso_attivo: int, id_modulo: int, db: Session):
+    """
+    Assicura che l'associazione tra CorsoAttivo ed Unità Formativa del Modulo
+    esista nella tabella `corsi_attivi_unita_formative`.
+    Questo previene l'errore del trigger SQL del database per edizioni che non hanno
+    ancora il Piano Studio popolato manualmente.
+    """
+    if not id_modulo or not id_corso_attivo:
+        return
+    
+    modulo = db.query(models.Modulo).filter(models.Modulo.id_modulo == id_modulo).first()
+    if not modulo or not modulo.id_unita_formativa:
+        return
+    
+    id_uf = modulo.id_unita_formativa
+    assoc = db.query(models.CorsoAttivoUnitaFormativa).filter(
+        models.CorsoAttivoUnitaFormativa.id_corso_attivo == id_corso_attivo,
+        models.CorsoAttivoUnitaFormativa.id_unita_formativa == id_uf
+    ).first()
+
+    if not assoc:
+        nuova_assoc = models.CorsoAttivoUnitaFormativa(
+            id_corso_attivo=id_corso_attivo,
+            id_unita_formativa=id_uf,
+            ore_dedicate=100  # Default 100 ore per abilitare automaticamente la programmazione
+        )
+        db.add(nuova_assoc)
+        db.flush()
+
 
 def extract_sql_error_message(e: Exception) -> str:
     """Estrae un messaggio di errore chiaro e leggibile da eccezioni SQL e Trigger."""
@@ -1000,11 +1157,11 @@ def extract_sql_error_message(e: Exception) -> str:
         else:
             raw_str = str(orig)
     
-    # Cerca l'inizio di 'Errore:' o 'Errore in modifica:' fino a fine frase/virgolette
     import re
-    match = re.search(r"Errore[^'\"\r\n]*", raw_str, re.IGNORECASE)
+    # Cerca l'inizio del messaggio 'Errore...' fino a fine riga per preservare gli apostrofi (es. un'altra)
+    match = re.search(r"(Errore[^\r\n\t\(\)]+)", raw_str, re.IGNORECASE)
     if match:
-        clean = match.group(0).strip().rstrip("'\"`")
+        clean = match.group(1).strip().rstrip("'\"`")
         return clean
     
     if "foreign key constraint" in raw_str.lower():
@@ -1079,3 +1236,5 @@ def delete_lezione(id_lezione: int, db: Session = Depends(get_db), current_user:
     db.delete(lezione)
     db.commit()
     return {"message": "Lezione eliminata con successo"}
+
+
