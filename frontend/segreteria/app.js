@@ -427,6 +427,8 @@ function showToast(message, isError = false) {
 // -----------------------------------------
 // GESTIONE EDIZIONE (Modifica Edizione Corso)
 // -----------------------------------------
+let currentEditInitialPianoStudioUfIds = new Set();
+
 window.openEditEdizione = function(id, etichetta, dataInizio, dataFine, oreTeoria, oreStage, percAssenza, tollIng, tollUsc, idCorso) {
     document.getElementById('editEdizioneId').value = id;
     document.getElementById('editEdizioneIdCorso').value = idCorso;
@@ -444,7 +446,81 @@ window.openEditEdizione = function(id, etichetta, dataInizio, dataFine, oreTeori
     document.getElementById('editEdizioneDurataOre').value = t + s;
 
     openModal('editEdizioneModal');
+    loadEditEdizionePianoStudio(id);
 };
+
+async function loadEditEdizionePianoStudio(idCorsoAttivo) {
+    const container = document.getElementById('editEdizioneUfList');
+    if (!container) return;
+
+    container.innerHTML = '<div class="text-muted small py-2"><i class="bi bi-arrow-repeat spin me-2"></i>Caricamento Unità Formative...</div>';
+    currentEditInitialPianoStudioUfIds = new Set();
+
+    try {
+        const [resUf, resM, resPs] = await Promise.all([
+            fetchAutenticata(`${API_URL}/unita_formative`),
+            fetchAutenticata(`${API_URL}/moduli`),
+            fetchAutenticata(`${API_URL}/corsi-attivi/${idCorsoAttivo}/piano-studio`)
+        ]);
+
+        if (resUf.ok && resM.ok && resPs.ok) {
+            const allUf = await resUf.json();
+            const allM = await resM.json();
+            const existingPs = await resPs.json();
+
+            const existingPsMap = {};
+            existingPs.forEach(item => {
+                existingPsMap[item.id_unita_formativa] = item.ore_dedicate;
+                currentEditInitialPianoStudioUfIds.add(item.id_unita_formativa);
+            });
+
+            if (!allUf.length) {
+                container.innerHTML = '<div class="alert alert-light border small text-muted mb-0">Nessuna Unità Formativa a catalogo.</div>';
+                return;
+            }
+
+            container.innerHTML = allUf.map(uf => {
+                const ufModuli = allM.filter(m => m.id_unita_formativa === uf.id_unita_formativa);
+                const modCount = ufModuli.length;
+                const isChecked = existingPsMap.hasOwnProperty(uf.id_unita_formativa);
+                const oreVal = isChecked ? existingPsMap[uf.id_unita_formativa] : 0;
+
+                return `
+                    <div class="card p-2 border uf-item-card" style="background:#ffffff; border-radius:8px;">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input chk-edit-uf-piano" type="checkbox" value="${uf.id_unita_formativa}" id="chkEditUf_${uf.id_unita_formativa}" data-uf-id="${uf.id_unita_formativa}" ${isChecked ? 'checked' : ''}>
+                                <label class="form-check-label fw-bold text-dark small" for="chkEditUf_${uf.id_unita_formativa}">
+                                    ${uf.Nome}
+                                    <span class="badge bg-light text-secondary border ms-2 font-monospace" style="font-size:0.7rem;">${modCount} modul${modCount === 1 ? 'o' : 'i'}</span>
+                                </label>
+                            </div>
+                            <div class="d-flex align-items-center gap-2" style="max-width: 170px;">
+                                <label for="oreEditUf_${uf.id_unita_formativa}" class="small text-muted mb-0 fw-semibold" style="font-size:0.75rem;">Ore:</label>
+                                <input type="number" id="oreEditUf_${uf.id_unita_formativa}" class="form-control form-control-sm input-ore-edit-uf py-1" min="0" max="1000" value="${oreVal}" placeholder="Ore" ${isChecked ? '' : 'disabled'}>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.querySelectorAll('.chk-edit-uf-piano').forEach(chk => {
+                chk.addEventListener('change', (e) => {
+                    const ufId = e.target.dataset.ufId;
+                    const oreInput = document.getElementById(`oreEditUf_${ufId}`);
+                    if (oreInput) {
+                        oreInput.disabled = !e.target.checked;
+                    }
+                });
+            });
+        } else {
+            container.innerHTML = '<div class="text-danger small py-2">Impossibile caricare le Unità Formative.</div>';
+        }
+    } catch (e) {
+        console.error('Errore caricamento Piano Studio per modale:', e);
+        container.innerHTML = '<div class="text-danger small py-2">Errore di connessione.</div>';
+    }
+}
 
 // Event listener per la sottomissione del form di modifica edizione
 document.addEventListener('DOMContentLoaded', () => {
@@ -519,6 +595,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (res.ok) {
+                    // Sincronizza Piano Studio (Unità Formative) per l'Edizione
+                    const currentCheckedUfs = Array.from(document.querySelectorAll('.chk-edit-uf-piano:checked'));
+                    const currentCheckedIds = new Set(currentCheckedUfs.map(c => parseInt(c.value)));
+
+                    // 1. Salva/Aggiorna UF selezionate
+                    for (const chk of currentCheckedUfs) {
+                        const ufId = parseInt(chk.value);
+                        const oreInput = document.getElementById(`oreEditUf_${ufId}`);
+                        const oreVal = parseInt(oreInput ? oreInput.value : 0) || 0;
+
+                        try {
+                            await fetchAutenticata(`${API_URL}/piano-studio`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    id_corso_attivo: parseInt(id),
+                                    id_unita_formativa: ufId,
+                                    ore_dedicate: oreVal
+                                })
+                            });
+                        } catch (e) {
+                            console.error(`Errore salvataggio piano studio per UF #${ufId}:`, e);
+                        }
+                    }
+
+                    // 2. Rimuovi UF deselezionate
+                    for (const initialUfId of currentEditInitialPianoStudioUfIds) {
+                        if (!currentCheckedIds.has(initialUfId)) {
+                            try {
+                                await fetchAutenticata(`${API_URL}/piano-studio/${id}/${initialUfId}`, {
+                                    method: 'DELETE'
+                                });
+                            } catch (e) {
+                                console.error(`Errore eliminazione piano studio per UF #${initialUfId}:`, e);
+                            }
+                        }
+                    }
+
                     closeModal('editEdizioneModal');
                     showToast("Edizione aggiornata con successo.");
                     loadDashboardData();

@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                                 <div class="d-flex align-items-center gap-2" style="max-width: 200px;">
                                     <label for="oreUf_${uf.id_unita_formativa}" class="small text-muted mb-0 fw-semibold">Ore:</label>
-                                    <input type="number" id="oreUf_${uf.id_unita_formativa}" class="form-control form-control-sm input-ore-uf" min="1" max="1000" value="100" placeholder="Ore" disabled>
+                                    <input type="number" id="oreUf_${uf.id_unita_formativa}" class="form-control form-control-sm input-ore-uf" min="0" max="1000" value="0" placeholder="Ore" disabled>
                                 </div>
                             </div>
                         </div>
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const chk of checkedUfs) {
             const ufId = parseInt(chk.value);
             const oreInput = document.getElementById(`oreUf_${ufId}`);
-            const oreVal = parseInt(oreInput ? oreInput.value : 100) || 100;
+            const oreVal = parseInt(oreInput ? oreInput.value : 0) || 0;
 
             try {
                 await fetchAutenticata(`${API_URL}/piano-studio`, {
@@ -186,6 +186,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 4. Gestione Toggle Modalità
+    const sectionPianoStudioTitle = document.getElementById('sectionPianoStudioTitle');
+    const sectionPianoStudioContainer = document.getElementById('sectionPianoStudioContainer');
+
     function toggleMode() {
         if (modeNew.checked) {
             sectionNewCourse.style.display = 'block';
@@ -195,7 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (checkCreaEdizione) {
                 checkCreaEdizione.disabled = false;
-                sectionEdizioneContainer.style.display = checkCreaEdizione.checked ? 'block' : 'none';
+                const showEdiz = checkCreaEdizione.checked;
+                sectionEdizioneContainer.style.display = showEdiz ? 'block' : 'none';
+                if (sectionPianoStudioTitle) sectionPianoStudioTitle.style.display = showEdiz ? 'block' : 'none';
+                if (sectionPianoStudioContainer) sectionPianoStudioContainer.style.display = showEdiz ? 'block' : 'none';
             }
         } else {
             sectionNewCourse.style.display = 'none';
@@ -207,6 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 checkCreaEdizione.checked = true;
                 checkCreaEdizione.disabled = true;
                 sectionEdizioneContainer.style.display = 'block';
+                if (sectionPianoStudioTitle) sectionPianoStudioTitle.style.display = 'block';
+                if (sectionPianoStudioContainer) sectionPianoStudioContainer.style.display = 'block';
             }
         }
         updatePreview();

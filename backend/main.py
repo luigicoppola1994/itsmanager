@@ -1141,7 +1141,7 @@ def ensure_piano_studio_associazione(id_corso_attivo: int, id_modulo: int, db: S
         nuova_assoc = models.CorsoAttivoUnitaFormativa(
             id_corso_attivo=id_corso_attivo,
             id_unita_formativa=id_uf,
-            ore_dedicate=100  # Default 100 ore per abilitare automaticamente la programmazione
+            ore_dedicate=0
         )
         db.add(nuova_assoc)
         db.flush()
