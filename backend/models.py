@@ -59,6 +59,7 @@ class Utente(Base):
     Data_Nascita = Column("data_nascita", Date, nullable=True)
 
     Citta_Nascita = Column("citta_nascita", String(100), nullable=True)
+    Nazionalita = Column("nazionalita", String(100), nullable=True, default="Italiana")
     Provincia_Nascita = Column("provincia_nascita", String(2), nullable=True)
     Indirizzo_Residenza = Column("indirizzo_residenza", String(255), nullable=True)
     Citta_Residenza = Column("citta_residenza", String(100), nullable=True)
@@ -168,3 +169,14 @@ class Calendario(Base):
     modulo = relationship("Modulo", back_populates="lezioni")
     corso_attivo = relationship("CorsoAttivo", back_populates="lezioni")
     docente = relationship("Utente", foreign_keys=[id_utente])
+
+
+# --- Modello per la tabella Utenti - Corsi Attivi (Aula / Studenti iscritti al corso attivo) ---
+class UtenteCorsoAttivo(Base):
+    __tablename__ = "utenti_corsi_attivi"
+    id_utente = Column("id_utente", Integer, ForeignKey("utenti.id_utente"), primary_key=True)
+    id_corso_attivo = Column("id_corso_attivo", Integer, ForeignKey("corsi_attivi.id_corso_attivo"), primary_key=True)
+
+    utente = relationship("Utente", backref="corsi_frequentati")
+    corso_attivo = relationship("CorsoAttivo", backref="studenti_aula")
+

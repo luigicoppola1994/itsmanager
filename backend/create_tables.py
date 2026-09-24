@@ -72,6 +72,21 @@ def create_missing_tables():
         print("Creazione tabella 'corsi_attivi_unita_formative'...")
         conn.execute(text(SQL_CREATE_CORSI_ATTIVI_UNITA_FORMATIVE))
         print("  ✓ Tabella 'corsi_attivi_unita_formative' creata (o già esistente).")
+
+        print("Creazione tabella 'utenti_corsi_attivi'...")
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS `utenti_corsi_attivi` (
+                `id_utente` INT NOT NULL,
+                `id_corso_attivo` INT NOT NULL,
+                PRIMARY KEY (`id_utente`, `id_corso_attivo`),
+                CONSTRAINT `fk_uca_utente` FOREIGN KEY (`id_utente`) 
+                    REFERENCES `utenti` (`id_utente`) ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT `fk_uca_corso_attivo` FOREIGN KEY (`id_corso_attivo`) 
+                    REFERENCES `corsi_attivi` (`id_corso_attivo`) ON DELETE CASCADE ON UPDATE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """))
+        print("  ✓ Tabella 'utenti_corsi_attivi' creata (o già esistente).")
+
         
         # Verifica se la colonna id_modulo esiste già nel calendario
         result = conn.execute(text("""
@@ -118,6 +133,46 @@ def create_missing_tables():
                 print(f"  ⚠ Errore su corsi_attivi: {e}")
         else:
             print("  ✓ Colonna 'etichetta' già presente in 'corsi_attivi'.")
+
+        # Aggiunge la colonna 'nazionalita' a utenti se non esiste già
+        result = conn.execute(text("""
+            SELECT COUNT(*) as cnt 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+              AND TABLE_NAME = 'utenti' 
+              AND COLUMN_NAME = 'nazionalita'
+        """))
+        row = result.fetchone()
+        if row[0] == 0:
+            print("Aggiunta colonna 'nazionalita' alla tabella 'utenti'...")
+            try:
+                conn.execute(text("""
+                    ALTER TABLE `utenti`
+                    ADD COLUMN `nazionalita` VARCHAR(100) NULL DEFAULT 'Italiana' AFTER `citta_nascita`
+                """))
+                print("  ✓ Colonna 'nazionalita' aggiunta a 'utenti'.")
+            except Exception as e:
+                print(f"  ⚠ Errore su utenti (nazionalita): {e}")
+        else:
+            print("  ✓ Colonna 'nazionalita' già presente in 'utenti'.")
+
+        # Se la vecchia colonna 'nazione_nascita' esiste ancora, migra i dati e rimuovila
+        result_old = conn.execute(text("""
+            SELECT COUNT(*) as cnt 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+              AND TABLE_NAME = 'utenti' 
+              AND COLUMN_NAME = 'nazione_nascita'
+        """))
+        row_old = result_old.fetchone()
+        if row_old[0] > 0:
+            print("Migrazione da 'nazione_nascita' a 'nazionalita' e pulizia vecchia colonna...")
+            try:
+                conn.execute(text("UPDATE `utenti` SET `nazionalita` = `nazione_nascita` WHERE `nazione_nascita` IS NOT NULL AND `nazione_nascita` != ''"))
+                conn.execute(text("ALTER TABLE `utenti` DROP COLUMN `nazione_nascita`"))
+                print("  ✓ Colonna 'nazione_nascita' migrata e rimossa con successo.")
+            except Exception as e:
+                print(f"  ⚠ Errore rimozione nazione_nascita: {e}")
 
         conn.commit()
         print("\n✅ Tutte le tabelle sono state create con successo!")

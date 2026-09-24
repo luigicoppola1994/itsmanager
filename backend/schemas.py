@@ -52,6 +52,7 @@ class UtenteBase(BaseModel):
     Codice_Fiscale: Optional[str] = None
     Data_Nascita: Optional[str] = None    # Stringa ISO (es. "1990-05-15") o None
     Citta_Nascita: Optional[str] = None
+    Nazionalita: Optional[str] = None
     Provincia_Nascita: Optional[str] = None
     Indirizzo_Residenza: Optional[str] = None
     Citta_Residenza: Optional[str] = None
@@ -112,6 +113,7 @@ class UtenteUpdate(BaseModel):
     Codice_Fiscale: Optional[str] = None
     Data_Nascita: Optional[str] = None
     Citta_Nascita: Optional[str] = None
+    Nazionalita: Optional[str] = None
     Provincia_Nascita: Optional[str] = None
     Indirizzo_Residenza: Optional[str] = None
     Citta_Residenza: Optional[str] = None
@@ -228,6 +230,15 @@ class CorsoAttivoUnitaFormativaResponse(CorsoAttivoUnitaFormativaBase):
         from_attributes = True
 
 
+class CorsoAttivoPianoStudioSyncItem(BaseModel):
+    id_unita_formativa: int
+    ore_dedicate: int
+
+class CorsoAttivoPianoStudioSyncRequest(BaseModel):
+    items: List[CorsoAttivoPianoStudioSyncItem]
+
+
+
 # --- Schema per la tabella Calendario ---
 class CalendarioBase(BaseModel):
     data: date
@@ -264,4 +275,22 @@ class CalendarioSettimanaleCreate(BaseModel):
     giorni_attivi: Optional[List[int]] = [0, 1, 2, 3, 4]  # 0=Lunedì ... 4=Venerdì
     orari_differenziati: Optional[Dict[str, OrarioGiornoSettimana]] = None
     note: Optional[str] = None
+
+
+# --- Schemi per utenti_corsi_attivi (Aula / Studenti Corsi Attivi) ---
+class UtenteCorsoAttivoBase(BaseModel):
+    id_utente: int
+    id_corso_attivo: int
+
+class UtenteCorsoAttivoCreate(UtenteCorsoAttivoBase):
+    pass
+
+class UtenteCorsoAttivoResponse(UtenteCorsoAttivoBase):
+    utente: Optional[UtenteResponse] = None
+    class Config:
+        from_attributes = True
+
+class SyncAulaRequest(BaseModel):
+    studenti_ids: List[int]
+
 
