@@ -162,6 +162,11 @@ function renderCorsi(list) {
                             ${badgeStatusHtml}
 
                             <div class="d-flex gap-1 ms-1">
+                                <button class="btn-action-icon btn-aula-edizione me-1" title="Gestione Aula"
+                                    data-id="${e.id_corso_attivo}"
+                                    data-label="${encodeURIComponent(edizLabel)}">
+                                    <i class="bi bi-people-fill"></i>
+                                </button>
                                 <button class="btn-action-icon btn-edit-edizione me-1" title="Modifica Edizione"
                                     data-id="${e.id_corso_attivo}"
                                     data-etichetta="${encodeURIComponent(e.etichetta || '')}"
@@ -237,6 +242,7 @@ function renderCorsi(list) {
         const editBtn = e.target.closest('.btn-edit-corso');
         const deleteBtn = e.target.closest('.btn-delete-corso');
         const editEdizBtn = e.target.closest('.btn-edit-edizione');
+        const aulaBtn = e.target.closest('.btn-aula-edizione');
 
         if (editBtn) {
             e.stopPropagation();
@@ -262,6 +268,11 @@ function renderCorsi(list) {
                 editEdizBtn.dataset.tollusc,
                 editEdizBtn.dataset.idcorso
             );
+        } else if (aulaBtn) {
+            e.stopPropagation();
+            const id = aulaBtn.dataset.id;
+            const label = decodeURIComponent(aulaBtn.dataset.label);
+            window.openAulaModal(id, label);
         }
     }, false);
 }
@@ -698,6 +709,170 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// -----------------------------------------
+// GESTIONE AULA (Studenti nei Corsi Attivi)
+// -----------------------------------------
+
+let _aulaAllStudenti = []; // Cache globale di tutti gli studenti
+
+window.openAulaModal = async function(idCorsoAttivo, corsoLabel) {
+    document.getElementById('aulaEdizioneId').value = idCorsoAttivo;
+    document.getElementById('aulaCorsoTitolo').textContent = corsoLabel || `Edizione #${idCorsoAttivo}`;
+    document.getElementById('aulaStudentiCountBadge').innerHTML = '<i class="bi bi-person-check-fill me-1"></i> Caricamento...';
+    document.getElementById('aulaSearchInput').value = '';
+
+    const listEl = document.getElementById('aulaStudentiList');
+    listEl.innerHTML = '<div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Caricamento elenco studenti...</div>';
+
+    openModal('aulaModal');
+
+    try {
+        // Carica tutti gli studenti e l'aula corrente in parallelo
+        const [resStudenti, resAula] = await Promise.all([
+            fetchAutenticata(`${API_URL}/studenti`),
+            fetchAutenticata(`${API_URL}/corsi-attivi/${idCorsoAttivo}/aula`)
+        ]);
+
+        if (!resStudenti.ok || !resAula.ok) {
+            listEl.innerHTML = '<div class="text-danger text-center py-3"><i class="bi bi-exclamation-circle me-2"></i>Errore nel caricamento dati. Riprova.</div>';
+            return;
+        }
+
+        _aulaAllStudenti = await resStudenti.json();
+        const aulaStudenti = await resAula.json();
+
+        // Set degli ID già nell'aula
+        const aulaIds = new Set(aulaStudenti.map(s => s.id_utente));
+
+        renderAulaStudentiList(_aulaAllStudenti, aulaIds, listEl);
+        updateAulaCount();
+
+        // Filtro live searchbar
+        const searchInput = document.getElementById('aulaSearchInput');
+        searchInput.oninput = function() {
+            const q = this.value.toLowerCase().trim();
+            const filtered = q
+                ? _aulaAllStudenti.filter(s =>
+                    s.Cognome.toLowerCase().includes(q) ||
+                    s.Nome.toLowerCase().includes(q)
+                  )
+                : _aulaAllStudenti;
+            // Salva gli ID già spuntati prima di filtrare
+            const checked = new Set(
+                Array.from(document.querySelectorAll('.chk-aula-studente:checked'))
+                    .map(c => parseInt(c.value))
+            );
+            renderAulaStudentiList(filtered, checked, listEl);
+            updateAulaCount();
+        };
+
+        // Seleziona tutti
+        document.getElementById('btnAulaSelectAll').onclick = function() {
+            const q = document.getElementById('aulaSearchInput').value.toLowerCase().trim();
+            const filtered = q
+                ? _aulaAllStudenti.filter(s =>
+                    s.Cognome.toLowerCase().includes(q) || s.Nome.toLowerCase().includes(q))
+                : _aulaAllStudenti;
+            const filteredIds = new Set(filtered.map(s => s.id_utente));
+            document.querySelectorAll('.chk-aula-studente').forEach(chk => {
+                if (filteredIds.has(parseInt(chk.value))) chk.checked = true;
+            });
+            updateAulaCount();
+        };
+
+        // Deseleziona tutti
+        document.getElementById('btnAulaDeselectAll').onclick = function() {
+            const q = document.getElementById('aulaSearchInput').value.toLowerCase().trim();
+            const filtered = q
+                ? _aulaAllStudenti.filter(s =>
+                    s.Cognome.toLowerCase().includes(q) || s.Nome.toLowerCase().includes(q))
+                : _aulaAllStudenti;
+            const filteredIds = new Set(filtered.map(s => s.id_utente));
+            document.querySelectorAll('.chk-aula-studente').forEach(chk => {
+                if (filteredIds.has(parseInt(chk.value))) chk.checked = false;
+            });
+            updateAulaCount();
+        };
+
+        // Salva aula
+        document.getElementById('btnSaveAula').onclick = saveAulaChanges;
+
+    } catch (err) {
+        console.error('Errore openAulaModal:', err);
+        listEl.innerHTML = '<div class="text-danger text-center py-3"><i class="bi bi-exclamation-circle me-2"></i>Errore di connessione.</div>';
+    }
+};
+
+function renderAulaStudentiList(studenti, selectedIds, container) {
+    if (!studenti.length) {
+        container.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-person-x fs-3 d-block mb-2"></i>Nessuno studente trovato.</div>';
+        return;
+    }
+
+    container.innerHTML = studenti.map(s => {
+        const isChecked = selectedIds.has(s.id_utente);
+        const initials = `${s.Cognome.charAt(0)}${s.Nome.charAt(0)}`.toUpperCase();
+        return `
+            <label class="aula-student-row ${isChecked ? 'is-selected' : ''}" for="chkAula_${s.id_utente}">
+                <div class="aula-student-avatar">${initials}</div>
+                <div class="aula-student-info">
+                    <span class="aula-student-name">${s.Cognome} ${s.Nome}</span>
+                    <span class="aula-student-email">${s.Email || ''}</span>
+                </div>
+                <input class="chk-aula-studente" type="checkbox" id="chkAula_${s.id_utente}" value="${s.id_utente}" ${isChecked ? 'checked' : ''}>
+            </label>
+        `;
+    }).join('');
+
+    // Toggle classe is-selected al click
+    container.querySelectorAll('.chk-aula-studente').forEach(chk => {
+        chk.addEventListener('change', function() {
+            const row = this.closest('.aula-student-row');
+            if (row) row.classList.toggle('is-selected', this.checked);
+            updateAulaCount();
+        });
+    });
+}
+
+function updateAulaCount() {
+    const count = document.querySelectorAll('.chk-aula-studente:checked').length;
+    const badge = document.getElementById('aulaStudentiCountBadge');
+    if (badge) {
+        badge.innerHTML = `<i class="bi bi-person-check-fill me-1"></i> ${count} Student${count === 1 ? 'e' : 'i'} Assegnat${count === 1 ? 'o' : 'i'}`;
+    }
+}
+
+async function saveAulaChanges() {
+    const idCorsoAttivo = document.getElementById('aulaEdizioneId').value;
+    const checkedIds = Array.from(document.querySelectorAll('.chk-aula-studente:checked'))
+        .map(c => parseInt(c.value));
+
+    const btn = document.getElementById('btnSaveAula');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvataggio...';
+
+    try {
+        const res = await fetchAutenticata(`${API_URL}/corsi-attivi/${idCorsoAttivo}/aula`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ studenti_ids: checkedIds })
+        });
+
+        if (res.ok) {
+            closeModal('aulaModal');
+            showToast(`Aula aggiornata: ${checkedIds.length} student${checkedIds.length === 1 ? 'e' : 'i'} assegnat${checkedIds.length === 1 ? 'o' : 'i'}.`);
+        } else {
+            const err = await res.json().catch(() => ({}));
+            showToast(err.detail || 'Errore durante il salvataggio dell\'aula.', true);
+        }
+    } catch (err) {
+        showToast('Errore di connessione durante il salvataggio.', true);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Salva Aula';
+    }
+}
 
 // -----------------------------------------
 // HELPERS MODALI (compatibili con o senza Bootstrap JS)

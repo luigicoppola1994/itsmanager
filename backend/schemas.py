@@ -276,3 +276,21 @@ class CalendarioSettimanaleCreate(BaseModel):
     orari_differenziati: Optional[Dict[str, OrarioGiornoSettimana]] = None
     note: Optional[str] = None
 
+
+# --- Schemi per utenti_corsi_attivi (Aula / Studenti Corsi Attivi) ---
+class UtenteCorsoAttivoBase(BaseModel):
+    id_utente: int
+    id_corso_attivo: int
+
+class UtenteCorsoAttivoCreate(UtenteCorsoAttivoBase):
+    pass
+
+class UtenteCorsoAttivoResponse(UtenteCorsoAttivoBase):
+    utente: Optional[UtenteResponse] = None
+    class Config:
+        from_attributes = True
+
+class SyncAulaRequest(BaseModel):
+    studenti_ids: List[int]
+
+

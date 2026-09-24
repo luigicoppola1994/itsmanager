@@ -224,9 +224,23 @@ def logout(response: Response):
 # ==============================================================================
 @app.get("/users", response_model=List[schemas.UtenteResponse])
 def get_users(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
-    """Restituisce la lista di tutti gli utenti. Richiede autenticazione JWT."""
-    users = db.query(models.Utente).all()
+    """Restituisce la lista di tutti gli utenti ordinata alfabeticamente per Cognome e Nome. Richiede autenticazione JWT."""
+    users = db.query(models.Utente).order_by(
+        func.lower(models.Utente.Cognome).asc(),
+        func.lower(models.Utente.Nome).asc()
+    ).all()
     return users
+
+@app.get("/studenti", response_model=List[schemas.UtenteResponse])
+def get_studenti(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
+    """Restituisce la lista degli studenti (utenti con ruolo 'Studente'), ordinata alfabeticamente per Cognome e Nome."""
+    studenti = db.query(models.Utente).join(models.Ruolo).filter(
+        func.lower(models.Ruolo.Nome) == "studente"
+    ).order_by(
+        func.lower(models.Utente.Cognome).asc(),
+        func.lower(models.Utente.Nome).asc()
+    ).all()
+    return studenti
 
 @app.get("/users/{id_utente}", response_model=schemas.UtenteResponse)
 def get_user(id_utente: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -359,8 +373,8 @@ def delete_user(id_utente: int, db: Session = Depends(get_db), current_user: mod
 # --- Endpoint per i Ruoli ---
 @app.get("/ruoli", response_model=List[schemas.RuoloResponse])
 def get_ruoli(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
-    """Restituisce la lista di tutti i ruoli."""
-    return db.query(models.Ruolo).all()
+    """Restituisce la lista di tutti i ruoli ordinata alfabeticamente per Nome."""
+    return db.query(models.Ruolo).order_by(func.lower(models.Ruolo.Nome).asc()).all()
 
 @app.get("/ruoli/{id_ruolo}", response_model=schemas.RuoloResponse)
 def get_ruolo(id_ruolo: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -488,8 +502,8 @@ def valida_ediz_ore_e_date(
 # --- Endpoint per i Corsi ---
 @app.get("/corsi", response_model=List[schemas.CorsoResponse])
 def get_corsi(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
-    """Restituisce la lista di tutti i corsi."""
-    return db.query(models.Corso).all()
+    """Restituisce la lista di tutti i corsi ordinata alfabeticamente per Nome."""
+    return db.query(models.Corso).order_by(func.lower(models.Corso.Nome).asc()).all()
 
 @app.get("/corsi/{id_corso}", response_model=schemas.CorsoResponse)
 def get_corso(id_corso: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -777,11 +791,114 @@ def delete_corso_attivo(id_corso_attivo: int, db: Session = Depends(get_db), cur
         raise HTTPException(status_code=400, detail=handle_db_exception(e))
 
 
+# ==============================================================================
+# ENDPOINT PER L'AULA (STUDENTI NEI CORSI ATTIVI)
+# ==============================================================================
+
+@app.get("/corsi-attivi/{id_corso_attivo}/aula", response_model=List[schemas.UtenteResponse])
+def get_aula_corso_attivo(
+    id_corso_attivo: int,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """
+    Restituisce l'elenco degli studenti appartenenti all'Aula di un corso attivo.
+    Ordinato alfabeticamente per Cognome e Nome.
+    """
+    corso_attivo = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == id_corso_attivo).first()
+    if not corso_attivo:
+        raise HTTPException(status_code=404, detail="Corso attivo non trovato")
+
+    studenti_aula = db.query(models.Utente).join(
+        models.UtenteCorsoAttivo, models.Utente.id_utente == models.UtenteCorsoAttivo.id_utente
+    ).filter(
+        models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo
+    ).order_by(
+        func.lower(models.Utente.Cognome).asc(),
+        func.lower(models.Utente.Nome).asc()
+    ).all()
+    return studenti_aula
+
+@app.put("/corsi-attivi/{id_corso_attivo}/aula", response_model=List[schemas.UtenteResponse])
+def sync_aula_corso_attivo(
+    id_corso_attivo: int,
+    payload: schemas.SyncAulaRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """
+    Sincronizza l'Aula di un corso attivo (assegnazione o modifica degli studenti).
+    """
+    corso_attivo = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == id_corso_attivo).first()
+    if not corso_attivo:
+        raise HTTPException(status_code=404, detail="Corso attivo non trovato")
+
+    # Rimuovi associazioni correnti per questo corso attivo
+    db.query(models.UtenteCorsoAttivo).filter(models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo).delete()
+
+    # Inserisci le nuove associazioni
+    ids_unici = set(payload.studenti_ids)
+    for st_id in ids_unici:
+        utente = db.query(models.Utente).filter(models.Utente.id_utente == st_id).first()
+        if utente:
+            nuova_assoc = models.UtenteCorsoAttivo(id_utente=st_id, id_corso_attivo=id_corso_attivo)
+            db.add(nuova_assoc)
+
+    db.commit()
+
+    return get_aula_corso_attivo(id_corso_attivo=id_corso_attivo, db=db, current_user=current_user)
+
+@app.post("/corsi-attivi/{id_corso_attivo}/aula/{id_utente}")
+def add_studente_aula(
+    id_corso_attivo: int,
+    id_utente: int,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Assegna un singolo studente all'Aula di un corso attivo."""
+    corso_attivo = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == id_corso_attivo).first()
+    if not corso_attivo:
+        raise HTTPException(status_code=404, detail="Corso attivo non trovato")
+
+    utente = db.query(models.Utente).filter(models.Utente.id_utente == id_utente).first()
+    if not utente:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+
+    esistente = db.query(models.UtenteCorsoAttivo).filter(
+        models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo,
+        models.UtenteCorsoAttivo.id_utente == id_utente
+    ).first()
+
+    if not esistente:
+        nuova = models.UtenteCorsoAttivo(id_corso_attivo=id_corso_attivo, id_utente=id_utente)
+        db.add(nuova)
+        db.commit()
+
+    return {"message": "Studente assegnato all'Aula con successo"}
+
+@app.delete("/corsi-attivi/{id_corso_attivo}/aula/{id_utente}")
+def remove_studente_aula(
+    id_corso_attivo: int,
+    id_utente: int,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Rimuove un singolo studente dall'Aula di un corso attivo."""
+    assoc = db.query(models.UtenteCorsoAttivo).filter(
+        models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo,
+        models.UtenteCorsoAttivo.id_utente == id_utente
+    ).first()
+    if assoc:
+        db.delete(assoc)
+        db.commit()
+    return {"message": "Studente rimosso dall'Aula con successo"}
+
+
 # --- Endpoint per le Unità Formative ---
 @app.get("/unita_formative", response_model=List[schemas.UnitaFormativaResponse])
 def get_unita_formative(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
-    """Restituisce la lista di tutte le unità formative."""
-    return db.query(models.UnitaFormativa).all()
+    """Restituisce la lista di tutte le unità formative ordinata alfabeticamente per Nome."""
+    return db.query(models.UnitaFormativa).order_by(func.lower(models.UnitaFormativa.Nome).asc()).all()
 
 @app.get("/unita_formative/{id_unita_formativa}", response_model=schemas.UnitaFormativaResponse)
 def get_unita_formativa(id_unita_formativa: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -860,8 +977,8 @@ def proxy_comuni(q: str):
 # --- Endpoint per i Moduli ---
 @app.get("/moduli", response_model=List[schemas.ModuloResponse])
 def get_moduli(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
-    """Restituisce la lista di tutti i moduli."""
-    return db.query(models.Modulo).all()
+    """Restituisce la lista di tutti i moduli ordinata alfabeticamente per Nome."""
+    return db.query(models.Modulo).order_by(func.lower(models.Modulo.Nome).asc()).all()
 
 @app.get("/moduli/{id_modulo}", response_model=schemas.ModuloResponse)
 def get_modulo(id_modulo: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -1308,5 +1425,4 @@ def delete_lezione(id_lezione: int, db: Session = Depends(get_db), current_user:
     db.delete(lezione)
     db.commit()
     return {"message": "Lezione eliminata con successo"}
-
 

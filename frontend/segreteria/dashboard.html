@@ -289,6 +289,62 @@
         </div>
     </div>
 
+    <!-- MODAL: GESTIONE AULA (STUDENTI CORSO ATTIVO) -->
+    <div class="modal fade" id="aulaModal" tabindex="-1" aria-labelledby="aulaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="aulaModalLabel">
+                        <i class="bi bi-people-fill me-2"></i>Gestione Aula & Studenti
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="aulaEdizioneId">
+                    
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark" id="aulaCorsoTitolo">Nome Edizione Corso</h6>
+                            <small class="text-muted">Seleziona o deseleziona gli studenti per aggiungerli o rimuoverli dall'aula del corso attivo.</small>
+                        </div>
+                        <span class="badge bg-primary px-3 py-2 fs-6 rounded-pill" id="aulaStudentiCountBadge">
+                            <i class="bi bi-person-check-fill me-1"></i> 0 Studenti Assegnati
+                        </span>
+                    </div>
+
+                    <!-- BARRA RICERCA STUDENTI -->
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" id="aulaSearchInput" class="form-control border-start-0" placeholder="Filtra studente per cognome o nome...">
+                        </div>
+                    </div>
+
+                    <!-- SELEZIONA TUTTI / DESELEZIONA TUTTI -->
+                    <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                        <div class="small fw-semibold text-secondary">Elenco Studenti (Ordinamento Alfabetico)</div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 fw-semibold" id="btnAulaSelectAll">Seleziona Tutti</button>
+                            <span class="text-muted">|</span>
+                            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 fw-semibold text-danger" id="btnAulaDeselectAll">Deseleziona Tutti</button>
+                        </div>
+                    </div>
+
+                    <!-- LISTA STUDENTI CON CHECKBOX -->
+                    <div id="aulaStudentiList" class="border rounded-3 p-3 bg-light" style="max-height: 340px; overflow-y: auto;">
+                        <div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Caricamento elenco studenti...</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary fw-semibold px-4" data-bs-dismiss="modal">Annulla</button>
+                    <button type="button" class="btn btn-primary fw-bold px-4" id="btnSaveAula">
+                        <i class="bi bi-check-circle-fill me-1"></i> Salva Aula
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICHE -->
     <div class="toast" id="toast">Operazione completata!</div>
 

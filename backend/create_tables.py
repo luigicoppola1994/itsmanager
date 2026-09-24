@@ -72,6 +72,21 @@ def create_missing_tables():
         print("Creazione tabella 'corsi_attivi_unita_formative'...")
         conn.execute(text(SQL_CREATE_CORSI_ATTIVI_UNITA_FORMATIVE))
         print("  ✓ Tabella 'corsi_attivi_unita_formative' creata (o già esistente).")
+
+        print("Creazione tabella 'utenti_corsi_attivi'...")
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS `utenti_corsi_attivi` (
+                `id_utente` INT NOT NULL,
+                `id_corso_attivo` INT NOT NULL,
+                PRIMARY KEY (`id_utente`, `id_corso_attivo`),
+                CONSTRAINT `fk_uca_utente` FOREIGN KEY (`id_utente`) 
+                    REFERENCES `utenti` (`id_utente`) ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT `fk_uca_corso_attivo` FOREIGN KEY (`id_corso_attivo`) 
+                    REFERENCES `corsi_attivi` (`id_corso_attivo`) ON DELETE CASCADE ON UPDATE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """))
+        print("  ✓ Tabella 'utenti_corsi_attivi' creata (o già esistente).")
+
         
         # Verifica se la colonna id_modulo esiste già nel calendario
         result = conn.execute(text("""
