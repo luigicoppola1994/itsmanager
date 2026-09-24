@@ -184,7 +184,7 @@ button:active {
     gap: 6px;
 }
 
-.badge {
+.user-card .badge {
     position: absolute;
     top: 20px;
     right: 20px;

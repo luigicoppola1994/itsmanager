@@ -59,6 +59,7 @@ class Utente(Base):
     Data_Nascita = Column("data_nascita", Date, nullable=True)
 
     Citta_Nascita = Column("citta_nascita", String(100), nullable=True)
+    Provincia_Nascita = Column("provincia_nascita", String(2), nullable=True)
     Indirizzo_Residenza = Column("indirizzo_residenza", String(255), nullable=True)
     Citta_Residenza = Column("citta_residenza", String(100), nullable=True)
     Cap_Residenza = Column("cap_residenza", String(10), nullable=True)
@@ -91,9 +92,9 @@ class Utente(Base):
 
 # --- Modello per la tabella Corsi ---
 class Corso(Base):
-    __tablename__ = "corsi"
+    __tablename__ = "corso"
     id_corso = Column("id_corso", Integer, primary_key=True, index=True)
-    Nome = Column("nome", String(255), nullable=False)
+    Nome = Column("nome", String(255), unique=True, nullable=False)
     Descrizione = Column("descrizione", Text, nullable=True)
 
     corsi_attivi = relationship("CorsoAttivo", back_populates="corso")
@@ -103,7 +104,8 @@ class Corso(Base):
 class CorsoAttivo(Base):
     __tablename__ = "corsi_attivi"
     id_corso_attivo = Column("id_corso_attivo", Integer, primary_key=True, index=True)
-    id_corso = Column("id_corso", Integer, ForeignKey("corsi.id_corso"), nullable=False)
+    id_corso = Column("id_corso", Integer, ForeignKey("corso.id_corso"), nullable=False)
+    etichetta = Column("etichetta", String(100), nullable=True)  # es. 'Gruppo A', 'Turno Mattina'
     data_inizio = Column("data_inizio", Date, nullable=True)
     data_fine = Column("data_fine", Date, nullable=True)
     durata_ore = Column("durata_ore", Integer, nullable=True)
@@ -120,7 +122,7 @@ class CorsoAttivo(Base):
 
 # --- Modello per la tabella Unita Formative ---
 class UnitaFormativa(Base):
-    __tablename__ = "unita_formative"
+    __tablename__ = "unita_formativa"
     id_unita_formativa = Column("id_unita_formativa", Integer, primary_key=True, index=True)
     Nome = Column("nome", String(255), nullable=False)
     Descrizione = Column("descrizione", Text, nullable=True)
@@ -130,14 +132,25 @@ class UnitaFormativa(Base):
 
 # --- Modello per la tabella Moduli ---
 class Modulo(Base):
-    __tablename__ = "moduli"
+    __tablename__ = "modulo"
     id_modulo = Column("id_modulo", Integer, primary_key=True, index=True)
     Nome = Column("nome", String(255), nullable=False)
     Descrizione = Column("descrizione", Text, nullable=True)
-    id_unita_formativa = Column("id_unita_formativa", Integer, ForeignKey("unita_formative.id_unita_formativa"), nullable=False)
+    id_unita_formativa = Column("id_unita_formativa", Integer, ForeignKey("unita_formativa.id_unita_formativa"), nullable=False)
 
     unita_formativa = relationship("UnitaFormativa", back_populates="moduli")
     lezioni = relationship("Calendario", back_populates="modulo")
+
+
+# --- Modello per la tabella Corsi Attivi - Unità Formative (Piano Studio) ---
+class CorsoAttivoUnitaFormativa(Base):
+    __tablename__ = "corsi_attivi_unita_formative"
+    id_corso_attivo = Column("id_corso_attivo", Integer, ForeignKey("corsi_attivi.id_corso_attivo"), primary_key=True)
+    id_unita_formativa = Column("id_unita_formativa", Integer, ForeignKey("unita_formativa.id_unita_formativa"), primary_key=True)
+    ore_dedicate = Column("ore_dedicate", Integer, nullable=False)
+
+    corso_attivo = relationship("CorsoAttivo", backref="piano_studio")
+    unita_formativa = relationship("UnitaFormativa")
 
 
 # --- Modello per la tabella Calendario ---
@@ -147,7 +160,7 @@ class Calendario(Base):
     data = Column("data", Date, nullable=False)
     ora_inizio = Column("ora_inizio", Time, nullable=False)
     ora_fine = Column("ora_fine", Time, nullable=False)
-    id_modulo = Column("id_modulo", Integer, ForeignKey("moduli.id_modulo"), nullable=True)
+    id_modulo = Column("id_modulo", Integer, ForeignKey("modulo.id_modulo"), nullable=True)
     id_utente = Column("id_utente", Integer, ForeignKey("utenti.id_utente"), nullable=True)
     id_corso_attivo = Column("id_corso_attivo", Integer, ForeignKey("corsi_attivi.id_corso_attivo"), nullable=False)
     note = Column("note", Text, nullable=True)

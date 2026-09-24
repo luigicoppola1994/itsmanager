@@ -14,9 +14,25 @@
 # 3. Crea una classe Response (per le risposte GET) che aggiunge i campi del DB (es. id)
 # ==============================================================================
 
-from pydantic import BaseModel  # Classe base di Pydantic per tutti gli schemi
-from typing import Optional     # Permette di dichiarare campi opzionali (possono essere None)
+from __future__ import annotations
+from pydantic import BaseModel, model_validator  # Classe base di Pydantic e validatore per gli schemi
+from typing import Optional, List, Dict     # Permette di dichiarare campi opzionali, liste e dizionari
 from datetime import date, time  # Tipo date e time per i campi data/orario
+
+
+# --- Schema per la tabella Ruoli ---
+class RuoloBase(BaseModel):
+    Nome: str
+    Descrizione: Optional[str] = None
+
+class RuoloCreate(RuoloBase):
+    pass
+
+class RuoloResponse(RuoloBase):
+    id_ruolo: int
+    class Config:
+        from_attributes = True
+
 
 
 # ------------------------------------------------------------------------------
@@ -36,6 +52,7 @@ class UtenteBase(BaseModel):
     Codice_Fiscale: Optional[str] = None
     Data_Nascita: Optional[str] = None    # Stringa ISO (es. "1990-05-15") o None
     Citta_Nascita: Optional[str] = None
+    Provincia_Nascita: Optional[str] = None
     Indirizzo_Residenza: Optional[str] = None
     Citta_Residenza: Optional[str] = None
     Cap_Residenza: Optional[str] = None
@@ -71,10 +88,37 @@ class UtenteCreate(UtenteBase):
 class UtenteResponse(UtenteBase):
     id_utente: int             # ID generato automaticamente dal database
     Primo_Accesso: Optional[bool] = None
+    # Override: il DB restituisce datetime.date, non una stringa
+    Data_Nascita: Optional[date] = None
+    ruolo: Optional[RuoloResponse] = None
 
     class Config:
         from_attributes = True  # Necessario per convertire oggetti SQLAlchemy in Pydantic
                                 # (in versioni vecchie si chiamava orm_mode = True)
+
+
+# ------------------------------------------------------------------------------
+# SCHEMA AGGIORNAMENTO: UtenteUpdate
+# Usato come tipo nei metodi PUT per aggiornare un utente esistente.
+# Tutti i campi sono opzionali; la password viene aggiornata solo se specificata.
+# ------------------------------------------------------------------------------
+class UtenteUpdate(BaseModel):
+    Nome: Optional[str] = None
+    Cognome: Optional[str] = None
+    Email: Optional[str] = None
+    Password: Optional[str] = None
+    id_ruolo: Optional[int] = None
+    Genere: Optional[str] = None
+    Codice_Fiscale: Optional[str] = None
+    Data_Nascita: Optional[str] = None
+    Citta_Nascita: Optional[str] = None
+    Provincia_Nascita: Optional[str] = None
+    Indirizzo_Residenza: Optional[str] = None
+    Citta_Residenza: Optional[str] = None
+    Cap_Residenza: Optional[str] = None
+    Provincia_Residenza: Optional[str] = None
+    Telefono: Optional[str] = None
+    Primo_Accesso: Optional[bool] = None
 
 
 # ==============================================================================
@@ -82,20 +126,6 @@ class UtenteResponse(UtenteBase):
 # Sotto questo commento, aggiungi schemi per le altre tabelle del DB.
 # Segui il pattern Base/Create/Response per ogni entità.
 # ==============================================================================
-
-
-# --- Schema per la tabella Ruoli ---
-class RuoloBase(BaseModel):
-    Nome: str
-    Descrizione: Optional[str] = None
-
-class RuoloCreate(RuoloBase):
-    pass
-
-class RuoloResponse(RuoloBase):
-    id_ruolo: int
-    class Config:
-        from_attributes = True
 
 
 # --- Schema per la tabella Corsi ---
@@ -115,6 +145,7 @@ class CorsoResponse(CorsoBase):
 # --- Schema per la tabella Corsi Attivi ---
 class CorsoAttivoBase(BaseModel):
     id_corso: int
+    etichetta: Optional[str] = None  # es. 'Gruppo A', 'Turno Mattina'
     data_inizio: Optional[date] = None
     data_fine: Optional[date] = None
     durata_ore: Optional[int] = None
@@ -139,6 +170,16 @@ class UnitaFormativaBase(BaseModel):
     Nome: str
     Descrizione: Optional[str] = None
 
+    @model_validator(mode='before')
+    @classmethod
+    def handle_column_names(cls, data):
+        if isinstance(data, dict):
+            if 'nome' in data and 'Nome' not in data:
+                data['Nome'] = data['nome']
+            if 'descrizione' in data and 'Descrizione' not in data:
+                data['Descrizione'] = data['descrizione']
+        return data
+
 class UnitaFormativaCreate(UnitaFormativaBase):
     pass
 
@@ -154,11 +195,35 @@ class ModuloBase(BaseModel):
     Descrizione: Optional[str] = None
     id_unita_formativa: int
 
+    @model_validator(mode='before')
+    @classmethod
+    def handle_column_names(cls, data):
+        if isinstance(data, dict):
+            if 'nome' in data and 'Nome' not in data:
+                data['Nome'] = data['nome']
+            if 'descrizione' in data and 'Descrizione' not in data:
+                data['Descrizione'] = data['descrizione']
+        return data
+
 class ModuloCreate(ModuloBase):
     pass
 
 class ModuloResponse(ModuloBase):
     id_modulo: int
+    class Config:
+        from_attributes = True
+
+
+# --- Schema per Corsi Attivi - Unità Formative (Piano Studio) ---
+class CorsoAttivoUnitaFormativaBase(BaseModel):
+    id_corso_attivo: int
+    id_unita_formativa: int
+    ore_dedicate: int
+
+class CorsoAttivoUnitaFormativaCreate(CorsoAttivoUnitaFormativaBase):
+    pass
+
+class CorsoAttivoUnitaFormativaResponse(CorsoAttivoUnitaFormativaBase):
     class Config:
         from_attributes = True
 
@@ -180,3 +245,23 @@ class CalendarioResponse(CalendarioBase):
     id: int
     class Config:
         from_attributes = True
+
+
+class OrarioGiornoSettimana(BaseModel):
+    attivo: bool = True
+    ora_inizio: Optional[time] = None
+    ora_fine: Optional[time] = None
+
+class CalendarioSettimanaleCreate(BaseModel):
+    id_corso_attivo: int
+    id_modulo: int
+    id_utente: int
+    data_inizio: date
+    data_fine: Optional[date] = None
+    numero_settimane: Optional[int] = 1
+    ora_inizio_default: time
+    ora_fine_default: time
+    giorni_attivi: Optional[List[int]] = [0, 1, 2, 3, 4]  # 0=Lunedì ... 4=Venerdì
+    orari_differenziati: Optional[Dict[str, OrarioGiornoSettimana]] = None
+    note: Optional[str] = None
+

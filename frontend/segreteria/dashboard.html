@@ -1,31 +1,270 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITS Manager - Segreteria</title>
+    <title>ITS Manager - Segreteria | Gestione Corsi</title>
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../shared/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="../assets/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Custom Segreteria CSS -->
+    <link rel="stylesheet" href="../shared/styles.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=3.0">
 </head>
 <body>
-    <div id="appContainer" class="container">
-        <button id="logoutBtn" style="width: auto; padding: 8px 16px; margin-bottom: 20px; background: var(--danger); float: right;">Logout</button>
-        <header style="clear: both;">
-            <h1>Dashboard Segreteria</h1>
-            <p class="subtitle">ITS Smart Management System | Ruolo: SEGRETERIA</p>
-        </header>
 
-        <div class="empty-state">
-            <h3>Funzionalità in arrivo</h3>
-            <p>Area Segreteria in fase di sviluppo.</p>
+    <div class="app-wrapper">
+        <!-- SIDEBAR A SINISTRA -->
+        <aside class="sidebar">
+            <!-- LOGO IN ALTO -->
+            <div class="sidebar-header">
+                <div class="sidebar-brand-block">
+                    <div class="sidebar-logo-container">
+                        <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo" class="sidebar-logo-img">
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <h2 class="sidebar-brand-title">ITS MANAGER</h2>
+                        <span class="sidebar-brand-subtitle">Gestionale Didattico</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROFILO UTENTE -->
+            <div class="sidebar-user">
+                <div class="user-avatar-small">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">Segreteria Didattica</div>
+                    <span class="user-role-badge">SEGRETERIA</span>
+                </div>
+            </div>
+
+            <!-- MENU DI NAVIGAZIONE -->
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="dashboard.html" class="nav-item-link active" id="navCorsi" title="Corsi"><i class="bi bi-journal-bookmark-fill"></i><span class="nav-label">Corsi</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" title="Piano Didattico"><i class="bi bi-book-half"></i><span class="nav-label">Piano Didattico</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="utenze.html" class="nav-item-link" id="navUtenze" title="Utenze"><i class="bi bi-people-fill"></i><span class="nav-label">Utenze</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="calendario.html" class="nav-item-link" id="navCalendario" title="Calendario"><i class="bi bi-calendar3"></i><span class="nav-label">Calendario</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- PULSANTE LOGOUT IN BASSO -->
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Disconnetti</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- AREA CONTENUTO PRINCIPALE (A DESTRA) -->
+        <main class="main-content">
+            <!-- RUBICK TOP BAR -->
+            <div class="rubick-top-bar">
+                <nav class="rubick-breadcrumb" aria-label="breadcrumb">
+                    <span class="breadcrumb-root"><i class="bi bi-mortarboard-fill me-1 text-primary"></i>ITS Manager</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-section">Segreteria</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-current">Corsi</span>
+                </nav>
+                <div class="rubick-top-bar-actions">
+                    <div class="rubick-quick-search">
+                        <input type="text" id="topNavSearch" placeholder="Cerca nel portale..." oninput="const s = document.getElementById('searchInput'); if(s) { s.value = this.value; s.dispatchEvent(new Event('input')); }">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <div class="rubick-icon-badge" title="Notifiche">
+                        <i class="bi bi-bell"></i>
+                        <span class="rubick-badge-dot"></span>
+                    </div>
+                    <div class="rubick-user-avatar" title="Segreteria Didattica">
+                        SD
+                    </div>
+                </div>
+            </div>
+
+            <!-- BARRA SUPERIORE CON TITOLO, SEARCHBAR E BOTTONE AGGIUNGI CORSO -->
+            <div class="top-action-bar">
+                <div class="page-header-info">
+                    <h1>
+                        <i class="bi bi-journal-check text-primary"></i>
+                        Gestione Corsi
+                    </h1>
+                    <p>Panoramica completa dei corsi e delle edizioni attive dell'Istituto</p>
+                </div>
+
+                <div class="header-controls">
+                    <!-- SEARCHBAR -->
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Cerca corso per nome o codice...">
+                        <i class="bi bi-search"></i>
+                    </div>
+
+                    <!-- PULSANTE AGGIUNGI CORSO IN ALTO A DESTRA -->
+                    <a href="nuovo-corso.html" class="btn-add-course" style="text-decoration: none;">
+                        <i class="bi bi-plus-circle-fill fs-5"></i>
+                        <span>Aggiungi corso</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- GRID DELLE CARDS DEI CORSI -->
+            <div class="courses-grid" id="coursesGrid">
+                <!-- LE CARDS VENGONO GENERATE DINAMICAMENTE DA JS O MOSTRATE GRAFICAMENTE -->
+            </div>
+        </main>
+    </div>
+
+
+
+    <!-- MODAL: MODIFICA CORSO (ANAGRAFICA) -->
+    <div class="modal fade" id="editCorsoModal" tabindex="-1" aria-labelledby="editCorsoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCorsoModalLabel"><i class="bi bi-pencil-square text-primary me-2"></i>Modifica Corso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editCorsoForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="editCorsoId">
+                        <div class="mb-3">
+                            <label for="editCorsoNome" class="form-label fw-bold">Nome del Corso <span class="text-danger">*</span></label>
+                            <input type="text" id="editCorsoNome" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCorsoDescrizione" class="form-label fw-bold">Descrizione</label>
+                            <textarea id="editCorsoDescrizione" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Annulla</button>
+                        <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSaveCorso">Salva Modifiche</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
+    <!-- MODAL: MODIFICA EDIZIONE CORSO (CORSO ATTIVO) -->
+    <div class="modal fade" id="editEdizioneModal" tabindex="-1" aria-labelledby="editEdizioneModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editEdizioneModalLabel"><i class="bi bi-pencil-square text-primary me-2"></i>Modifica Edizione Corso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editEdizioneForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="editEdizioneId">
+                        <input type="hidden" id="editEdizioneIdCorso">
+                        
+                        <div class="mb-3">
+                            <label for="editEdizioneEtichetta" class="form-label fw-bold">Etichetta Edizione</label>
+                            <input type="text" id="editEdizioneEtichetta" class="form-control" placeholder="Es. Gruppo A, Turno Mattina...">
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="editEdizioneDataInizio" class="form-label fw-bold">Data Inizio <span class="text-danger">*</span></label>
+                                <input type="date" id="editEdizioneDataInizio" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editEdizioneDataFine" class="form-label fw-bold">Data Fine <span class="text-danger">*</span></label>
+                                <input type="date" id="editEdizioneDataFine" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="editEdizioneOreTeoria" class="form-label fw-bold">Ore Aula <span class="text-danger">*</span></label>
+                                <input type="number" id="editEdizioneOreTeoria" class="form-control" min="1" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editEdizioneOreStage" class="form-label fw-bold">Ore Stage <span class="text-danger">*</span></label>
+                                <input type="number" id="editEdizioneOreStage" class="form-control" min="0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editEdizioneDurataOre" class="form-label fw-bold">Ore Totali</label>
+                                <input type="number" id="editEdizioneDurataOre" class="form-control bg-light fw-bold" readonly disabled tabindex="-1">
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="editEdizionePercAssenza" class="form-label fw-bold">% Assenza Max</label>
+                                <div class="input-group">
+                                    <input type="number" id="editEdizionePercAssenza" class="form-control" min="0" max="30" required>
+                                    <span class="input-group-text bg-light">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editEdizioneTollIngresso" class="form-label fw-bold">Toll. Ingresso</label>
+                                <div class="input-group">
+                                    <input type="number" id="editEdizioneTollIngresso" class="form-control" min="0" max="30" required>
+                                    <span class="input-group-text bg-light">min</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editEdizioneTollUscita" class="form-label fw-bold">Toll. Uscita</label>
+                                <div class="input-group">
+                                    <input type="number" id="editEdizioneTollUscita" class="form-control" min="0" max="45" required>
+                                    <span class="input-group-text bg-light">min</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SEZIONE PIANO STUDIO (UNITA FORMATIVE & ORE DEDICATE) -->
+                        <div class="mt-4 pt-3 border-top">
+                            <label class="form-label fw-bold text-dark mb-1">
+                                <i class="bi bi-book-half text-primary me-1"></i> Piano Studio Edizione (Unità Formative & Ore Dedicate)
+                            </label>
+                            <p class="small text-muted mb-2">
+                                Seleziona le Unità Formative collegate a questa edizione del corso ed indica le ore dedicate.
+                            </p>
+                            <div id="editEdizioneUfList" class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+                                <div class="text-muted small py-2"><i class="bi bi-arrow-repeat spin me-2"></i>Caricamento Unità Formative...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Annulla</button>
+                        <button type="submit" class="btn btn-primary fw-bold px-4" id="btnSaveEdizione">Salva Modifiche</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICHE -->
     <div class="toast" id="toast">Operazione completata!</div>
 
+    <!-- Bootstrap JS Bundle (deve essere caricato PRIMA di auth.js e app.js) -->
+    <script src="../assets/bootstrap.bundle.min.js"></script>
+
+    <!-- Scripts Autenticazione e Logica Segreteria -->
     <script src="../shared/auth.js"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=2.1"></script>
 </body>
 </html>
+
+
+

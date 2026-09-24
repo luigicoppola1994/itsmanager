@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITS Manager - Segreteria | Calendario Didattico</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="../assets/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- FullCalendar 6 Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+    <!-- Custom Segreteria CSS -->
+    <link rel="stylesheet" href="../shared/styles.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=3.0">
+
+    <style>
+        /* ── EDITION PICKER SCREEN ── */
+        #editionPickerScreen {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .edition-picker-hero {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #3b82f6 100%);
+            border-radius: 20px;
+            padding: 40px 48px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            box-shadow: 0 20px 60px rgba(37, 99, 235, 0.3);
+        }
+
+        .edition-picker-hero-icon {
+            width: 72px;
+            height: 72px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .edition-picker-hero h2 {
+            font-size: 1.9rem;
+            font-weight: 800;
+            margin: 0 0 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .edition-picker-hero p {
+            margin: 0;
+            opacity: 0.85;
+            font-size: 1rem;
+        }
+
+        .step-card {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px 28px;
+            box-shadow: 0 4px 24px rgba(15, 23, 42, 0.05);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .step-card.active {
+            border-color: #2563eb;
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.12);
+        }
+
+        .step-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .step-badge-primary { background: #eff6ff; color: #1d4ed8; }
+        .step-badge-secondary { background: #f1f5f9; color: #64748b; }
+
+        .step-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .step-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 4px 0 0;
+        }
+
+        /* Corso Cards Grid */
+        #corsiGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+
+        .corso-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: all 0.22s ease;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .corso-card:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12);
+        }
+
+        .corso-card.selected {
+            border-color: #2563eb;
+            background: #eff6ff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .corso-card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .corso-card-name {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 0.95rem;
+            line-height: 1.3;
+        }
+
+        .corso-card-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        /* Edizione Rows */
+        #edizioniGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+        }
+
+        .edizione-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.22s;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .edizione-card:hover {
+            border-color: #059669;
+            background: #f0fdf4;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(5, 150, 105, 0.1);
+        }
+
+        .edizione-card.selected {
+            border-color: #059669;
+            background: #f0fdf4;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+        }
+
+        .edizione-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .edizione-info .edizione-label {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 0.9rem;
+        }
+
+        .edizione-dates {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-top: 2px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .date-chip {
+            background: #e2e8f0;
+            border-radius: 4px;
+            padding: 1px 7px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        /* ── CALENDAR SCREEN ── */
+        #calendarScreen {
+            display: none;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* Edition Banner */
+        .edition-banner {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1d4ed8 100%);
+            border-radius: 16px;
+            padding: 18px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(15, 23, 42, 0.2);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .edition-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .edition-banner-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .edition-banner-corso {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.65);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .edition-banner-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: white;
+            margin: 2px 0 0;
+            letter-spacing: -0.3px;
+        }
+
+        .edition-period-chips {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .period-chip {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 8px;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-change-edition {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: white;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .btn-change-edition:hover {
+            background: rgba(255,255,255,0.22);
+        }
+
+        /* Calendar Layout */
+        .calendar-layout {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @media (max-width: 1100px) {
+            .calendar-layout {
+                grid-template-columns: 1fr;
+            }
+            #oreSidebar {
+                order: -1;
+            }
+        }
+
+        /* Main Calendar Card */
+        .calendar-main-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(15, 23, 42, 0.05);
+        }
+
+        /* Sidebar ORE */
+        #oreSidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ore-sidebar-header {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            border-radius: 14px;
+            padding: 16px 18px;
+            color: white;
+        }
+
+        .ore-sidebar-header h3 {
+            font-size: 0.88rem;
+            font-weight: 700;
+            margin: 0 0 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .ore-sidebar-header p {
+            font-size: 0.75rem;
+            opacity: 0.6;
+            margin: 0;
+        }
+
+        .docente-filter-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .docente-filter-card label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .uf-budget-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .uf-budget-card-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .uf-ore-item {
+            margin-bottom: 12px;
+        }
+
+        .uf-ore-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .uf-ore-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .uf-ore-count {
+            font-size: 0.72rem;
+            color: #64748b;
+            font-weight: 500;
+            white-space: nowrap;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+
+        .uf-ore-bar {
+            height: 6px;
+            background: #f1f5f9;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .uf-ore-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.4s ease;
+        }
+
+        .uf-ore-bar-fill.ok { background: linear-gradient(90deg, #059669, #10b981); }
+        .uf-ore-bar-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .uf-ore-bar-fill.full { background: linear-gradient(90deg, #dc2626, #ef4444); }
+
+        /* FullCalendar Styles */
+        .fc { font-family: inherit; }
+
+        .fc-toolbar { margin-bottom: 18px !important; gap: 10px; }
+
+        .fc-toolbar-title {
+            font-size: 1.3rem !important;
+            font-weight: 800 !important;
+            color: #1e293b;
+            letter-spacing: -0.3px;
+            text-transform: capitalize;
+        }
+
+        .fc-button-group {
+            background: #f1f5f9;
+            padding: 3px;
+            border-radius: 8px;
+            display: inline-flex;
+            gap: 2px;
+        }
+
+        .fc-button-primary {
+            background: transparent !important;
+            border: none !important;
+            color: #475569 !important;
+            font-weight: 600 !important;
+            font-size: 0.8rem !important;
+            padding: 5px 12px !important;
+            border-radius: 6px !important;
+            text-transform: capitalize !important;
+            box-shadow: none !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .fc-button-primary:hover { background: #e2e8f0 !important; color: #0f172a !important; }
+
+        .fc-button-primary.fc-button-active,
+        .fc-button-primary:active {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+        }
+
+        .fc-col-header-cell {
+            background: #f8fafc;
+            border-color: #e2e8f0 !important;
+            padding: 8px 0;
+        }
+
+        .fc-col-header-cell-cushion {
+            color: #1e293b;
+            font-weight: 700;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-decoration: none !important;
+        }
+
+        .fc-timegrid-slot {
+            height: 36px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+        }
+
+        .fc-timegrid-slot-label-cushion {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        .fc-day-today { background-color: rgba(37, 99, 235, 0.04) !important; }
+
+        /* Date fuori range edizione: visual marker */
+        .fc-day-disabled-range {
+            background: rgba(241, 245, 249, 0.6) !important;
+        }
+
+        /* Custom Event Card */
+        .fc-event {
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+        }
+
+        .fc-custom-card {
+            height: 100%;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 5px 9px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+            transition: all 0.18s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .fc-event:hover .fc-custom-card {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
+            border-color: #cbd5e1;
+        }
+
+        .fc-custom-time {
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            line-height: 1.2;
+        }
+
+        .fc-custom-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.25;
+        }
+
+        .fc-custom-docente {
+            font-size: 0.72rem;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .fc-custom-note {
+            font-size: 0.68rem;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* Disabled range overlay on calendar */
+        .fc-disabled-day {
+            background: repeating-linear-gradient(
+                45deg,
+                #f8fafc,
+                #f8fafc 3px,
+                #f1f5f9 3px,
+                #f1f5f9 6px
+            ) !important;
+            opacity: 0.7;
+        }
+
+        /* Sommario totale ore */
+        .ore-total-summary {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ore-total-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #1d4ed8;
+        }
+
+        .ore-total-value {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #1d4ed8;
+        }
+
+        /* Add lesson toolbar */
+        .cal-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 0 16px;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .cal-toolbar-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        /* Loading state */
+        .ore-loading {
+            text-align: center;
+            padding: 20px;
+            color: #94a3b8;
+            font-size: 0.82rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand-block">
+                    <div class="sidebar-logo-container">
+                        <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo" class="sidebar-logo-img">
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <h2 class="sidebar-brand-title">ITS MANAGER</h2>
+                        <span class="sidebar-brand-subtitle">Gestionale Didattico</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-small">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">Segreteria Didattica</div>
+                    <span class="user-role-badge">SEGRETERIA</span>
+                </div>
+            </div>
+
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="dashboard.html" class="nav-item-link" id="navCorsi" title="Corsi">
+                        <i class="bi bi-journal-bookmark-fill"></i><span class="nav-label">Corsi</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" title="Piano Didattico">
+                        <i class="bi bi-book-half"></i><span class="nav-label">Piano Didattico</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="utenze.html" class="nav-item-link" id="navUtenze" title="Utenze">
+                        <i class="bi bi-people-fill"></i><span class="nav-label">Utenze</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="calendario.html" class="nav-item-link active" id="navCalendario" title="Calendario">
+                        <i class="bi bi-calendar3"></i><span class="nav-label">Calendario</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Disconnetti</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <!-- TOP BAR -->
+            <div class="rubick-top-bar">
+                <nav class="rubick-breadcrumb" aria-label="breadcrumb">
+                    <span class="breadcrumb-root"><i class="bi bi-mortarboard-fill me-1 text-primary"></i>ITS Manager</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-section">Segreteria</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-current" id="breadcrumbLabel">Calendario</span>
+                </nav>
+                <div class="rubick-top-bar-actions">
+                    <div class="rubick-icon-badge" title="Notifiche">
+                        <i class="bi bi-bell"></i>
+                        <span class="rubick-badge-dot"></span>
+                    </div>
+                    <div class="rubick-user-avatar" title="Segreteria Didattica">SD</div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════
+                 SCHERMATA 1: SELEZIONA EDIZIONE
+                 ═══════════════════════════════════════════════ -->
+            <div id="editionPickerScreen">
+
+                <!-- Hero -->
+                <div class="edition-picker-hero">
+                    <div class="edition-picker-hero-icon">
+                        <i class="bi bi-calendar3"></i>
+                    </div>
+                    <div>
+                        <h2>Calendario Didattico</h2>
+                        <p>Seleziona un corso e un'edizione per pianificare le lezioni, gestire i docenti e monitorare il budget ore.</p>
+                    </div>
+                </div>
+
+                <!-- Step 1: Scegli Corso -->
+                <div class="step-card active" id="stepCardCorso">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="step-badge step-badge-primary">1</div>
+                        <div>
+                            <div class="step-label">Primo passo</div>
+                            <div class="step-title">Seleziona il Corso</div>
+                        </div>
+                    </div>
+                    <div id="corsiGrid">
+                        <div class="ore-loading"><i class="bi bi-arrow-repeat spin me-2"></i>Caricamento corsi...</div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Scegli Edizione -->
+                <div class="step-card" id="stepCardEdizione" style="opacity: 0.5; pointer-events: none;">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="step-badge step-badge-secondary" id="stepBadge2">2</div>
+                        <div>
+                            <div class="step-label">Secondo passo</div>
+                            <div class="step-title">Seleziona l'Edizione del Corso</div>
+                        </div>
+                    </div>
+                    <div id="edizioniGrid">
+                        <p class="text-muted small">Seleziona prima un corso...</p>
+                    </div>
+                    <div class="mt-3 pt-3 border-top" style="display:none;" id="goToCalendarBar">
+                        <button class="btn btn-primary w-100 fw-bold" id="btnGoToCalendar" style="padding: 12px;">
+                            <i class="bi bi-calendar3-event me-2"></i>Apri Calendario Edizione
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ═══════════════════════════════════════════════
+                 SCHERMATA 2: CALENDARIO
+                 ═══════════════════════════════════════════════ -->
+            <div id="calendarScreen">
+
+                <!-- Edition Active Banner -->
+                <div class="edition-banner">
+                    <div class="edition-banner-left">
+                        <div class="edition-banner-icon">
+                            <i class="bi bi-calendar3-event"></i>
+                        </div>
+                        <div>
+                            <div class="edition-banner-corso" id="bannerCorsoNome">—</div>
+                            <div class="edition-banner-title" id="bannerEdizioneNome">Edizione</div>
+                        </div>
+                    </div>
+                    <div class="edition-period-chips">
+                        <div class="period-chip" id="bannerDataInizio">
+                            <i class="bi bi-play-fill"></i>
+                            <span>—</span>
+                        </div>
+                        <div class="period-chip" id="bannerDataFine">
+                            <i class="bi bi-stop-fill"></i>
+                            <span>—</span>
+                        </div>
+                        <div class="period-chip" id="bannerDurataOre">
+                            <i class="bi bi-clock-history"></i>
+                            <span>— ore</span>
+                        </div>
+                        <button class="btn-change-edition" id="btnChangeEdizione">
+                            <i class="bi bi-arrow-left"></i>
+                            Cambia Edizione
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Layout: Calendar + Sidebar -->
+                <div class="calendar-layout">
+
+                    <!-- LEFT: Calendar -->
+                    <div class="calendar-main-card">
+                        <div class="cal-toolbar">
+                            <span class="cal-toolbar-title">
+                                <i class="bi bi-info-circle me-1 text-primary"></i>
+                                Clicca su uno slot per aggiungere una lezione · Trascina per spostare
+                            </span>
+                            <button type="button" class="btn btn-primary btn-sm" id="btnNuovaLezione">
+                                <i class="bi bi-calendar-plus me-1"></i>Aggiungi Lezione
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm ms-2" id="btnProgrammaSettimana">
+                                <i class="bi bi-calendar-range me-1"></i>Programma Settimana (1 Step)
+                            </button>
+                        </div>
+                        <div id="calendar"></div>
+                    </div>
+
+                    <!-- RIGHT: Sidebar -->
+                    <div id="oreSidebar">
+                        <!-- Header -->
+                        <div class="ore-sidebar-header">
+                            <h3><i class="bi bi-bar-chart-fill me-2"></i>Budget Ore UF</h3>
+                            <p>Ore pianificate vs. disponibili per ogni unità formativa</p>
+                        </div>
+
+                        <!-- Filtro Docente -->
+                        <div class="docente-filter-card">
+                            <label for="selectDocenteFiltro">
+                                <i class="bi bi-person-badge me-1"></i>Filtra per Docente
+                            </label>
+                            <select id="selectDocenteFiltro" class="form-select form-select-sm">
+                                <option value="">Tutti i docenti</option>
+                            </select>
+                        </div>
+
+                        <!-- Totale ore pianificate -->
+                        <div class="ore-total-summary">
+                            <span class="ore-total-label"><i class="bi bi-clock me-1"></i>Ore pianificate totali</span>
+                            <span class="ore-total-value" id="oreTotaliPianificate">0h</span>
+                        </div>
+
+                        <!-- Budget per UF -->
+                        <div class="uf-budget-card">
+                            <div class="uf-budget-card-title">
+                                <i class="bi bi-layers-fill"></i>Unità Formative
+                            </div>
+                            <div id="ufBudgetList">
+                                <div class="ore-loading">Caricamento...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ─── MODAL: CREA / MODIFICA LEZIONE ─── -->
+    <div class="modal fade" id="lezioneModal" tabindex="-1" aria-labelledby="lezioneModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+                <div class="modal-header px-4 py-3" style="background: linear-gradient(135deg, #1e293b, #334155);">
+                    <h5 class="modal-title fw-bold text-white" id="lezioneModalLabel">
+                        <i class="bi bi-calendar-plus me-2"></i>
+                        <span id="modalTitleText">Programma Lezione</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                </div>
+
+                <!-- Edition context strip -->
+                <div class="px-4 py-2 d-flex align-items-center gap-2" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <i class="bi bi-bookmark-fill text-primary"></i>
+                    <span class="small fw-semibold text-secondary" id="modalEdizioneBadge">Edizione: —</span>
+                    <span class="small text-muted" id="modalRangeDate"></span>
+                </div>
+
+                <form id="lezioneForm">
+                    <div class="modal-body px-4 py-4" style="background: #f8fafc;">
+                        <!-- ALERT ERRORE SALVATAGGIO / MOTIVAZIONE -->
+                        <div class="alert alert-danger d-flex align-items-start gap-2 mb-3" id="modalAlertError" style="display: none !important; border-radius: 10px;">
+                            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" style="font-size: 1.1rem;"></i>
+                            <div id="modalAlertErrorText" class="small fw-semibold" style="line-height: 1.4;"></div>
+                        </div>
+
+                        <input type="hidden" id="lezioneId">
+                        <input type="hidden" id="modalCorsoAttivoHidden">
+
+                        <!-- Modulo & Docente -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="modalModulo" class="form-label fw-semibold small">Modulo Didattico <span class="text-danger">*</span></label>
+                                <select id="modalModulo" class="form-select" required>
+                                    <option value="">-- Seleziona modulo --</option>
+                                </select>
+                                <div id="modalModuloBudgetInfo" class="mt-1" style="display:none;">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small class="text-muted" id="modalBudgetLabel">Budget ore UF</small>
+                                        <small class="fw-bold" id="modalBudgetValue" style="color:#2563eb;">—</small>
+                                    </div>
+                                    <div class="uf-ore-bar">
+                                        <div class="uf-ore-bar-fill ok" id="modalBudgetBar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="modalDocente" class="form-label fw-semibold small">Docente <span class="text-danger">*</span></label>
+                                <select id="modalDocente" class="form-select" required>
+                                    <option value="">-- Seleziona docente --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Data, Ora Inizio, Ora Fine -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="modalData" class="form-label fw-semibold small">Data Lezione <span class="text-danger">*</span></label>
+                                <input type="date" id="modalData" class="form-control" required>
+                                <div class="form-text text-muted small" id="modalDataHint"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="modalOraInizio" class="form-label fw-semibold small">Ora Inizio <span class="text-danger">*</span></label>
+                                <input type="time" id="modalOraInizio" class="form-control" value="09:00" step="900" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="modalOraFine" class="form-label fw-semibold small">Ora Fine <span class="text-danger">*</span></label>
+                                <input type="time" id="modalOraFine" class="form-control" value="13:00" step="900" required>
+                            </div>
+                        </div>
+
+                        <!-- Durata calcolata -->
+                        <div class="alert alert-light border py-2 px-3 mb-3 d-flex align-items-center gap-2" id="durataCalcAlert" style="display:none!important;">
+                            <i class="bi bi-clock text-primary"></i>
+                            <span class="small" id="durataCalcText">Durata: —</span>
+                        </div>
+
+                        <!-- Note / Aula -->
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="modalNote" class="form-label fw-semibold small">Aula / Note Lezione</label>
+                                <input type="text" id="modalNote" class="form-control" placeholder="Es. Aula 3 - Laboratorio Informatica">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer bg-white px-4 py-3 border-top d-flex justify-content-between">
+                        <div>
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="btnDeleteLezione" style="display: none;">
+                                <i class="bi bi-trash3-fill me-1"></i> Elimina Lezione
+                            </button>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Annulla</button>
+                            <button type="submit" class="btn btn-primary fw-bold" id="btnSaveLezione">
+                                <i class="bi bi-check2-circle me-1"></i> Salva Lezione
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── MODAL: PROGRAMMAZIONE SETTIMANALE IN 1 STEP ─── -->
+    <div class="modal fade" id="settimanaModal" tabindex="-1" aria-labelledby="settimanaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+                <div class="modal-header px-4 py-3" style="background: linear-gradient(135deg, #059669, #10b981);">
+                    <h5 class="modal-title fw-bold text-white" id="settimanaModalLabel">
+                        <i class="bi bi-calendar-range me-2"></i>
+                        <span>Programma Settimana (In 1 Step)</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                </div>
+
+                <div class="px-4 py-2 d-flex align-items-center gap-2" style="background: #f0fdf4; border-bottom: 1px solid #d1fae5;">
+                    <i class="bi bi-magic text-success"></i>
+                    <span class="small fw-semibold text-success-emphasis">Genera automaticamente tutte le lezioni per una o più settimane.</span>
+                </div>
+
+                <form id="settimanaForm">
+                    <div class="modal-body px-4 py-4" style="background: #f8fafc;">
+                        <!-- ALERT ERRORE -->
+                        <div class="alert alert-danger d-flex align-items-start gap-2 mb-3" id="settimanaAlertError" style="display: none !important; border-radius: 10px;">
+                            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" style="font-size: 1.1rem;"></i>
+                            <div id="settimanaAlertErrorText" class="small fw-semibold" style="line-height: 1.4;"></div>
+                        </div>
+
+                        <!-- Modulo & Docente -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="settimanaModulo" class="form-label fw-semibold small">Modulo Didattico <span class="text-danger">*</span></label>
+                                <select id="settimanaModulo" class="form-select" required>
+                                    <option value="">-- Seleziona modulo --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="settimanaDocente" class="form-label fw-semibold small">Docente <span class="text-danger">*</span></label>
+                                <select id="settimanaDocente" class="form-select" required>
+                                    <option value="">-- Seleziona docente --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Data Inizio Settimana & Numero Settimane -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="settimanaDataInizio" class="form-label fw-semibold small">Data Inizio Periodo / Settimana <span class="text-danger">*</span></label>
+                                <input type="date" id="settimanaDataInizio" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="settimanaNumeroSettimane" class="form-label fw-semibold small">Durata (Numero Settimane)</label>
+                                <select id="settimanaNumeroSettimane" class="form-select">
+                                    <option value="1" selected>1 Settimana</option>
+                                    <option value="2">2 Settimane consecutive</option>
+                                    <option value="3">3 Settimane consecutive</option>
+                                    <option value="4">4 Settimane consecutive</option>
+                                    <option value="6">6 Settimane consecutive</option>
+                                    <option value="8">8 Settimane consecutive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Orario Unico Standard -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="settimanaOraInizio" class="form-label fw-semibold small">Ora Inizio Standard <span class="text-danger">*</span></label>
+                                <input type="time" id="settimanaOraInizio" class="form-control" value="09:00" step="900" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="settimanaOraFine" class="form-label fw-semibold small">Ora Fine Standard <span class="text-danger">*</span></label>
+                                <input type="time" id="settimanaOraFine" class="form-control" value="14:00" step="900" required>
+                            </div>
+                        </div>
+
+                        <!-- Giorni della settimana attivi -->
+                        <div class="card p-3 border mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="fw-bold small text-dark mb-0"><i class="bi bi-calendar-week me-1"></i> Giorni di Lezione Nella Settimana</label>
+                                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="btnToggleOrariDifferenziati">
+                                    <i class="bi bi-clock-history me-1"></i><span id="labelToggleDiff">Personalizza orari (es. Mar e Gio 9-15)</span>
+                                </button>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="0" id="chkLun" checked>
+                                    <label class="form-check-label small fw-semibold" for="chkLun">Lun</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="1" id="chkMar" checked>
+                                    <label class="form-check-label small fw-semibold" for="chkMar">Mar</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="2" id="chkMer" checked>
+                                    <label class="form-check-label small fw-semibold" for="chkMer">Mer</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="3" id="chkGio" checked>
+                                    <label class="form-check-label small fw-semibold" for="chkGio">Gio</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="4" id="chkVen" checked>
+                                    <label class="form-check-label small fw-semibold" for="chkVen">Ven</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="5" id="chkSab">
+                                    <label class="form-check-label small fw-semibold text-muted" for="chkSab">Sab</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input chk-giorno" type="checkbox" value="6" id="chkDom">
+                                    <label class="form-check-label small fw-semibold text-muted" for="chkDom">Dom</label>
+                                </div>
+                            </div>
+
+                            <!-- Sezione Orari Differenziati Facoltativa -->
+                            <div id="boxOrariDifferenziati" class="mt-3 pt-3 border-top" style="display: none;">
+                                <div class="small text-muted mb-2">Imposta orari specifici per singoli giorni:</div>
+                                <div class="row g-2">
+                                    <div class="col-md-6 d-flex align-items-center gap-2">
+                                        <span class="badge bg-secondary">Mar:</span>
+                                        <input type="time" id="diffMarInizio" class="form-control form-control-sm" value="09:00">
+                                        <span>-</span>
+                                        <input type="time" id="diffMarFine" class="form-control form-control-sm" value="15:00">
+                                    </div>
+                                    <div class="col-md-6 d-flex align-items-center gap-2">
+                                        <span class="badge bg-secondary">Gio:</span>
+                                        <input type="time" id="diffGioInizio" class="form-control form-control-sm" value="09:00">
+                                        <span>-</span>
+                                        <input type="time" id="diffGioFine" class="form-control form-control-sm" value="15:00">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Note / Aula -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <label for="settimanaNote" class="form-label fw-semibold small">Aula / Note (opzionale)</label>
+                                <input type="text" id="settimanaNote" class="form-control" placeholder="Es. Aula 2 - Lab. Informatica">
+                            </div>
+                        </div>
+
+                        <!-- Box Anteprima -->
+                        <div class="alert alert-success border py-2 px-3 m-0 d-flex align-items-center gap-2" id="settimanaPreviewAlert">
+                            <i class="bi bi-calculator text-success"></i>
+                            <span class="small fw-semibold" id="settimanaPreviewText">Riepilogo: —</span>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer bg-white px-4 py-3 border-top d-flex justify-content-between">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Annulla</button>
+                        <button type="submit" class="btn btn-success fw-bold" id="btnSaveSettimana">
+                            <i class="bi bi-magic me-1"></i> Programma Settimana
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="../assets/bootstrap.bundle.min.js"></script>
+    <!-- Auth + logic -->
+    <script src="../shared/auth.js"></script>
+    <script src="calendario.js?v=2.0"></script>
+</body>
+</html>
