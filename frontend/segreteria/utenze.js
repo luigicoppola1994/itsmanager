@@ -286,7 +286,7 @@ async function handleFormSubmit(e) {
         Data_Nascita: dataN,
         Genere: uCorrente?.Genere ?? null,
         Citta_Nascita: uCorrente?.Citta_Nascita ?? null,
-        Nazione_Nascita: uCorrente?.Nazione_Nascita ?? null,
+        Nazionalita: uCorrente?.Nazionalita ?? "Italiana",
         Provincia_Nascita: uCorrente?.Provincia_Nascita ?? null,
         Indirizzo_Residenza: uCorrente?.Indirizzo_Residenza ?? null,
         Citta_Residenza: uCorrente?.Citta_Residenza ?? null,
@@ -375,7 +375,7 @@ function populateUserInfoModal(u) {
     document.getElementById('infoGenere').value         = u.Genere || '';
     document.getElementById('infoCF').value             = u.Codice_Fiscale || '';
     document.getElementById('infoDataNascita').value    = u.Data_Nascita || '';
-    document.getElementById('infoNazioneNascita').value = u.Nazione_Nascita || '';
+    document.getElementById('infoNazionalita').value = u.Nazionalita || 'Italiana';
     document.getElementById('infoCittaNascita').value   = u.Citta_Nascita || '';
     document.getElementById('infoProvinciaNascita').value = u.Provincia_Nascita || '';
     document.getElementById('infoIndirizzo').value      = u.Indirizzo_Residenza || '';
@@ -450,7 +450,7 @@ async function handleUserInfoSubmit(e) {
         Genere: document.getElementById('infoGenere').value || null,
         Codice_Fiscale: document.getElementById('infoCF').value.trim().toUpperCase() || null,
         Data_Nascita: document.getElementById('infoDataNascita').value || null,
-        Nazione_Nascita: document.getElementById('infoNazioneNascita').value.trim() || null,
+        Nazionalita: document.getElementById('infoNazionalita').value.trim() || 'Italiana',
         Citta_Nascita: document.getElementById('infoCittaNascita').value.trim() || null,
         Provincia_Nascita: document.getElementById('infoProvinciaNascita').value.trim().toUpperCase() || null,
         Indirizzo_Residenza: document.getElementById('infoIndirizzo').value.trim() || null,

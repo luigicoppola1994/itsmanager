@@ -119,27 +119,45 @@ def create_missing_tables():
         else:
             print("  ✓ Colonna 'etichetta' già presente in 'corsi_attivi'.")
 
-        # Aggiunge la colonna 'nazione_nascita' a utenti se non esiste già
+        # Aggiunge la colonna 'nazionalita' a utenti se non esiste già
         result = conn.execute(text("""
+            SELECT COUNT(*) as cnt 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+              AND TABLE_NAME = 'utenti' 
+              AND COLUMN_NAME = 'nazionalita'
+        """))
+        row = result.fetchone()
+        if row[0] == 0:
+            print("Aggiunta colonna 'nazionalita' alla tabella 'utenti'...")
+            try:
+                conn.execute(text("""
+                    ALTER TABLE `utenti`
+                    ADD COLUMN `nazionalita` VARCHAR(100) NULL DEFAULT 'Italiana' AFTER `citta_nascita`
+                """))
+                print("  ✓ Colonna 'nazionalita' aggiunta a 'utenti'.")
+            except Exception as e:
+                print(f"  ⚠ Errore su utenti (nazionalita): {e}")
+        else:
+            print("  ✓ Colonna 'nazionalita' già presente in 'utenti'.")
+
+        # Se la vecchia colonna 'nazione_nascita' esiste ancora, migra i dati e rimuovila
+        result_old = conn.execute(text("""
             SELECT COUNT(*) as cnt 
             FROM INFORMATION_SCHEMA.COLUMNS 
             WHERE TABLE_SCHEMA = DATABASE() 
               AND TABLE_NAME = 'utenti' 
               AND COLUMN_NAME = 'nazione_nascita'
         """))
-        row = result.fetchone()
-        if row[0] == 0:
-            print("Aggiunta colonna 'nazione_nascita' alla tabella 'utenti'...")
+        row_old = result_old.fetchone()
+        if row_old[0] > 0:
+            print("Migrazione da 'nazione_nascita' a 'nazionalita' e pulizia vecchia colonna...")
             try:
-                conn.execute(text("""
-                    ALTER TABLE `utenti`
-                    ADD COLUMN `nazione_nascita` VARCHAR(100) NULL AFTER `citta_nascita`
-                """))
-                print("  ✓ Colonna 'nazione_nascita' aggiunta a 'utenti'.")
+                conn.execute(text("UPDATE `utenti` SET `nazionalita` = `nazione_nascita` WHERE `nazione_nascita` IS NOT NULL AND `nazione_nascita` != ''"))
+                conn.execute(text("ALTER TABLE `utenti` DROP COLUMN `nazione_nascita`"))
+                print("  ✓ Colonna 'nazione_nascita' migrata e rimossa con successo.")
             except Exception as e:
-                print(f"  ⚠ Errore su utenti: {e}")
-        else:
-            print("  ✓ Colonna 'nazione_nascita' già presente in 'utenti'.")
+                print(f"  ⚠ Errore rimozione nazione_nascita: {e}")
 
         conn.commit()
         print("\n✅ Tutte le tabelle sono state create con successo!")

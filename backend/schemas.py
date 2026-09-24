@@ -52,7 +52,7 @@ class UtenteBase(BaseModel):
     Codice_Fiscale: Optional[str] = None
     Data_Nascita: Optional[str] = None    # Stringa ISO (es. "1990-05-15") o None
     Citta_Nascita: Optional[str] = None
-    Nazione_Nascita: Optional[str] = None
+    Nazionalita: Optional[str] = None
     Provincia_Nascita: Optional[str] = None
     Indirizzo_Residenza: Optional[str] = None
     Citta_Residenza: Optional[str] = None
@@ -113,7 +113,7 @@ class UtenteUpdate(BaseModel):
     Codice_Fiscale: Optional[str] = None
     Data_Nascita: Optional[str] = None
     Citta_Nascita: Optional[str] = None
-    Nazione_Nascita: Optional[str] = None
+    Nazionalita: Optional[str] = None
     Provincia_Nascita: Optional[str] = None
     Indirizzo_Residenza: Optional[str] = None
     Citta_Residenza: Optional[str] = None

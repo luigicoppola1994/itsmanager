@@ -260,7 +260,7 @@ def create_user(user: schemas.UtenteCreate, db: Session = Depends(get_db), curre
         Codice_Fiscale=user.Codice_Fiscale,
         Data_Nascita=user.Data_Nascita,
         Citta_Nascita=user.Citta_Nascita,
-        Nazione_Nascita=user.Nazione_Nascita,
+        Nazionalita=user.Nazionalita if user.Nazionalita else "Italiana",
         Provincia_Nascita=user.Provincia_Nascita,
         Indirizzo_Residenza=user.Indirizzo_Residenza,
         Citta_Residenza=user.Citta_Residenza,
@@ -312,8 +312,8 @@ def update_user(id_utente: int, user_data: schemas.UtenteUpdate, db: Session = D
         user.Data_Nascita = user_data.Data_Nascita if user_data.Data_Nascita and str(user_data.Data_Nascita).strip() else None
     if user_data.Citta_Nascita is not None:
         user.Citta_Nascita = user_data.Citta_Nascita.strip() if user_data.Citta_Nascita and user_data.Citta_Nascita.strip() else None
-    if user_data.Nazione_Nascita is not None:
-        user.Nazione_Nascita = user_data.Nazione_Nascita.strip() if user_data.Nazione_Nascita and user_data.Nazione_Nascita.strip() else None
+    if user_data.Nazionalita is not None:
+        user.Nazionalita = user_data.Nazionalita.strip() if user_data.Nazionalita and user_data.Nazionalita.strip() else "Italiana"
     if user_data.Provincia_Nascita is not None:
         user.Provincia_Nascita = user_data.Provincia_Nascita.strip().upper() if user_data.Provincia_Nascita and user_data.Provincia_Nascita.strip() else None
     if user_data.Indirizzo_Residenza is not None:
@@ -835,16 +835,26 @@ import json
 
 @app.get("/proxy/province")
 def proxy_province():
-    req = urllib.request.Request("https://daticomuni.it/api/v1/province?limit=150", headers={'User-Agent': 'Mozilla/5.0'})
-    with urllib.request.urlopen(req) as response:
-        return json.loads(response.read().decode())
+    try:
+        req = urllib.request.Request("https://daticomuni.it/api/v1/province?limit=150", headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=3) as response:
+            return json.loads(response.read().decode())
+    except Exception as e:
+        print(f"Errore proxy_province: {e}")
+        return {"data": []}
 
 @app.get("/proxy/comuni")
 def proxy_comuni(q: str):
-    q_enc = urllib.parse.quote(q)
-    req = urllib.request.Request(f"https://daticomuni.it/api/v1/search?q={q_enc}", headers={'User-Agent': 'Mozilla/5.0'})
-    with urllib.request.urlopen(req) as response:
-        return json.loads(response.read().decode())
+    if not q or len(q.strip()) < 2:
+        return {"data": []}
+    try:
+        q_enc = urllib.parse.quote(q.strip())
+        req = urllib.request.Request(f"https://daticomuni.it/api/v1/search?q={q_enc}", headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=3) as response:
+            return json.loads(response.read().decode())
+    except Exception as e:
+        print(f"Errore proxy_comuni: {e}")
+        return {"data": []}
 
 
 # --- Endpoint per i Moduli ---
