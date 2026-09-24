@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITS Manager - Unità Formativa</title>
+    <title>ITS Manager - Modifica Corso</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="../assets/bootstrap.min.css" rel="stylesheet">
@@ -48,13 +48,13 @@
 
             <ul class="sidebar-nav">
                 <li>
-                    <a href="dashboard.html" class="nav-item-link" id="navCorsi" title="Corsi">
+                    <a href="dashboard.html" class="nav-item-link active" id="navCorsi" title="Corsi">
                         <i class="bi bi-journal-bookmark-fill"></i>
                         <span class="nav-label">Corsi</span>
                     </a>
                 </li>
                 <li>
-                    <a href="piano-didattico.html" class="nav-item-link active" id="navPianoDidattico" title="Piano Didattico">
+                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" title="Piano Didattico">
                         <i class="bi bi-book-half"></i>
                         <span class="nav-label">Piano Didattico</span>
                     </a>
@@ -97,9 +97,9 @@
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
                     <span class="breadcrumb-section">Segreteria</span>
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
-                    <a href="piano-didattico.html" class="breadcrumb-section" style="text-decoration:none;">Piano Didattico</a>
+                    <a href="dashboard.html" class="breadcrumb-section" style="text-decoration:none;">Corsi</a>
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
-                    <span class="breadcrumb-current" id="topNavCurrent">Nuova Unità Formativa</span>
+                    <span class="breadcrumb-current">Modifica Corso</span>
                 </nav>
                 <div class="rubick-top-bar-actions">
                     <div class="rubick-icon-badge" title="Notifiche">
@@ -115,98 +115,88 @@
             <!-- BREADCRUMB + TITOLO -->
             <div class="nc-page-header">
                 <div class="nc-breadcrumb">
-                    <a href="piano-didattico.html" class="nc-breadcrumb-link">
-                        <i class="bi bi-book-half"></i>
-                        Piano Didattico
+                    <a href="dashboard.html" class="nc-breadcrumb-link">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        Corsi
                     </a>
                     <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
-                    <span class="nc-breadcrumb-current" id="breadcrumbAction">Nuova Unità Formativa</span>
+                    <span class="nc-breadcrumb-current">Modifica Corso</span>
                 </div>
 
                 <div class="nc-header-row">
                     <div>
                         <h1 class="nc-title">
-                            <span class="nc-title-icon"><i class="bi bi-collection-fill"></i></span>
-                            <span id="pageTitleText">Crea Nuova Unità Formativa</span>
+                            <span class="nc-title-icon"><i class="bi bi-pencil-square"></i></span>
+                            Modifica Anagrafica Corso
                         </h1>
-                        <p class="nc-subtitle" id="pageSubtitleText">Definisci una macro-area formativa per raggruppare i moduli di competenza didattica.</p>
+                        <p class="nc-subtitle">Aggiorna le informazioni generali e descrittive del percorso formativo a catalogo.</p>
                     </div>
-                    <a href="piano-didattico.html" class="btn-back">
+                    <a href="dashboard.html" class="btn-back">
                         <i class="bi bi-arrow-left"></i>
-                        <span>Torna al Piano Didattico</span>
+                        <span>Torna ai corsi</span>
                     </a>
                 </div>
             </div>
 
-            <!-- FORM CARD LAYOUT -->
+            <!-- FORM CARD + ANTEPRIMA -->
             <div class="nc-form-layout">
 
-                <!-- COLONNA FORM -->
+                <!-- COLONNA SINISTRA: form -->
                 <div class="nc-form-card">
-                    <div class="nc-form-card-header" style="background-color: var(--primary-color); color: #ffffff;">
-                        <i class="bi bi-pencil-square" style="color: #ffffff;"></i>
-                        <span id="cardHeaderTitle" style="color: #ffffff;">Informazioni Unità Formativa</span>
+                    <div class="nc-form-card-header">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>Dettagli del Corso</span>
                     </div>
 
-                    <form id="ufForm" style="padding: 28px;" novalidate>
-                        <input type="hidden" id="ufId">
+                    <form id="modificaCorsoForm" novalidate style="padding: 28px;">
+                        <input type="hidden" id="editCorsoId">
 
-                        <!-- SEZIONE: DATI GENERALI -->
                         <div class="nc-section-title">
                             <span class="nc-step-number">1</span>
-                            Dati dell'Unità Formativa
+                            Anagrafica Corso
                         </div>
 
-                        <div class="mb-4">
-                            <div class="nc-field-group">
-                                <label class="nc-label" for="ufNome">
-                                    Nome Unità Formativa <span class="nc-required">*</span>
-                                </label>
-                                <div class="nc-input-wrapper">
-                                    <i class="bi bi-journal-text nc-input-icon"></i>
-                                    <input type="text" id="ufNome" class="nc-input" placeholder="Es. Tecnologie Web e Cloud Computing" required maxlength="150">
-                                </div>
-                                <div class="nc-field-hint-row">
-                                    <span class="nc-field-hint">Inserisci un titolo chiaro e rappresentativo delle competenze da erogare.</span>
-                                </div>
-                                <div class="nc-field-error" id="errNome"></div>
+                        <div class="nc-field-group mb-3">
+                            <label for="editCorsoNome" class="nc-label">Nome del Corso <span class="nc-required">*</span></label>
+                            <div class="nc-input-wrapper">
+                                <i class="bi bi-journal-text nc-input-icon"></i>
+                                <input type="text" id="editCorsoNome" class="nc-input" placeholder="Es. AI Specialist & Cloud Data Engineering" maxlength="200" required>
+                            </div>
+                            <span class="nc-field-error" id="erroreNome"></span>
+                        </div>
+
+                        <div class="nc-field-group mb-4">
+                            <label for="editCorsoDescrizione" class="nc-label">Descrizione del Corso</label>
+                            <div class="nc-textarea-wrapper">
+                                <i class="bi bi-card-text nc-input-icon nc-textarea-icon"></i>
+                                <textarea id="editCorsoDescrizione" class="nc-textarea" rows="4" placeholder="Descrivi il percorso formativo..." maxlength="1000"></textarea>
+                            </div>
+                            <div class="nc-field-hint-row">
+                                <span class="nc-field-hint">Descrizione visibile nella scheda del catalogo corsi.</span>
+                                <span class="nc-char-count" id="charCount">0 / 1000</span>
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <div class="nc-field-group">
-                                <label class="nc-label" for="ufDescrizione">
-                                    Descrizione e Obiettivi Formativi
-                                </label>
-                                <div class="nc-textarea-wrapper">
-                                    <i class="bi bi-card-text nc-input-icon nc-textarea-icon"></i>
-                                    <textarea id="ufDescrizione" class="nc-textarea" rows="4" placeholder="Descrivi le finalità didattiche, le abilità acquisite e il contesto applicativo..."></textarea>
-                                </div>
-                                <div class="nc-field-hint">Opzionale ma raccomandata per orientare docenti e studenti.</div>
-                            </div>
-                        </div>
-
-                        <!-- INFO BOX -->
                         <div class="nc-info-box mb-4">
                             <i class="bi bi-info-circle-fill"></i>
                             <div>
-                                <strong>Struttura Didattica</strong>
-                                <p>Un'Unità Formativa (UF) funge da contenitore tematico. Una volta creata, potrai associare uno o più <em>Moduli Didattici</em> specifici (es. Frontend, Backend, Database).</p>
+                                <strong>Aggiornamento Corso a Catalogo</strong>
+                                <p>Le modifiche applicate qui si riflettono automaticamente sull'anagrafica di tutte le edizioni associate.</p>
                             </div>
                         </div>
 
                         <!-- AZIONI FORM -->
-                        <div class="nc-form-actions pt-3 border-top">
-                            <a href="piano-didattico.html" class="btn-nc-cancel">
-                                <i class="bi bi-x-circle"></i>
+                        <div class="nc-form-actions mt-4 pt-3 border-top">
+                            <a href="dashboard.html" class="btn-nc-cancel">
+                                <i class="bi bi-x-lg"></i>
                                 Annulla
                             </a>
-                            <button type="submit" class="btn-nc-submit" id="btnSubmitUf">
-                                <span class="btn-nc-text" id="btnSubmitText">
-                                    <i class="bi bi-check2-circle"></i>
-                                    Salva Unità Formativa
+                            <button type="submit" class="btn-nc-submit" id="submitBtn">
+                                <span class="btn-nc-text">
+                                    <i class="bi bi-check-lg"></i>
+                                    Salva Modifiche
                                 </span>
-                                <span class="btn-nc-loading" id="btnSubmitLoading" style="display: none;">
+                                <span class="btn-nc-loading" style="display:none;">
                                     <span class="nc-spinner"></span>
                                     Salvataggio...
                                 </span>
@@ -215,50 +205,64 @@
                     </form>
                 </div>
 
-                <!-- PANNELLO ANTEPRIMA -->
+                <!-- COLONNA DESTRA: anteprima in tempo reale -->
                 <div class="nc-preview-panel">
                     <div class="nc-preview-header">
-                        <i class="bi bi-eye"></i>
-                        <span>Anteprima Scheda UF</span>
+                        <i class="bi bi-eye-fill"></i>
+                        <span>Anteprima Scheda Corso</span>
                     </div>
-                    <div class="nc-preview-hint">Visualizzazione in tempo reale nel Piano Didattico</div>
+                    <p class="nc-preview-hint">Visualizzazione in tempo reale della card corso nel catalogo</p>
 
-                    <div class="nc-preview-card">
-                        <div class="nc-preview-card-top" style="background: var(--primary-color); color: #fff; padding: 16px 20px;">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="badge bg-white text-primary fw-bold" id="previewUfBadge">UF #NUOVA</span>
-                                <span class="small text-white-50"><i class="bi bi-collection-fill me-1"></i>0 Moduli</span>
+                    <div class="nc-preview-card" id="previewCard">
+                        <div class="nc-preview-card-top">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="preview-badge-status" id="previewStatusBadge">
+                                    <i class="bi bi-mortarboard-fill me-1"></i>Catalogo Corsi
+                                </span>
+                                <span class="preview-badge-edition" id="previewIdBadge">
+                                    ID: —
+                                </span>
                             </div>
-                            <h5 class="fw-bold mt-2 mb-0 text-white" id="previewUfTitle">Titolo Unità Formativa</h5>
+                            <h3 class="nc-preview-title" id="previewTitle">Nome del corso</h3>
                         </div>
-                        <div class="nc-preview-card-body p-3">
-                            <p class="small text-muted mb-0" id="previewUfDesc">Nessuna descrizione inserita.</p>
+                        <div class="nc-preview-card-body">
+                            <p class="nc-preview-desc" id="previewDesc">La descrizione del percorso formativo apparirà qui...</p>
+                            
+                            <div class="preview-dates-box mt-3 mb-0">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-journal-check text-primary fs-5"></i>
+                                    <div>
+                                        <div class="preview-dates-label">Edizioni Collegate</div>
+                                        <div class="preview-dates-val" id="previewEdizioniCount">0 edizioni</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="nc-checklist">
-                        <div class="nc-checklist-item" id="checkNome">
-                            <i class="bi bi-circle nc-check-icon"></i>
-                            <span>Nome unità formativa inserito</span>
+                    <!-- Checklist -->
+                    <div class="nc-progress-box mt-4">
+                        <div class="nc-progress-title">
+                            <i class="bi bi-check2-circle text-primary"></i>
+                            Stato Completamento
                         </div>
-                        <div class="nc-checklist-item" id="checkDesc">
-                            <i class="bi bi-circle nc-check-icon"></i>
-                            <span>Descrizione compilata (facoltativa)</span>
+                        <div class="nc-checklist mt-2">
+                            <div class="nc-check-item" id="checkNome">
+                                <i class="bi bi-circle"></i>
+                                <span>Nome del corso compilato</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
             </div>
-
         </main>
     </div>
 
-    <!-- TOAST -->
-    <div class="toast" id="toast"></div>
+    <!-- TOAST NOTIFICHE -->
+    <div class="toast" id="toast">Operazione completata!</div>
 
-    <!-- Bootstrap JS -->
-    <script src="../assets/bootstrap.bundle.min.js"></script>
     <script src="../shared/auth.js"></script>
-    <script src="nuova-uf.js?v=1.0"></script>
+    <script src="modifica-corso.js?v=1.0"></script>
 </body>
 </html>

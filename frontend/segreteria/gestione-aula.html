@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITS Manager - Gestione Aula & Studenti</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="../assets/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- CSS condiviso e segreteria -->
+    <link rel="stylesheet" href="../shared/styles.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=3.0">
+    <link rel="stylesheet" href="nuovo-corso.css?v=2.1">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- SIDEBAR A SINISTRA -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand-block">
+                    <div class="sidebar-logo-container">
+                        <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo" class="sidebar-logo-img">
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <h2 class="sidebar-brand-title">ITS MANAGER</h2>
+                        <span class="sidebar-brand-subtitle">Gestionale Didattico</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-small">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">Segreteria Didattica</div>
+                    <span class="user-role-badge">SEGRETERIA</span>
+                </div>
+            </div>
+
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="dashboard.html" class="nav-item-link active" id="navCorsi" title="Corsi">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        <span class="nav-label">Corsi</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" title="Piano Didattico">
+                        <i class="bi bi-book-half"></i>
+                        <span class="nav-label">Piano Didattico</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="utenze.html" class="nav-item-link" id="navUtenze" title="Utenze">
+                        <i class="bi bi-people-fill"></i>
+                        <span class="nav-label">Utenze</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="calendario.html" class="nav-item-link" id="navCalendario" title="Calendario">
+                        <i class="bi bi-calendar3"></i>
+                        <span class="nav-label">Calendario</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="timbrature.html" class="nav-item-link" id="navTimbrature" title="Timbrature">
+                        <i class="bi bi-clock-history"></i>
+                        <span class="nav-label">Timbrature</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Disconnetti</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENUTO PRINCIPALE -->
+        <main class="main-content">
+
+            <!-- RUBICK TOP BAR -->
+            <div class="rubick-top-bar">
+                <nav class="rubick-breadcrumb" aria-label="breadcrumb">
+                    <span class="breadcrumb-root"><i class="bi bi-mortarboard-fill me-1 text-primary"></i>ITS Manager</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-section">Segreteria</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <a href="dashboard.html" class="breadcrumb-section" style="text-decoration:none;">Corsi</a>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-current">Gestione Aula</span>
+                </nav>
+                <div class="rubick-top-bar-actions">
+                    <div class="rubick-icon-badge" title="Notifiche">
+                        <i class="bi bi-bell"></i>
+                        <span class="rubick-badge-dot"></span>
+                    </div>
+                    <div class="rubick-user-avatar" title="Segreteria Didattica">
+                        SD
+                    </div>
+                </div>
+            </div>
+
+            <!-- BREADCRUMB + TITOLO -->
+            <div class="nc-page-header">
+                <div class="nc-breadcrumb">
+                    <a href="dashboard.html" class="nc-breadcrumb-link">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        Corsi
+                    </a>
+                    <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
+                    <span class="nc-breadcrumb-current" id="headerBreadcrumbCurrent">Gestione Aula & Studenti</span>
+                </div>
+
+                <div class="nc-header-row">
+                    <div>
+                        <h1 class="nc-title">
+                            <span class="nc-title-icon"><i class="bi bi-people-fill"></i></span>
+                            <span id="pageTitleText">Gestione Aula & Studenti</span>
+                        </h1>
+                        <p class="nc-subtitle" id="pageSubtitleText">Assegna o rimuovi gli studenti iscritti a questa specifica edizione del corso.</p>
+                    </div>
+                    <a href="dashboard.html" class="btn-back">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>Torna ai corsi</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- FORM CARD LAYOUT -->
+            <div class="nc-form-layout">
+
+                <!-- COLONNA SINISTRA: SELEZIONE STUDENTI -->
+                <div class="nc-form-card">
+                    <div class="nc-form-card-header">
+                        <i class="bi bi-person-check-fill"></i>
+                        <span id="cardHeaderTitle">Composizione Classe & Studenti Iscritti</span>
+                    </div>
+
+                    <div style="padding: 28px;">
+                        <input type="hidden" id="aulaEdizioneId">
+
+                        <div class="nc-section-title d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="nc-step-number">1</span>
+                                Selezione Studenti per l'Edizione
+                            </div>
+                            <span class="badge bg-primary px-3 py-2 fs-6 rounded-pill" id="aulaStudentiCountBadge">
+                                <i class="bi bi-person-check-fill me-1"></i> 0 Studenti Assegnati
+                            </span>
+                        </div>
+
+                        <!-- BARRA RICERCA STUDENTI -->
+                        <div class="nc-field-group mb-3">
+                            <label for="aulaSearchInput" class="nc-label">Filtra Elenco Studenti</label>
+                            <div class="nc-input-wrapper">
+                                <i class="bi bi-search nc-input-icon"></i>
+                                <input type="text" id="aulaSearchInput" class="nc-input" placeholder="Cerca per cognome, nome o email...">
+                            </div>
+                        </div>
+
+                        <!-- BARRA AZIONI RAPIDE SELEZIONA TUTTI -->
+                        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                            <div class="small fw-semibold text-secondary">Elenco Completo Studenti Registrati</div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-2 py-1" id="btnAulaSelectAll">
+                                    <i class="bi bi-check-all me-1"></i>Seleziona Tutti
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger fw-semibold px-2 py-1" id="btnAulaDeselectAll">
+                                    <i class="bi bi-x-circle me-1"></i>Deseleziona Tutti
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- LISTA STUDENTI CON CHECKBOX -->
+                        <div id="aulaStudentiList" class="border rounded-3 p-3 bg-light mb-4" style="max-height: 480px; overflow-y: auto;">
+                            <div class="text-center py-5 text-muted">
+                                <span class="spinner-border spinner-border-sm me-2"></span>Caricamento elenco studenti...
+                            </div>
+                        </div>
+
+                        <!-- AZIONI -->
+                        <div class="nc-form-actions mt-4 pt-3 border-top">
+                            <a href="dashboard.html" class="btn-nc-cancel">
+                                <i class="bi bi-x-lg"></i>
+                                Annulla
+                            </a>
+                            <button type="button" class="btn-nc-submit" id="btnSaveAula">
+                                <span class="btn-nc-text">
+                                    <i class="bi bi-check-lg"></i>
+                                    Salva Composizione Aula
+                                </span>
+                                <span class="btn-nc-loading" style="display:none;">
+                                    <span class="nc-spinner"></span>
+                                    Salvataggio...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLONNA DESTRA: ANTEPRIMA & RIEPILOGO EDIZIONE -->
+                <div class="nc-preview-panel">
+                    <div class="nc-preview-header">
+                        <i class="bi bi-eye-fill"></i>
+                        <span>Riepilogo Classe Edizione</span>
+                    </div>
+                    <p class="nc-preview-hint">Dettagli dell'edizione e statistiche classe</p>
+
+                    <div class="nc-preview-card" id="previewCard">
+                        <div class="nc-preview-card-top">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="preview-badge-status" id="previewCorsoNome">
+                                    Corso
+                                </span>
+                                <span class="preview-badge-edition" id="previewEdizioneBadge">
+                                    Edizione
+                                </span>
+                            </div>
+                            <h3 class="nc-preview-title" id="previewEdizioneTitle">Nome Edizione</h3>
+                        </div>
+                        <div class="nc-preview-card-body">
+                            <!-- Periodo -->
+                            <div class="preview-dates-box mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-calendar-range text-primary fs-5"></i>
+                                    <div>
+                                        <div class="preview-dates-label">Periodo Didattico</div>
+                                        <div class="preview-dates-val" id="previewDatesVal">Date corso</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Metriche Aula -->
+                            <div class="nc-metrics-grid mb-3">
+                                <div class="nc-metric-card primary">
+                                    <div class="metric-icon"><i class="bi bi-people"></i></div>
+                                    <div class="metric-val" id="previewStudentiAssegnati">0</div>
+                                    <div class="metric-lbl">Studenti Assegnati</div>
+                                </div>
+                                <div class="nc-metric-card">
+                                    <div class="metric-icon"><i class="bi bi-person-x"></i></div>
+                                    <div class="metric-val" id="previewStudentiNonAssegnati">0</div>
+                                    <div class="metric-lbl">Non Iscritti</div>
+                                </div>
+                            </div>
+
+                            <div class="preview-parameters-pill mb-2">
+                                <div class="param-chip" id="previewTotStudentiSistema">
+                                    <i class="bi bi-database text-primary me-1"></i>Studenti a Sistema: <strong id="valTotStudentiSistema">0</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Checklist -->
+                    <div class="nc-progress-box mt-4">
+                        <div class="nc-progress-title">
+                            <i class="bi bi-check2-circle text-primary"></i>
+                            Stato Configurazione Aula
+                        </div>
+                        <div class="nc-checklist mt-2">
+                            <div class="nc-check-item" id="checkAlmenoUnoStudente">
+                                <i class="bi bi-circle"></i>
+                                <span>Almeno uno studente assegnato</span>
+                            </div>
+                            <div class="nc-check-item done">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Elenco anagrafico sincronizzato</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">Operazione completata!</div>
+
+    <script src="../shared/auth.js"></script>
+    <script src="gestione-aula.js?v=1.0"></script>
+</body>
+</html>

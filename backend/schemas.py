@@ -294,3 +294,39 @@ class SyncAulaRequest(BaseModel):
     studenti_ids: List[int]
 
 
+# --- Schemi per la tabella Presenze (Timbrature) ---
+class PresenzaBase(BaseModel):
+    id_utente: int
+    data_presenza: date
+    ora_ingresso: Optional[time] = None
+    ora_uscita: Optional[time] = None
+    note: Optional[str] = None
+
+class PresenzaCreate(PresenzaBase):
+    pass
+
+class PresenzaUpdate(BaseModel):
+    data_presenza: Optional[date] = None
+    ora_ingresso: Optional[time] = None
+    ora_uscita: Optional[time] = None
+    note: Optional[str] = None
+
+class PresenzaResponse(PresenzaBase):
+    id_presenza: int
+    utente: Optional[UtenteResponse] = None
+    class Config:
+        from_attributes = True
+
+class PresenzaBatchItem(BaseModel):
+    id_utente: int
+    presente: bool = True
+    ora_ingresso: Optional[time] = None
+    ora_uscita: Optional[time] = None
+    note: Optional[str] = None
+
+class PresenzaBatchCreate(BaseModel):
+    data_presenza: date
+    id_corso_attivo: Optional[int] = None
+    presenze: List[PresenzaBatchItem]
+
+

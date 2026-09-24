@@ -212,42 +212,14 @@ function renderUserRow(u, index) {
         </tr>`;
 }
 
-// Apri modal CREA
+// Apri pagina CREA
 function openCreateModal() {
-    editingId = null;
-    document.getElementById('modalTitleText').textContent = 'Aggiungi Utente';
-    document.getElementById('utenteForm').reset();
-    document.getElementById('editUtenteId').value = '';
-    document.getElementById('pwdRequired').style.display = '';
-    document.getElementById('pwdHint').style.display = 'none';
-    document.getElementById('editPassword').required = true;
-
-    const modal = new bootstrap.Modal(document.getElementById('utenteModal'));
-    modal.show();
+    window.location.href = 'nuovo-utente.html';
 }
 
-// Apri modal MODIFICA
+// Apri pagina MODIFICA
 function openEditModal(id) {
-    const u = allUtenti.find(x => x.id_utente === id);
-    if (!u) return;
-
-    editingId = id;
-    document.getElementById('modalTitleText').textContent = 'Modifica Utente';
-    document.getElementById('editUtenteId').value = id;
-    document.getElementById('editNome').value      = u.Nome   || '';
-    document.getElementById('editCognome').value   = u.Cognome || '';
-    document.getElementById('editEmail').value     = u.Email  || '';
-    document.getElementById('editRuolo').value     = u.id_ruolo || '';
-    document.getElementById('editPassword').value  = '';
-    document.getElementById('editCF').value        = u.Codice_Fiscale || '';
-    document.getElementById('editDataNascita').value = u.Data_Nascita || '';
-
-    document.getElementById('pwdRequired').style.display = 'none';
-    document.getElementById('pwdHint').style.display = '';
-    document.getElementById('editPassword').required = false;
-
-    const modal = new bootstrap.Modal(document.getElementById('utenteModal'));
-    modal.show();
+    window.location.href = `nuovo-utente.html?id=${id}`;
 }
 
 // Submit form (CREATE o UPDATE)

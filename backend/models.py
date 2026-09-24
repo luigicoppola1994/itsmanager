@@ -180,3 +180,16 @@ class UtenteCorsoAttivo(Base):
     utente = relationship("Utente", backref="corsi_frequentati")
     corso_attivo = relationship("CorsoAttivo", backref="studenti_aula")
 
+
+# --- Modello per la tabella Presenze (Timbrature Studenti e Docenti) ---
+class Presenza(Base):
+    __tablename__ = "presenze"
+    id_presenza = Column("id_presenza", Integer, primary_key=True, index=True, autoincrement=True)
+    id_utente = Column("id_utente", Integer, ForeignKey("utenti.id_utente"), nullable=False)
+    data_presenza = Column("data_presenza", Date, nullable=False)
+    ora_ingresso = Column("ora_ingresso", Time, nullable=True)
+    ora_uscita = Column("ora_uscita", Time, nullable=True)
+    note = Column("note", Text, nullable=True)
+
+    utente = relationship("Utente", backref="presenze")
+

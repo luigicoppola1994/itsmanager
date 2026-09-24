@@ -9,11 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Avvia la dashboard dei corsi
     initCorsiDashboard();
-
-    const editCorsoForm = document.getElementById('editCorsoForm');
-    if (editCorsoForm) {
-        editCorsoForm.addEventListener('submit', handleEditCorsoSubmit);
-    }
 });
 
 let masterCoursesList = [];
@@ -247,32 +242,19 @@ function renderCorsi(list) {
         if (editBtn) {
             e.stopPropagation();
             const id = editBtn.dataset.id;
-            const nome = decodeURIComponent(editBtn.dataset.nome);
-            const descrizione = decodeURIComponent(editBtn.dataset.descrizione);
-            window.editCorso(id, nome, descrizione);
+            window.location.href = `modifica-corso.html?id=${id}`;
         } else if (deleteBtn) {
             e.stopPropagation();
             const id = deleteBtn.dataset.id;
             window.deleteCorso(id);
         } else if (editEdizBtn) {
             e.stopPropagation();
-            window.openEditEdizione(
-                editEdizBtn.dataset.id,
-                decodeURIComponent(editEdizBtn.dataset.etichetta),
-                editEdizBtn.dataset.inizio,
-                editEdizBtn.dataset.fine,
-                editEdizBtn.dataset.teoria,
-                editEdizBtn.dataset.stage,
-                editEdizBtn.dataset.assenza,
-                editEdizBtn.dataset.tolling,
-                editEdizBtn.dataset.tollusc,
-                editEdizBtn.dataset.idcorso
-            );
+            const id = editEdizBtn.dataset.id;
+            window.location.href = `modifica-edizione.html?id=${id}`;
         } else if (aulaBtn) {
             e.stopPropagation();
             const id = aulaBtn.dataset.id;
-            const label = decodeURIComponent(aulaBtn.dataset.label);
-            window.openAulaModal(id, label);
+            window.location.href = `gestione-aula.html?id=${id}`;
         }
     }, false);
 }
@@ -332,21 +314,8 @@ window.deleteCorsoAttivo = async function(id) {
 // GESTIONE CORSO (Anagrafica)
 // -----------------------------------------
 
-window.editCorso = function(id, nome, descrizione) {
-    document.getElementById('editCorsoId').value = id;
-    document.getElementById('editCorsoNome').value = nome;
-    document.getElementById('editCorsoDescrizione').value = descrizione;
-    
-    // Pulisce eventuali errori precedenti
-    const errEl = document.getElementById('editCorsoError');
-    if (errEl) errEl.style.display = 'none';
-    
-    // Ripristina il pulsante
-    const btn = document.getElementById('btnSaveCorso');
-    if (btn) { btn.disabled = false; btn.textContent = 'Salva Modifiche'; }
-    
-    // Apri la modale (Bootstrap o fallback nativo)
-    openModal('editCorsoModal');
+window.editCorso = function(id) {
+    window.location.href = `modifica-corso.html?id=${id}`;
 };
 
 window.deleteCorso = async function(id) {
@@ -369,57 +338,7 @@ window.deleteCorso = async function(id) {
     }
 };
 
-async function handleEditCorsoSubmit(e) {
-    e.preventDefault();
-    const id = document.getElementById('editCorsoId').value;
-    const nome = document.getElementById('editCorsoNome').value.trim();
-    const descrizione = document.getElementById('editCorsoDescrizione').value.trim();
-    
-    if (!nome) {
-        showEditCorsoError('Il nome del corso è obbligatorio.');
-        return;
-    }
-    
-    const btn = document.getElementById('btnSaveCorso');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvataggio...';
-    
-    try {
-        const response = await fetchAutenticata(`${API_URL}/corsi/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ Nome: nome, Descrizione: descrizione || null })
-        });
-        
-        if (response.ok) {
-            // Chiude la modale
-            closeModal('editCorsoModal');
-            
-            showToast('Corso aggiornato con successo.');
-            loadDashboardData();
-        } else {
-            const err = await response.json();
-            showEditCorsoError(err.detail || "Errore durante l'aggiornamento del corso.");
-        }
-    } catch (error) {
-        showEditCorsoError('Errore di rete. Controlla la connessione.');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Salva Modifiche';
-    }
-}
 
-function showEditCorsoError(msg) {
-    let errEl = document.getElementById('editCorsoError');
-    if (!errEl) {
-        errEl = document.createElement('div');
-        errEl.id = 'editCorsoError';
-        errEl.className = 'alert alert-danger py-2 mt-2 mb-0';
-        document.getElementById('editCorsoForm').querySelector('.modal-body').appendChild(errEl);
-    }
-    errEl.textContent = msg;
-    errEl.style.display = 'block';
-}
 
 // Visualizza i toast
 function showToast(message, isError = false) {
@@ -438,441 +357,16 @@ function showToast(message, isError = false) {
 // -----------------------------------------
 // GESTIONE EDIZIONE (Modifica Edizione Corso)
 // -----------------------------------------
-let currentEditInitialPianoStudioUfIds = new Set();
-
-window.openEditEdizione = function(id, etichetta, dataInizio, dataFine, oreTeoria, oreStage, percAssenza, tollIng, tollUsc, idCorso) {
-    document.getElementById('editEdizioneId').value = id;
-    document.getElementById('editEdizioneIdCorso').value = idCorso;
-    document.getElementById('editEdizioneEtichetta').value = etichetta;
-    document.getElementById('editEdizioneDataInizio').value = dataInizio;
-    document.getElementById('editEdizioneDataFine').value = dataFine;
-    document.getElementById('editEdizioneOreTeoria').value = oreTeoria;
-    document.getElementById('editEdizioneOreStage').value = oreStage;
-    document.getElementById('editEdizionePercAssenza').value = percAssenza;
-    document.getElementById('editEdizioneTollIngresso').value = tollIng;
-    document.getElementById('editEdizioneTollUscita').value = tollUsc;
-
-    const t = parseInt(oreTeoria) || 0;
-    const s = parseInt(oreStage) || 0;
-    document.getElementById('editEdizioneDurataOre').value = t + s;
-
-    openModal('editEdizioneModal');
-    loadEditEdizionePianoStudio(id);
+// -----------------------------------------
+// GESTIONE EDIZIONE & AULA (Redirect a Pagine Dedicate)
+// -----------------------------------------
+window.openEditEdizione = function(id) {
+    window.location.href = `modifica-edizione.html?id=${id}`;
 };
 
-async function loadEditEdizionePianoStudio(idCorsoAttivo) {
-    const container = document.getElementById('editEdizioneUfList');
-    if (!container) return;
-
-    container.innerHTML = '<div class="text-muted small py-2"><i class="bi bi-arrow-repeat spin me-2"></i>Caricamento Unità Formative...</div>';
-    currentEditInitialPianoStudioUfIds = new Set();
-
-    try {
-        const [resUf, resM, resPs] = await Promise.all([
-            fetchAutenticata(`${API_URL}/unita_formative`),
-            fetchAutenticata(`${API_URL}/moduli`),
-            fetchAutenticata(`${API_URL}/corsi-attivi/${idCorsoAttivo}/piano-studio`)
-        ]);
-
-        if (resUf.ok && resM.ok && resPs.ok) {
-            const allUf = await resUf.json();
-            const allM = await resM.json();
-            const existingPs = await resPs.json();
-
-            const existingPsMap = {};
-            existingPs.forEach(item => {
-                existingPsMap[item.id_unita_formativa] = item.ore_dedicate;
-                currentEditInitialPianoStudioUfIds.add(item.id_unita_formativa);
-            });
-
-            if (!allUf.length) {
-                container.innerHTML = '<div class="alert alert-light border small text-muted mb-0">Nessuna Unità Formativa a catalogo.</div>';
-                return;
-            }
-
-            container.innerHTML = allUf.map(uf => {
-                const ufModuli = allM.filter(m => m.id_unita_formativa === uf.id_unita_formativa);
-                const modCount = ufModuli.length;
-                const isChecked = existingPsMap.hasOwnProperty(uf.id_unita_formativa);
-                const oreVal = isChecked ? existingPsMap[uf.id_unita_formativa] : 0;
-
-                return `
-                    <div class="card p-2 border uf-item-card" style="background:#ffffff; border-radius:8px;">
-                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                            <div class="form-check mb-0">
-                                <input class="form-check-input chk-edit-uf-piano" type="checkbox" value="${uf.id_unita_formativa}" id="chkEditUf_${uf.id_unita_formativa}" data-uf-id="${uf.id_unita_formativa}" ${isChecked ? 'checked' : ''}>
-                                <label class="form-check-label fw-bold text-dark small" for="chkEditUf_${uf.id_unita_formativa}">
-                                    ${uf.Nome}
-                                    <span class="badge bg-light text-secondary border ms-2 font-monospace" style="font-size:0.7rem;">${modCount} modul${modCount === 1 ? 'o' : 'i'}</span>
-                                </label>
-                            </div>
-                            <div class="d-flex align-items-center gap-2" style="max-width: 170px;">
-                                <label for="oreEditUf_${uf.id_unita_formativa}" class="small text-muted mb-0 fw-semibold" style="font-size:0.75rem;">Ore:</label>
-                                <input type="number" id="oreEditUf_${uf.id_unita_formativa}" class="form-control form-control-sm input-ore-edit-uf py-1" min="0" max="1000" value="${oreVal}" placeholder="Ore" ${isChecked ? '' : 'disabled'}>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            container.querySelectorAll('.chk-edit-uf-piano').forEach(chk => {
-                chk.addEventListener('change', (e) => {
-                    const ufId = e.target.dataset.ufId;
-                    const oreInput = document.getElementById(`oreEditUf_${ufId}`);
-                    if (oreInput) {
-                        oreInput.disabled = !e.target.checked;
-                    }
-                    updateEditEdizioneUfCounter();
-                });
-            });
-
-            container.querySelectorAll('.input-ore-edit-uf').forEach(input => {
-                ['input', 'keyup', 'change'].forEach(evt => {
-                    input.addEventListener(evt, updateEditEdizioneUfCounter);
-                });
-            });
-
-            updateEditEdizioneUfCounter();
-        } else {
-            container.innerHTML = '<div class="text-danger small py-2">Impossibile caricare le Unità Formative.</div>';
-        }
-    } catch (e) {
-        console.error('Errore caricamento Piano Studio per modale:', e);
-        container.innerHTML = '<div class="text-danger small py-2">Errore di connessione.</div>';
-    }
-}
-
-function updateEditEdizioneUfCounter() {
-    const tInput = document.getElementById('editEdizioneOreTeoria');
-    const targetOreAula = parseInt(tInput ? tInput.value : 0) || 0;
-    let sumAssigned = 0;
-
-    const checkedChks = document.querySelectorAll('.chk-edit-uf-piano:checked');
-    checkedChks.forEach(chk => {
-        const ufId = chk.dataset.ufId;
-        const oreInput = document.getElementById(`oreEditUf_${ufId}`);
-        sumAssigned += parseInt(oreInput ? oreInput.value : 0) || 0;
-    });
-
-    const restanti = targetOreAula - sumAssigned;
-
-    const valOreAulaTarget = document.getElementById('editEdizioneValOreAulaTarget');
-    const valOreUfAssegnate = document.getElementById('editEdizioneValOreUfAssegnate');
-    const valOreUfRestanti = document.getElementById('editEdizioneValOreUfRestanti');
-    const ufBadgeStatus = document.getElementById('editEdizioneUfBadgeStatus');
-
-    if (valOreAulaTarget) valOreAulaTarget.textContent = `${targetOreAula}h`;
-    if (valOreUfAssegnate) valOreUfAssegnate.textContent = `${sumAssigned}h`;
-    if (valOreUfRestanti) valOreUfRestanti.textContent = `${restanti}h`;
-
-    if (ufBadgeStatus && valOreUfRestanti) {
-        if (targetOreAula === 0 && sumAssigned === 0) {
-            ufBadgeStatus.className = 'badge bg-secondary text-white px-3 py-1 rounded-pill font-monospace fw-bold';
-            ufBadgeStatus.textContent = 'Inserire ore aula';
-            valOreUfRestanti.className = 'fw-bold fs-6 text-muted';
-        } else if (restanti > 0) {
-            ufBadgeStatus.className = 'badge bg-warning text-dark px-3 py-1 rounded-pill font-monospace fw-bold';
-            ufBadgeStatus.textContent = `Mancano ${restanti}h da associare`;
-            valOreUfRestanti.className = 'fw-bold fs-6 text-warning';
-        } else if (restanti === 0) {
-            ufBadgeStatus.className = 'badge bg-success text-white px-3 py-1 rounded-pill font-monospace fw-bold';
-            ufBadgeStatus.textContent = `✓ Bilancio Perfetto (0h restanti)`;
-            valOreUfRestanti.className = 'fw-bold fs-6 text-success';
-        } else {
-            const eccedenza = Math.abs(restanti);
-            ufBadgeStatus.className = 'badge bg-danger text-white px-3 py-1 rounded-pill font-monospace fw-bold';
-            ufBadgeStatus.textContent = `⚠ Eccedenza di ${eccedenza}h`;
-            valOreUfRestanti.className = 'fw-bold fs-6 text-danger';
-        }
-    }
-
-    return { targetOreAula, sumAssigned, restanti };
-}
-
-// Event listener per la sottomissione del form di modifica edizione
-document.addEventListener('DOMContentLoaded', () => {
-    const editEdizForm = document.getElementById('editEdizioneForm');
-    if (editEdizForm) {
-        const tInput = document.getElementById('editEdizioneOreTeoria');
-        const sInput = document.getElementById('editEdizioneOreStage');
-        const totInput = document.getElementById('editEdizioneDurataOre');
-
-        const updateModaleTot = () => {
-            const t = parseInt(tInput.value) || 0;
-            const s = parseInt(sInput.value) || 0;
-            totInput.value = t + s;
-        };
-
-        if (tInput && sInput) {
-            ['input', 'keyup', 'change'].forEach(evt => {
-                tInput.addEventListener(evt, () => {
-                    updateModaleTot();
-                    updateEditEdizioneUfCounter();
-                });
-                sInput.addEventListener(evt, updateModaleTot);
-            });
-        }
-
-        editEdizForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const id = document.getElementById('editEdizioneId').value;
-            const idCorso = document.getElementById('editEdizioneIdCorso').value;
-            const etichetta = document.getElementById('editEdizioneEtichetta').value.trim();
-            const dInizio = document.getElementById('editEdizioneDataInizio').value;
-            const dFine = document.getElementById('editEdizioneDataFine').value;
-            const oreTeoriaVal = parseInt(document.getElementById('editEdizioneOreTeoria').value);
-            const oreStageVal = parseInt(document.getElementById('editEdizioneOreStage').value);
-            const percAssenzaVal = parseFloat(document.getElementById('editEdizionePercAssenza').value);
-            const tollIngVal = parseInt(document.getElementById('editEdizioneTollIngresso').value);
-            const tollUscVal = parseInt(document.getElementById('editEdizioneTollUscita').value);
-
-            if (isNaN(oreTeoriaVal) || oreTeoriaVal <= 0) {
-                showToast("Le ore in aula sono obbligatorie e devono essere maggiori di 0.", true);
-                return;
-            }
-            if (isNaN(oreStageVal) || oreStageVal < 0) {
-                showToast("Le ore di stage sono obbligatorie (inserisci 0 se non previste).", true);
-                return;
-            }
-            if (!dInizio || !dFine || new Date(dInizio) > new Date(dFine)) {
-                showToast("Inserisci un intervallo di date valido.", true);
-                return;
-            }
-
-            // Calcolo bilancio ore UF (non bloccante per il salvataggio)
-            const { targetOreAula, sumAssigned, restanti } = updateEditEdizioneUfCounter();
-
-            const payload = {
-                id_corso: parseInt(idCorso),
-                etichetta: etichetta || null,
-                data_inizio: dInizio,
-                data_fine: dFine,
-                durata_ore: oreTeoriaVal + oreStageVal,
-                ore_teoria_aula: oreTeoriaVal,
-                ore_stage: oreStageVal,
-                percentuale_ore_assenza: percAssenzaVal,
-                tolleranza_ingresso_minuti: tollIngVal,
-                tolleranza_uscita_minuti: tollUscVal,
-                archiviato: false
-            };
-
-            const btn = document.getElementById('btnSaveEdizione');
-            btn.disabled = true;
-            btn.textContent = 'Salvataggio...';
-
-            try {
-                const res = await fetchAutenticata(`${API_URL}/corsi-attivi/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (res.ok) {
-                    // Sincronizza Piano Studio (Unità Formative) per l'Edizione
-                    const currentCheckedUfs = Array.from(document.querySelectorAll('.chk-edit-uf-piano:checked'));
-                    const items = currentCheckedUfs.map(chk => {
-                        const ufId = parseInt(chk.value);
-                        const oreInput = document.getElementById(`oreEditUf_${ufId}`);
-                        return {
-                            id_unita_formativa: ufId,
-                            ore_dedicate: parseInt(oreInput ? oreInput.value : 0) || 0
-                        };
-                    });
-
-                    const syncRes = await fetchAutenticata(`${API_URL}/corsi-attivi/${id}/piano-studio`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ items: items })
-                    });
-
-                    if (!syncRes.ok) {
-                        const errSync = await syncRes.json().catch(() => ({}));
-                        showToast(errSync.detail || "Errore durante il salvataggio del piano studio.", true);
-                        btn.disabled = false;
-                        btn.textContent = 'Salva Modifiche';
-                        return;
-                    }
-
-                    closeModal('editEdizioneModal');
-                    showToast("Edizione aggiornata con successo.");
-                    loadDashboardData();
-                } else {
-                    const err = await res.json();
-                    showToast(err.detail || "Errore durante l'aggiornamento dell'edizione.", true);
-                }
-            } catch (err) {
-                showToast("Errore di connessione.", true);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Salva Modifiche';
-            }
-        });
-    }
-});
-
-// -----------------------------------------
-// GESTIONE AULA (Studenti nei Corsi Attivi)
-// -----------------------------------------
-
-let _aulaAllStudenti = []; // Cache globale di tutti gli studenti
-
-window.openAulaModal = async function(idCorsoAttivo, corsoLabel) {
-    document.getElementById('aulaEdizioneId').value = idCorsoAttivo;
-    document.getElementById('aulaCorsoTitolo').textContent = corsoLabel || `Edizione #${idCorsoAttivo}`;
-    document.getElementById('aulaStudentiCountBadge').innerHTML = '<i class="bi bi-person-check-fill me-1"></i> Caricamento...';
-    document.getElementById('aulaSearchInput').value = '';
-
-    const listEl = document.getElementById('aulaStudentiList');
-    listEl.innerHTML = '<div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Caricamento elenco studenti...</div>';
-
-    openModal('aulaModal');
-
-    try {
-        // Carica tutti gli studenti e l'aula corrente in parallelo
-        const [resStudenti, resAula] = await Promise.all([
-            fetchAutenticata(`${API_URL}/studenti`),
-            fetchAutenticata(`${API_URL}/corsi-attivi/${idCorsoAttivo}/aula`)
-        ]);
-
-        if (!resStudenti.ok || !resAula.ok) {
-            listEl.innerHTML = '<div class="text-danger text-center py-3"><i class="bi bi-exclamation-circle me-2"></i>Errore nel caricamento dati. Riprova.</div>';
-            return;
-        }
-
-        _aulaAllStudenti = await resStudenti.json();
-        const aulaStudenti = await resAula.json();
-
-        // Set degli ID già nell'aula
-        const aulaIds = new Set(aulaStudenti.map(s => s.id_utente));
-
-        renderAulaStudentiList(_aulaAllStudenti, aulaIds, listEl);
-        updateAulaCount();
-
-        // Filtro live searchbar
-        const searchInput = document.getElementById('aulaSearchInput');
-        searchInput.oninput = function() {
-            const q = this.value.toLowerCase().trim();
-            const filtered = q
-                ? _aulaAllStudenti.filter(s =>
-                    s.Cognome.toLowerCase().includes(q) ||
-                    s.Nome.toLowerCase().includes(q)
-                  )
-                : _aulaAllStudenti;
-            // Salva gli ID già spuntati prima di filtrare
-            const checked = new Set(
-                Array.from(document.querySelectorAll('.chk-aula-studente:checked'))
-                    .map(c => parseInt(c.value))
-            );
-            renderAulaStudentiList(filtered, checked, listEl);
-            updateAulaCount();
-        };
-
-        // Seleziona tutti
-        document.getElementById('btnAulaSelectAll').onclick = function() {
-            const q = document.getElementById('aulaSearchInput').value.toLowerCase().trim();
-            const filtered = q
-                ? _aulaAllStudenti.filter(s =>
-                    s.Cognome.toLowerCase().includes(q) || s.Nome.toLowerCase().includes(q))
-                : _aulaAllStudenti;
-            const filteredIds = new Set(filtered.map(s => s.id_utente));
-            document.querySelectorAll('.chk-aula-studente').forEach(chk => {
-                if (filteredIds.has(parseInt(chk.value))) chk.checked = true;
-            });
-            updateAulaCount();
-        };
-
-        // Deseleziona tutti
-        document.getElementById('btnAulaDeselectAll').onclick = function() {
-            const q = document.getElementById('aulaSearchInput').value.toLowerCase().trim();
-            const filtered = q
-                ? _aulaAllStudenti.filter(s =>
-                    s.Cognome.toLowerCase().includes(q) || s.Nome.toLowerCase().includes(q))
-                : _aulaAllStudenti;
-            const filteredIds = new Set(filtered.map(s => s.id_utente));
-            document.querySelectorAll('.chk-aula-studente').forEach(chk => {
-                if (filteredIds.has(parseInt(chk.value))) chk.checked = false;
-            });
-            updateAulaCount();
-        };
-
-        // Salva aula
-        document.getElementById('btnSaveAula').onclick = saveAulaChanges;
-
-    } catch (err) {
-        console.error('Errore openAulaModal:', err);
-        listEl.innerHTML = '<div class="text-danger text-center py-3"><i class="bi bi-exclamation-circle me-2"></i>Errore di connessione.</div>';
-    }
+window.openAulaModal = function(id) {
+    window.location.href = `gestione-aula.html?id=${id}`;
 };
-
-function renderAulaStudentiList(studenti, selectedIds, container) {
-    if (!studenti.length) {
-        container.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-person-x fs-3 d-block mb-2"></i>Nessuno studente trovato.</div>';
-        return;
-    }
-
-    container.innerHTML = studenti.map(s => {
-        const isChecked = selectedIds.has(s.id_utente);
-        const initials = `${s.Cognome.charAt(0)}${s.Nome.charAt(0)}`.toUpperCase();
-        return `
-            <label class="aula-student-row ${isChecked ? 'is-selected' : ''}" for="chkAula_${s.id_utente}">
-                <div class="aula-student-avatar">${initials}</div>
-                <div class="aula-student-info">
-                    <span class="aula-student-name">${s.Cognome} ${s.Nome}</span>
-                    <span class="aula-student-email">${s.Email || ''}</span>
-                </div>
-                <input class="chk-aula-studente" type="checkbox" id="chkAula_${s.id_utente}" value="${s.id_utente}" ${isChecked ? 'checked' : ''}>
-            </label>
-        `;
-    }).join('');
-
-    // Toggle classe is-selected al click
-    container.querySelectorAll('.chk-aula-studente').forEach(chk => {
-        chk.addEventListener('change', function() {
-            const row = this.closest('.aula-student-row');
-            if (row) row.classList.toggle('is-selected', this.checked);
-            updateAulaCount();
-        });
-    });
-}
-
-function updateAulaCount() {
-    const count = document.querySelectorAll('.chk-aula-studente:checked').length;
-    const badge = document.getElementById('aulaStudentiCountBadge');
-    if (badge) {
-        badge.innerHTML = `<i class="bi bi-person-check-fill me-1"></i> ${count} Student${count === 1 ? 'e' : 'i'} Assegnat${count === 1 ? 'o' : 'i'}`;
-    }
-}
-
-async function saveAulaChanges() {
-    const idCorsoAttivo = document.getElementById('aulaEdizioneId').value;
-    const checkedIds = Array.from(document.querySelectorAll('.chk-aula-studente:checked'))
-        .map(c => parseInt(c.value));
-
-    const btn = document.getElementById('btnSaveAula');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvataggio...';
-
-    try {
-        const res = await fetchAutenticata(`${API_URL}/corsi-attivi/${idCorsoAttivo}/aula`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ studenti_ids: checkedIds })
-        });
-
-        if (res.ok) {
-            closeModal('aulaModal');
-            showToast(`Aula aggiornata: ${checkedIds.length} student${checkedIds.length === 1 ? 'e' : 'i'} assegnat${checkedIds.length === 1 ? 'o' : 'i'}.`);
-        } else {
-            const err = await res.json().catch(() => ({}));
-            showToast(err.detail || 'Errore durante il salvataggio dell\'aula.', true);
-        }
-    } catch (err) {
-        showToast('Errore di connessione durante il salvataggio.', true);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Salva Aula';
-    }
-}
 
 // -----------------------------------------
 // HELPERS MODALI (compatibili con o senza Bootstrap JS)

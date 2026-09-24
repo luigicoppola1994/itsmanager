@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITS Manager - Modifica Edizione Corso</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="../assets/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- CSS condiviso e segreteria -->
+    <link rel="stylesheet" href="../shared/styles.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=3.0">
+    <link rel="stylesheet" href="nuovo-corso.css?v=2.1">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- SIDEBAR A SINISTRA -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand-block">
+                    <div class="sidebar-logo-container">
+                        <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo" class="sidebar-logo-img">
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <h2 class="sidebar-brand-title">ITS MANAGER</h2>
+                        <span class="sidebar-brand-subtitle">Gestionale Didattico</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-small">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">Segreteria Didattica</div>
+                    <span class="user-role-badge">SEGRETERIA</span>
+                </div>
+            </div>
+
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="dashboard.html" class="nav-item-link active" id="navCorsi" title="Corsi">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        <span class="nav-label">Corsi</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" title="Piano Didattico">
+                        <i class="bi bi-book-half"></i>
+                        <span class="nav-label">Piano Didattico</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="utenze.html" class="nav-item-link" id="navUtenze" title="Utenze">
+                        <i class="bi bi-people-fill"></i>
+                        <span class="nav-label">Utenze</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="calendario.html" class="nav-item-link" id="navCalendario" title="Calendario">
+                        <i class="bi bi-calendar3"></i>
+                        <span class="nav-label">Calendario</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="timbrature.html" class="nav-item-link" id="navTimbrature" title="Timbrature">
+                        <i class="bi bi-clock-history"></i>
+                        <span class="nav-label">Timbrature</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Disconnetti</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENUTO PRINCIPALE -->
+        <main class="main-content">
+
+            <!-- RUBICK TOP BAR -->
+            <div class="rubick-top-bar">
+                <nav class="rubick-breadcrumb" aria-label="breadcrumb">
+                    <span class="breadcrumb-root"><i class="bi bi-mortarboard-fill me-1 text-primary"></i>ITS Manager</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-section">Segreteria</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <a href="dashboard.html" class="breadcrumb-section" style="text-decoration:none;">Corsi</a>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-current">Modifica Edizione</span>
+                </nav>
+                <div class="rubick-top-bar-actions">
+                    <div class="rubick-icon-badge" title="Notifiche">
+                        <i class="bi bi-bell"></i>
+                        <span class="rubick-badge-dot"></span>
+                    </div>
+                    <div class="rubick-user-avatar" title="Segreteria Didattica">
+                        SD
+                    </div>
+                </div>
+            </div>
+
+            <!-- BREADCRUMB + TITOLO -->
+            <div class="nc-page-header">
+                <div class="nc-breadcrumb">
+                    <a href="dashboard.html" class="nc-breadcrumb-link">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        Corsi
+                    </a>
+                    <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
+                    <span class="nc-breadcrumb-current" id="headerBreadcrumbCurrent">Modifica Edizione</span>
+                </div>
+
+                <div class="nc-header-row">
+                    <div>
+                        <h1 class="nc-title">
+                            <span class="nc-title-icon"><i class="bi bi-calendar2-range"></i></span>
+                            <span id="pageTitleText">Modifica Edizione Corso</span>
+                        </h1>
+                        <p class="nc-subtitle" id="pageSubtitleText">Modifica date, monte ore, percentuali di tolleranza e bilancio del Piano di Studio.</p>
+                    </div>
+                    <a href="dashboard.html" class="btn-back">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>Torna ai corsi</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- FORM CARD LAYOUT -->
+            <div class="nc-form-layout">
+
+                <!-- COLONNA SINISTRA: form -->
+                <div class="nc-form-card">
+                    <div class="nc-form-card-header">
+                        <i class="bi bi-pencil-square"></i>
+                        <span id="cardHeaderTitle">Parametri Edizione & Piano di Studio</span>
+                    </div>
+
+                    <form id="modificaEdizioneForm" novalidate style="padding: 28px;">
+                        <input type="hidden" id="editEdizioneId">
+                        <input type="hidden" id="editEdizioneIdCorso">
+
+                        <!-- SEZIONE 1: IDENTIFICATIVO E PERIODO -->
+                        <div class="nc-section-title">
+                            <span class="nc-step-number">1</span>
+                            Periodo & Dati Generali Edizione
+                        </div>
+
+                        <div class="nc-field-group mb-3">
+                            <label for="editEdizioneEtichetta" class="nc-label">Etichetta Edizione</label>
+                            <div class="nc-input-wrapper">
+                                <i class="bi bi-tag-fill nc-input-icon"></i>
+                                <input type="text" id="editEdizioneEtichetta" class="nc-input" placeholder="Es. Edizione 2025/26 - Gruppo A" maxlength="100">
+                            </div>
+                            <span class="nc-field-hint">Facoltativa — etichetta personalizzata visibile in dashboard.</span>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="nc-field-group">
+                                    <label for="editEdizioneDataInizio" class="nc-label">Data Inizio <span class="nc-required">*</span></label>
+                                    <input type="date" id="editEdizioneDataInizio" class="form-control nc-input py-2" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="nc-field-group">
+                                    <label for="editEdizioneDataFine" class="nc-label">Data Fine <span class="nc-required">*</span></label>
+                                    <input type="date" id="editEdizioneDataFine" class="form-control nc-input py-2" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SEZIONE 2: MONTE ORE E FREQUENZA -->
+                        <div class="nc-section-title mt-4">
+                            <span class="nc-step-number">2</span>
+                            Monte Ore & Parametri Frequenza
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <div class="nc-field-group">
+                                    <label for="editEdizioneOreTeoria" class="nc-label">Ore Aula <span class="nc-required">*</span></label>
+                                    <input type="number" id="editEdizioneOreTeoria" class="form-control nc-input py-2" min="1" required>
+                                    <span class="nc-field-hint">Lezioni in presenza/FAD</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="nc-field-group">
+                                    <label for="editEdizioneOreStage" class="nc-label">Ore Stage <span class="nc-required">*</span></label>
+                                    <input type="number" id="editEdizioneOreStage" class="form-control nc-input py-2" min="0" required>
+                                    <span class="nc-field-hint">Tirocinio curricolare</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="nc-field-group">
+                                    <label for="editEdizioneDurataOre" class="nc-label">Ore Totali (Calcolate)</label>
+                                    <input type="number" id="editEdizioneDurataOre" class="form-control nc-input py-2 bg-light fw-bold" readonly disabled tabindex="-1">
+                                    <span class="nc-field-hint">Aula + Stage</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="nc-field-group">
+                                    <label for="editEdizionePercAssenza" class="nc-label">Max Assenza (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" id="editEdizionePercAssenza" class="form-control nc-input py-2" min="0" max="30" value="20" required>
+                                        <span class="input-group-text bg-light">%</span>
+                                    </div>
+                                    <span class="nc-field-hint">Limite legale (max 30%)</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="nc-field-group">
+                                    <label for="editEdizioneTollIngresso" class="nc-label">Toll. Ingresso</label>
+                                    <div class="input-group">
+                                        <input type="number" id="editEdizioneTollIngresso" class="form-control nc-input py-2" min="0" max="30" value="15" required>
+                                        <span class="input-group-text bg-light">min</span>
+                                    </div>
+                                    <span class="nc-field-hint">Ritardo massimo ammesso</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="nc-field-group">
+                                    <label for="editEdizioneTollUscita" class="nc-label">Toll. Uscita</label>
+                                    <div class="input-group">
+                                        <input type="number" id="editEdizioneTollUscita" class="form-control nc-input py-2" min="0" max="45" value="15" required>
+                                        <span class="input-group-text bg-light">min</span>
+                                    </div>
+                                    <span class="nc-field-hint">Uscita anticipata ammessa</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SEZIONE 3: PIANO STUDIO EDIZIONE -->
+                        <div class="nc-section-title mt-4">
+                            <span class="nc-step-number">3</span>
+                            Piano Studio Edizione (Unità Formative & Ore Dedicate)
+                        </div>
+
+                        <p class="small text-muted mb-3">
+                            Seleziona le Unità Formative collegate a questa specifica edizione ed assegna le ore dedicate. <strong>La somma delle ore UF deve corrispondere esattamente alle Ore Aula stabilite sopra</strong>.
+                        </p>
+
+                        <!-- Box Bilancio Ore -->
+                        <div id="editEdizioneUfHoursCounterCard" class="card p-3 mb-3 border-0 shadow-sm rounded-3" style="background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                <div class="fw-bold text-dark d-flex align-items-center gap-2 small">
+                                    <i class="bi bi-calculator-fill text-primary"></i>
+                                    <span>Bilancio Ore Unità Formative</span>
+                                </div>
+                                <div id="editEdizioneUfBadgeStatus" class="badge bg-warning text-dark px-3 py-2 rounded-pill font-monospace fw-bold" style="font-size:0.8rem;">
+                                    Mancano 0h da associare
+                                </div>
+                            </div>
+                            
+                            <div class="row g-2 text-center mb-2">
+                                <div class="col-4">
+                                    <div class="p-2 bg-white rounded border">
+                                        <div class="text-muted small text-uppercase fw-semibold" style="font-size:0.68rem;">Ore Aula (Target)</div>
+                                        <div class="fw-bold fs-5 text-primary" id="editEdizioneValOreAulaTarget">0h</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 bg-white rounded border">
+                                        <div class="text-muted small text-uppercase fw-semibold" style="font-size:0.68rem;">Ore Assegnate UF</div>
+                                        <div class="fw-bold fs-5 text-dark" id="editEdizioneValOreUfAssegnate">0h</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 bg-white rounded border" id="editEdizioneBoxOreUfRestanti">
+                                        <div class="text-muted small text-uppercase fw-semibold" style="font-size:0.68rem;">Ore Restanti</div>
+                                        <div class="fw-bold fs-5 text-warning" id="editEdizioneValOreUfRestanti">0h</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="small text-muted" id="editEdizioneUfCounterHint">
+                                Inserisci le ore per ciascuna Unità Formativa per completare la ripartizione.
+                            </div>
+                        </div>
+
+                        <!-- Lista UF -->
+                        <div id="editEdizioneUfList" class="d-flex flex-column gap-2 mb-4" style="max-height: 380px; overflow-y: auto;">
+                            <div class="text-muted small py-3 text-center"><i class="bi bi-arrow-repeat spin me-2"></i>Caricamento Unità Formative...</div>
+                        </div>
+
+                        <!-- AZIONI FORM -->
+                        <div class="nc-form-actions mt-4 pt-3 border-top">
+                            <a href="dashboard.html" class="btn-nc-cancel">
+                                <i class="bi bi-x-lg"></i>
+                                Annulla
+                            </a>
+                            <button type="submit" class="btn-nc-submit" id="submitBtn">
+                                <span class="btn-nc-text">
+                                    <i class="bi bi-check-lg"></i>
+                                    Salva Modifiche Edizione
+                                </span>
+                                <span class="btn-nc-loading" style="display:none;">
+                                    <span class="nc-spinner"></span>
+                                    Salvataggio...
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- COLONNA DESTRA: ANTEPRIMA IN TEMPO REALE -->
+                <div class="nc-preview-panel">
+                    <div class="nc-preview-header">
+                        <i class="bi bi-eye-fill"></i>
+                        <span>Riepilogo & Anteprima Edizione</span>
+                    </div>
+                    <p class="nc-preview-hint">Anteprima in tempo reale della scheda edizione</p>
+
+                    <div class="nc-preview-card" id="previewCard">
+                        <div class="nc-preview-card-top">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="preview-badge-status" id="previewCorsoNome">
+                                    Corso
+                                </span>
+                                <span class="preview-badge-edition" id="previewEdizioneBadge">
+                                    Edizione
+                                </span>
+                            </div>
+                            <h3 class="nc-preview-title" id="previewTitle">Etichetta Edizione</h3>
+                        </div>
+                        <div class="nc-preview-card-body">
+                            <!-- Periodo -->
+                            <div class="preview-dates-box mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-calendar-range text-primary fs-5"></i>
+                                    <div>
+                                        <div class="preview-dates-label">Periodo Didattico</div>
+                                        <div class="preview-dates-val" id="previewDatesVal">Date da definire</div>
+                                    </div>
+                                </div>
+                                <span class="badge bg-light text-secondary border" id="previewDaysCount">0 gg lav.</span>
+                            </div>
+
+                            <!-- Griglia Metriche: 4 box -->
+                            <div class="nc-metrics-grid mb-3">
+                                <div class="nc-metric-card primary">
+                                    <div class="metric-icon"><i class="bi bi-clock-history"></i></div>
+                                    <div class="metric-val" id="previewOreTotali">—</div>
+                                    <div class="metric-lbl">Ore Totali</div>
+                                </div>
+                                <div class="nc-metric-card">
+                                    <div class="metric-icon"><i class="bi bi-easel2"></i></div>
+                                    <div class="metric-val" id="previewOreAula">—</div>
+                                    <div class="metric-lbl">Ore Aula</div>
+                                </div>
+                                <div class="nc-metric-card">
+                                    <div class="metric-icon"><i class="bi bi-briefcase"></i></div>
+                                    <div class="metric-val" id="previewOreStage">—</div>
+                                    <div class="metric-lbl">Ore Stage</div>
+                                </div>
+                                <div class="nc-metric-card">
+                                    <div class="metric-icon"><i class="bi bi-percent"></i></div>
+                                    <div class="metric-val" id="previewAssenza">20%</div>
+                                    <div class="metric-lbl">Max Assenza</div>
+                                </div>
+                            </div>
+
+                            <!-- Tolleranze -->
+                            <div class="preview-parameters-pill mb-2">
+                                <div class="param-chip" id="previewTollIngresso">
+                                    <i class="bi bi-box-arrow-in-right text-primary me-1"></i>Toll. Entrata: <strong>15 min</strong>
+                                </div>
+                                <div class="param-chip" id="previewTollUscita">
+                                    <i class="bi bi-box-arrow-right text-primary me-1"></i>Toll. Uscita: <strong>15 min</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Checklist -->
+                    <div class="nc-progress-box mt-4">
+                        <div class="nc-progress-title">
+                            <i class="bi bi-check2-circle text-primary"></i>
+                            Checklist di Validazione
+                        </div>
+                        <div class="nc-checklist mt-2">
+                            <div class="nc-check-item" id="checkDate">
+                                <i class="bi bi-circle"></i>
+                                <span>Periodo date coerente</span>
+                            </div>
+                            <div class="nc-check-item" id="checkOre">
+                                <i class="bi bi-circle"></i>
+                                <span>Ore aula inserite (> 0)</span>
+                            </div>
+                            <div class="nc-check-item" id="checkBilancioUf">
+                                <i class="bi bi-circle"></i>
+                                <span>Bilancio ore UF perfetto (0h)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">Operazione completata!</div>
+
+    <script src="../shared/auth.js"></script>
+    <script src="modifica-edizione.js?v=1.0"></script>
+</body>
+</html>

@@ -7,6 +7,9 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=mysql+pymysql://its-manager:progettoits2026@mysql-its-manager.alwaysdata.net:3306/its-manager_db
+    volumes:
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - app_network
 

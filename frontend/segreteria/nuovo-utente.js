@@ -1,5 +1,5 @@
 // ============================================================
-// nuovo-utente.js — Creazione e Modifica Completa Utente
+// nuovo-utente.js â€” Creazione e Modifica Completa Utente
 // ============================================================
 
 let ruoliList = [];
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('userPassword')?.addEventListener('input', updatePasswordStrength);
 
-    // Setup Nazionalità Toggle
+    // Setup NazionalitÃ  Toggle
     setupNazionalitaToggle();
 
     // Gestione Query Params
@@ -132,7 +132,7 @@ async function initEditMode(id) {
     document.getElementById('breadcrumbAction').textContent = `Modifica Utente #${id}`;
     document.getElementById('btnSubmitText').innerHTML = '<i class="bi bi-check2-circle"></i> Salva Modifiche';
 
-    // In modifica la password non è obbligatoria
+    // In modifica la password non Ã¨ obbligatoria
     document.getElementById('pwdRequiredStar').style.display = 'none';
     document.getElementById('pwdHint').style.display = 'block';
     document.getElementById('labelPassword').textContent = 'Nuova Password';
@@ -347,7 +347,7 @@ function updatePasswordStrength() {
 }
 
 // ============================================================
-// Setup Toggle Nazionalità (Italiana vs Altro)
+// Setup Toggle NazionalitÃ  (Italiana vs Altro)
 // ============================================================
 function applyNazionalitaUI() {
     const radItaliana = document.getElementById('nazItaliana');
@@ -376,7 +376,7 @@ function applyNazionalitaUI() {
 
         if (cittaNascita) {
             cittaNascita.placeholder = 'Es. Roma';
-            cittaNascita.setAttribute('list', 'comuniList');
+            cittaNascita.removeAttribute('list');
             cittaNascita.setAttribute('autocomplete', 'off');
         }
         if (provNascita) {
@@ -385,12 +385,12 @@ function applyNazionalitaUI() {
             provNascita.placeholder = 'Es. RM';
         }
         if (cittaResidenza) {
-            cittaResidenza.setAttribute('list', 'comuniList');
+            cittaResidenza.removeAttribute('list');
             cittaResidenza.setAttribute('autocomplete', 'off');
         }
         if (provResidenza) {
             provResidenza.readOnly = true;
-            provResidenza.setAttribute('list', 'provinceList');
+            provResidenza.removeAttribute('list');
             provResidenza.placeholder = 'Es. MI';
         }
     } else {
@@ -491,11 +491,11 @@ async function handleSubmit(e) {
 
     // STEP 1 Validation
     if (!nome) {
-        if (errNome) errNome.textContent = 'Il nome è obbligatorio.';
+        if (errNome) errNome.textContent = 'Il nome Ã¨ obbligatorio.';
         hasErrors = true;
     }
     if (!cognome) {
-        if (errCognome) errCognome.textContent = 'Il cognome è obbligatorio.';
+        if (errCognome) errCognome.textContent = 'Il cognome Ã¨ obbligatorio.';
         hasErrors = true;
     }
     if (!email || !email.includes('@')) {
@@ -507,58 +507,58 @@ async function handleSubmit(e) {
         hasErrors = true;
     }
     if (!isEditMode && !password) {
-        if (errPassword) errPassword.textContent = 'La password è obbligatoria per i nuovi utenti.';
+        if (errPassword) errPassword.textContent = 'La password Ã¨ obbligatoria per i nuovi utenti.';
         hasErrors = true;
     }
 
     // STEP 2 Dati Anagrafici Validation
     if (!genere) {
-        if (errGenere) errGenere.textContent = 'Il genere è obbligatorio.';
+        if (errGenere) errGenere.textContent = 'Il genere Ã¨ obbligatorio.';
         hasErrors = true;
     }
     if (!cf) {
-        if (errCF) errCF.textContent = 'Il codice fiscale è obbligatorio.';
+        if (errCF) errCF.textContent = 'Il codice fiscale Ã¨ obbligatorio.';
         hasErrors = true;
     } else if (!validateCodiceFiscale(cf)) {
         if (errCF) errCF.textContent = 'Codice Fiscale non valido (formato o carattere di controllo errati).';
         hasErrors = true;
     }
     if (!dataNascita) {
-        if (errDataNascita) errDataNascita.textContent = 'La data di nascita è obbligatoria.';
+        if (errDataNascita) errDataNascita.textContent = 'La data di nascita Ã¨ obbligatoria.';
         hasErrors = true;
     }
     if (!isItaliana && !nazionalitaVal) {
-        if (errNazionalita) errNazionalita.textContent = 'La nazionalità è obbligatoria per utenti esteri.';
+        if (errNazionalita) errNazionalita.textContent = 'La nazionalitÃ  Ã¨ obbligatoria per utenti esteri.';
         hasErrors = true;
     }
     if (!cittaNascita) {
-        if (errCittaNascita) errCittaNascita.textContent = 'La città di nascita è obbligatoria.';
+        if (errCittaNascita) errCittaNascita.textContent = 'La cittÃ  di nascita Ã¨ obbligatoria.';
         hasErrors = true;
     }
     if (isItaliana && !provinciaNascita) {
-        if (errProvinciaNascita) errProvinciaNascita.textContent = 'La provincia di nascita è obbligatoria.';
+        if (errProvinciaNascita) errProvinciaNascita.textContent = 'La provincia di nascita Ã¨ obbligatoria.';
         hasErrors = true;
     }
 
     // STEP 3 Residenza Validation
     if (!indirizzo) {
-        if (errIndirizzo) errIndirizzo.textContent = 'L\'indirizzo di residenza è obbligatorio.';
+        if (errIndirizzo) errIndirizzo.textContent = 'L\'indirizzo di residenza Ã¨ obbligatorio.';
         hasErrors = true;
     }
     if (!telefono) {
-        if (errTelefono) errTelefono.textContent = 'Il numero di telefono è obbligatorio.';
+        if (errTelefono) errTelefono.textContent = 'Il numero di telefono Ã¨ obbligatorio.';
         hasErrors = true;
     }
     if (!cittaResidenza) {
-        if (errCittaResidenza) errCittaResidenza.textContent = 'La città di residenza è obbligatoria.';
+        if (errCittaResidenza) errCittaResidenza.textContent = 'La cittÃ  di residenza Ã¨ obbligatoria.';
         hasErrors = true;
     }
     if (!cap) {
-        if (errCap) errCap.textContent = 'Il CAP è obbligatorio.';
+        if (errCap) errCap.textContent = 'Il CAP Ã¨ obbligatorio.';
         hasErrors = true;
     }
     if (!provincia) {
-        if (errProvincia) errProvincia.textContent = 'La provincia di residenza è obbligatoria.';
+        if (errProvincia) errProvincia.textContent = 'La provincia di residenza Ã¨ obbligatoria.';
         hasErrors = true;
     }
 
@@ -642,87 +642,127 @@ function showToast(msg, isError = false) {
 }
 
 // ============================================================
-// Autocomplete Dati Comuni e Province
+// Autocomplete Comuni e Province — usa endpoint interno /comuni
 // ============================================================
-async function setupAutocomplete() {
-    // 1. Carica tutte le province (sono circa 110) al caricamento della pagina
-    try {
-        const res = await fetch(`${API_URL}/proxy/province`);
-        if (res.ok) {
-            const json = await res.json();
-            const dlProv = document.getElementById('provinceList');
-            if (dlProv && json.data) {
-                json.data.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.sigla; // Il valore effettivo nell'input
-                    opt.textContent = p.nome; // Mostra "Roma", "Milano" nel menu a tendina
-                    dlProv.appendChild(opt);
-                });
-            }
-        }
-    } catch (e) {
-        console.error('Errore caricamento province:', e);
+
+function createComuneAutocomplete(inputId, provinciaId, capId) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+
+    // Rimuovi list attribute (non usiamo datalist)
+    input.removeAttribute('list');
+
+    // Wrapper per posizionamento relativo del dropdown
+    var fieldGroup = input.closest('.nc-field-group') || input.parentElement;
+    fieldGroup.style.position = 'relative';
+
+    // Crea il dropdown container
+    var dropdown = document.createElement('div');
+    dropdown.className = 'comune-autocomplete-dropdown';
+    dropdown.style.cssText = 'display:none;position:absolute;top:100%;left:0;right:0;z-index:9999;background:#fff;border:1px solid #c8d0e0;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 8px 24px rgba(0,0,0,0.13);max-height:230px;overflow-y:auto;font-size:0.875rem;';
+    fieldGroup.appendChild(dropdown);
+
+    var debounceTimer = null;
+    var comuniResults = [];
+    var activeIndex = -1;
+
+    function hideDropdown() {
+        dropdown.style.display = 'none';
+        activeIndex = -1;
     }
 
-    // 2. Autocomplete dinamico per i comuni
-    let searchTimeout;
-    let lastFetchedComuni = []; // Variabile per memorizzare l'ultimo risultato
+    function showDropdown() {
+        if (dropdown.children.length > 0) dropdown.style.display = 'block';
+    }
 
-    async function fetchComuni(query) {
-        if (!query || query.length < 2) return;
+    function highlightItem(index) {
+        var items = dropdown.querySelectorAll('.cac-item');
+        items.forEach(function(el, i) {
+            el.style.backgroundColor = (i === index) ? '#eef2ff' : '';
+            el.style.color = (i === index) ? '#3b4cb8' : '';
+        });
+        activeIndex = index;
+    }
+
+    function selectComune(comune) {
+        input.value = comune.nome;
+        var provInput = document.getElementById(provinciaId);
+        if (provInput) provInput.value = comune.sigla || '';
+        if (capId) {
+            var capInput = document.getElementById(capId);
+            if (capInput && comune.cap) capInput.value = comune.cap;
+        }
+        hideDropdown();
+    }
+
+    function renderItems(items) {
+        dropdown.innerHTML = '';
+        comuniResults = items;
+        activeIndex = -1;
+        if (!items || !items.length) { hideDropdown(); return; }
+        items.forEach(function(comune, i) {
+            var item = document.createElement('div');
+            item.className = 'cac-item';
+            item.style.cssText = 'padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f3f4f7;transition:background 0.12s;';
+            var leftSpan = document.createElement('span');
+            leftSpan.style.cssText = 'font-weight:500;color:#212529;';
+            leftSpan.textContent = comune.nome;
+            var rightSpan = document.createElement('span');
+            rightSpan.style.cssText = 'font-size:0.78rem;color:#6c757d;margin-left:8px;white-space:nowrap;display:flex;align-items:center;gap:5px;';
+            var siglaBadge = document.createElement('span');
+            siglaBadge.style.cssText = 'background:#e9ecef;padding:1px 7px;border-radius:4px;font-weight:700;color:#495057;';
+            siglaBadge.textContent = comune.sigla;
+            rightSpan.appendChild(siglaBadge);
+            if (comune.cap) {
+                var capSpan = document.createElement('span');
+                capSpan.style.color = '#adb5bd';
+                capSpan.textContent = comune.cap;
+                rightSpan.appendChild(capSpan);
+            }
+            item.appendChild(leftSpan);
+            item.appendChild(rightSpan);
+            item.addEventListener('mousedown', function(e) { e.preventDefault(); selectComune(comune); });
+            item.addEventListener('mouseenter', function() { highlightItem(i); });
+            dropdown.appendChild(item);
+        });
+        showDropdown();
+    }
+
+    async function fetchAndRender(query) {
+        if (!query || query.length < 2) { hideDropdown(); return; }
         try {
-            const res = await fetch(`${API_URL}/proxy/comuni?q=${encodeURIComponent(query)}`);
-            if (res.ok) {
-                const json = await res.json();
-                const dlComuni = document.getElementById('comuniList');
-                if (dlComuni && json.data) {
-                    dlComuni.innerHTML = '';
-                    lastFetchedComuni = json.data; // Memorizza i dati
-                    json.data.forEach(c => {
-                        const opt = document.createElement('option');
-                        opt.value = c.nome;
-                        if (c.sigla_provincia) {
-                            opt.textContent = `${c.nome} (${c.sigla_provincia})`;
-                        }
-                        dlComuni.appendChild(opt);
-                    });
-                }
-            }
-        } catch (e) {
-            console.error('Errore ricerca comuni:', e);
-        }
+            var res = await fetch(API_URL + '/comuni?q=' + encodeURIComponent(query) + '&limit=10');
+            if (res.ok) { var data = await res.json(); renderItems(data); }
+        } catch (e) { console.error('Errore autocomplete comuni:', e); }
     }
 
-    const cittaInputs = ['userCittaNascita', 'userCittaResidenza'];
-    cittaInputs.forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            // Evento input per cercare i comuni mentre si digita
-            input.addEventListener('input', (e) => {
-                clearTimeout(searchTimeout);
-                const query = e.target.value.trim();
-                searchTimeout = setTimeout(() => {
-                    fetchComuni(query);
-                }, 300); // Debounce per evitare troppe chiamate API
-            });
-
-            // Evento change per autocompletare la provincia (quando l'utente clicca un'opzione)
-            input.addEventListener('change', (e) => {
-                const selectedValue = e.target.value;
-                const match = lastFetchedComuni.find(c => c.nome.toLowerCase() === selectedValue.toLowerCase());
-                if (match && match.sigla_provincia) {
-                    // Mappa ogni input città al campo provincia corrispondente
-                    let provId = null;
-                    if (id === 'userCittaResidenza') provId = 'userProvincia';
-                    if (id === 'userCittaNascita')   provId = 'userProvinciaNascita';
-                    if (provId) {
-                        const provInput = document.getElementById(provId);
-                        if (provInput) {
-                            provInput.value = match.sigla_provincia;
-                        }
-                    }
-                }
-            });
-        }
+    input.addEventListener('input', function(e) {
+        clearTimeout(debounceTimer);
+        var q = e.target.value.trim();
+        debounceTimer = setTimeout(function() { fetchAndRender(q); }, 280);
     });
+
+    input.addEventListener('keydown', function(e) {
+        var items = dropdown.querySelectorAll('.cac-item');
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); highlightItem(Math.min(activeIndex + 1, items.length - 1)); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); highlightItem(Math.max(activeIndex - 1, 0)); }
+        else if (e.key === 'Enter') { if (activeIndex >= 0 && comuniResults[activeIndex]) { e.preventDefault(); selectComune(comuniResults[activeIndex]); } }
+        else if (e.key === 'Escape') { hideDropdown(); }
+    });
+
+    input.addEventListener('focus', function() {
+        if (input.value.trim().length >= 2) fetchAndRender(input.value.trim());
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!fieldGroup.contains(e.target) && !dropdown.contains(e.target)) hideDropdown();
+    });
+}
+
+function setupAutocomplete() {
+    // Citta di nascita -> auto-compila Provincia Nascita
+    createComuneAutocomplete('userCittaNascita', 'userProvinciaNascita', null);
+    // Citta di residenza -> auto-compila Provincia e CAP Residenza
+    createComuneAutocomplete('userCittaResidenza', 'userProvincia', 'userCap');
 }
