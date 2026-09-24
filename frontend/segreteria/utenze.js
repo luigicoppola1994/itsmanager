@@ -286,6 +286,8 @@ async function handleFormSubmit(e) {
         Data_Nascita: dataN,
         Genere: uCorrente?.Genere ?? null,
         Citta_Nascita: uCorrente?.Citta_Nascita ?? null,
+        Nazione_Nascita: uCorrente?.Nazione_Nascita ?? null,
+        Provincia_Nascita: uCorrente?.Provincia_Nascita ?? null,
         Indirizzo_Residenza: uCorrente?.Indirizzo_Residenza ?? null,
         Citta_Residenza: uCorrente?.Citta_Residenza ?? null,
         Cap_Residenza: uCorrente?.Cap_Residenza ?? null,
@@ -356,10 +358,60 @@ function togglePasswordVisibility(inputId, btn) {
     }
 }
 
-// Apri modal SCHEDA COMPLETA UTENTE (INFO & EDIT)
 // Apri scheda utente in-page (non popup modal)
 function openUserInfoModal(id) {
     window.location.href = `nuovo-utente.html?id=${id}`;
+}
+
+// Popola il modal Scheda Completa Utente con i dati di un utente specifico
+function populateUserInfoModal(u) {
+    if (!u) return;
+
+    document.getElementById('infoUtenteId').value       = u.id_utente;
+    document.getElementById('infoNome').value           = u.Nome || '';
+    document.getElementById('infoCognome').value        = u.Cognome || '';
+    document.getElementById('infoEmail').value          = u.Email || '';
+    document.getElementById('infoRuolo').value          = u.id_ruolo || '';
+    document.getElementById('infoGenere').value         = u.Genere || '';
+    document.getElementById('infoCF').value             = u.Codice_Fiscale || '';
+    document.getElementById('infoDataNascita').value    = u.Data_Nascita || '';
+    document.getElementById('infoNazioneNascita').value = u.Nazione_Nascita || '';
+    document.getElementById('infoCittaNascita').value   = u.Citta_Nascita || '';
+    document.getElementById('infoProvinciaNascita').value = u.Provincia_Nascita || '';
+    document.getElementById('infoIndirizzo').value      = u.Indirizzo_Residenza || '';
+    document.getElementById('infoCittaResidenza').value = u.Citta_Residenza || '';
+    document.getElementById('infoCap').value            = u.Cap_Residenza || '';
+    document.getElementById('infoProvincia').value      = u.Provincia_Residenza || '';
+    document.getElementById('infoTelefono').value       = u.Telefono || '';
+    document.getElementById('infoPrimoAccesso').checked = !!u.Primo_Accesso;
+    document.getElementById('infoPassword').value       = '';
+
+    // Avatar e nome nella testata modale
+    const initials = `${(u.Nome||'').charAt(0)}${(u.Cognome||'').charAt(0)}`.toUpperCase();
+    const avatarEl = document.getElementById('infoUserAvatar');
+    const fullNameEl = document.getElementById('infoUserFullname');
+    const emailEl = document.getElementById('infoUserEmailText');
+    const idEl = document.getElementById('infoUserIdText');
+    const roleEl = document.getElementById('infoUserRoleBadge');
+    const primoEl = document.getElementById('infoUserPrimoAccessoBadge');
+
+    if (avatarEl) avatarEl.textContent = initials;
+    if (fullNameEl) fullNameEl.textContent = `${u.Nome} ${u.Cognome}`;
+    if (emailEl) emailEl.textContent = u.Email || '—';
+    if (idEl) idEl.textContent = u.id_utente;
+
+    if (roleEl) {
+        const ruoloNome = getRuoloNome(u);
+        const style = getRuoloStyle(ruoloNome);
+        roleEl.className = `user-role-tag ${style.cls}`;
+        roleEl.innerHTML = `<i class="bi ${style.icon}"></i> ${style.label}`;
+    }
+
+    if (primoEl) {
+        primoEl.innerHTML = u.Primo_Accesso
+            ? `<i class="bi bi-shield-exclamation me-1 text-warning"></i>Cambio password richiesto`
+            : `<i class="bi bi-shield-check me-1 text-success"></i>Accesso Normale`;
+    }
 }
 
 // Submit della Scheda Completa Utente
@@ -398,6 +450,7 @@ async function handleUserInfoSubmit(e) {
         Genere: document.getElementById('infoGenere').value || null,
         Codice_Fiscale: document.getElementById('infoCF').value.trim().toUpperCase() || null,
         Data_Nascita: document.getElementById('infoDataNascita').value || null,
+        Nazione_Nascita: document.getElementById('infoNazioneNascita').value.trim() || null,
         Citta_Nascita: document.getElementById('infoCittaNascita').value.trim() || null,
         Provincia_Nascita: document.getElementById('infoProvinciaNascita').value.trim().toUpperCase() || null,
         Indirizzo_Residenza: document.getElementById('infoIndirizzo').value.trim() || null,

@@ -298,8 +298,45 @@
 
                         <div id="sectionPianoStudioContainer" class="ps-4 border-start border-3 border-info mb-4">
                             <p class="small text-muted mb-3">
-                                Seleziona le Unità Formative da assegnare a questa edizione del corso ed indica le ore dedicate. Solo i moduli di queste UF saranno disponibili per la programmazione del calendario.
+                                Seleziona le Unità Formative da assegnare a questa edizione del corso ed indica le ore dedicate. La somma delle ore delle UF deve corrispondere esattamente alle ore di aula dell'edizione.
                             </p>
+
+                            <!-- CONTATORE DINAMICO BILANCIO ORE UF -->
+                            <div id="ufHoursCounterCard" class="card p-3 mb-3 border-0 shadow-sm rounded-3" style="background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                        <i class="bi bi-calculator-fill text-primary fs-5"></i>
+                                        <span>Bilancio Ore Unità Formative</span>
+                                    </div>
+                                    <div id="ufBadgeStatus" class="badge bg-warning text-dark px-3 py-2 rounded-pill font-monospace fw-bold" style="font-size:0.82rem;">
+                                        Mancano 0h da associare
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-2 text-center mt-1">
+                                    <div class="col-4">
+                                        <div class="p-2 bg-white rounded border">
+                                            <div class="text-muted small text-uppercase fw-semibold" style="font-size:0.68rem; letter-spacing:0.04em;">Ore Aula Corso</div>
+                                            <div class="fw-bold fs-5 text-primary" id="valOreAulaTarget">0h</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-white rounded border">
+                                            <div class="text-muted small text-uppercase fw-semibold" style="font-size:0.68rem; letter-spacing:0.04em;">Totale Ore UF</div>
+                                            <div class="fw-bold fs-5 text-dark" id="valOreUfAssegnate">0h</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-white rounded border" id="boxOreUfRestanti">
+                                            <div class="text-muted small text-uppercase fw-semibold" style="font-size:0.68rem; letter-spacing:0.04em;">Ore Restanti</div>
+                                            <div class="fw-bold fs-5 text-warning" id="valOreUfRestanti">0h</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="ufCounterHintMessage" class="small text-muted mt-2 mb-0 text-center fw-medium">
+                                    Inserisci le ore per ciascuna UF per azzerare le ore restanti da associare.
+                                </div>
+                            </div>
 
                             <div id="ufPianoStudioList" class="d-flex flex-column gap-2">
                                 <div class="text-muted small py-2"><i class="bi bi-arrow-repeat spin me-2"></i>Caricamento Unità Formative...</div>

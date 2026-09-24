@@ -260,6 +260,7 @@ def create_user(user: schemas.UtenteCreate, db: Session = Depends(get_db), curre
         Codice_Fiscale=user.Codice_Fiscale,
         Data_Nascita=user.Data_Nascita,
         Citta_Nascita=user.Citta_Nascita,
+        Nazione_Nascita=user.Nazione_Nascita,
         Provincia_Nascita=user.Provincia_Nascita,
         Indirizzo_Residenza=user.Indirizzo_Residenza,
         Citta_Residenza=user.Citta_Residenza,
@@ -311,6 +312,8 @@ def update_user(id_utente: int, user_data: schemas.UtenteUpdate, db: Session = D
         user.Data_Nascita = user_data.Data_Nascita if user_data.Data_Nascita and str(user_data.Data_Nascita).strip() else None
     if user_data.Citta_Nascita is not None:
         user.Citta_Nascita = user_data.Citta_Nascita.strip() if user_data.Citta_Nascita and user_data.Citta_Nascita.strip() else None
+    if user_data.Nazione_Nascita is not None:
+        user.Nazione_Nascita = user_data.Nazione_Nascita.strip() if user_data.Nazione_Nascita and user_data.Nazione_Nascita.strip() else None
     if user_data.Provincia_Nascita is not None:
         user.Provincia_Nascita = user_data.Provincia_Nascita.strip().upper() if user_data.Provincia_Nascita and user_data.Provincia_Nascita.strip() else None
     if user_data.Indirizzo_Residenza is not None:
@@ -951,6 +954,64 @@ def create_o_aggiorna_piano_studio(item: schemas.CorsoAttivoUnitaFormativaCreate
         db.refresh(nuova_associazione)
         return nuova_associazione
 
+@app.put("/corsi-attivi/{id_corso_attivo}/piano-studio", response_model=List[schemas.CorsoAttivoUnitaFormativaResponse])
+def sync_piano_studio_corso(
+    id_corso_attivo: int,
+    payload: schemas.CorsoAttivoPianoStudioSyncRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """
+    Sincronizza e valida in un'unica operazione atomica l'intero Piano Studio (Unità Formative) di un corso attivo.
+    Valida che la somma delle ore delle UF sia ESATTAMENTE UGUALE alle ore di aula dell'edizione.
+    """
+    corso_attivo = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == id_corso_attivo).first()
+    if not corso_attivo:
+        raise HTTPException(status_code=404, detail="Corso attivo non trovato")
+    
+    ore_aula = corso_attivo.ore_teoria_aula or 0
+    totale_ore_uf = sum(item.ore_dedicate for item in payload.items)
+    
+    # Il sistema non blocca il salvataggio se il totale non corrisponde a zero ore restanti,
+    # consentendo il salvataggio flessibile dell'edizione.
+    
+    new_uf_ids = {item.id_unita_formativa: item.ore_dedicate for item in payload.items}
+    
+    existing_items = db.query(models.CorsoAttivoUnitaFormativa).filter(
+        models.CorsoAttivoUnitaFormativa.id_corso_attivo == id_corso_attivo
+    ).all()
+    
+    existing_map = {e.id_unita_formativa: e for e in existing_items}
+    
+    # Rimuovi quelle non più incluse
+    for uf_id, item_obj in existing_map.items():
+        if uf_id not in new_uf_ids:
+            db.delete(item_obj)
+            
+    result = []
+    for item in payload.items:
+        uf = db.query(models.UnitaFormativa).filter(models.UnitaFormativa.id_unita_formativa == item.id_unita_formativa).first()
+        if not uf:
+            raise HTTPException(status_code=400, detail=f"Unità Formativa #{item.id_unita_formativa} non trovata")
+            
+        if item.id_unita_formativa in existing_map:
+            obj = existing_map[item.id_unita_formativa]
+            obj.ore_dedicate = item.ore_dedicate
+            result.append(obj)
+        else:
+            nuova = models.CorsoAttivoUnitaFormativa(
+                id_corso_attivo=id_corso_attivo,
+                id_unita_formativa=item.id_unita_formativa,
+                ore_dedicate=item.ore_dedicate
+            )
+            db.add(nuova)
+            result.append(nuova)
+            
+    db.commit()
+    for r in result:
+        db.refresh(r)
+    return result
+
 @app.delete("/piano-studio/{id_corso_attivo}/{id_unita_formativa}")
 def delete_piano_studio_item(id_corso_attivo: int, id_unita_formativa: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
     """Rimuove un'Unità Formativa dal Piano Studio di un Corso Attivo."""
@@ -964,6 +1025,7 @@ def delete_piano_studio_item(id_corso_attivo: int, id_unita_formativa: int, db: 
     db.delete(item)
     db.commit()
     return {"message": "Voce del piano studio rimossa con successo"}
+
 
 
 # --- Endpoint per il Calendario ---

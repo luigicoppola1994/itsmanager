@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                 }).join('');
 
-                // Listener per attivare/disattivare l'input ore
+                // Listener per attivare/disattivare l'input ore e ricalcolare il bilancio ore UF
                 container.querySelectorAll('.chk-uf-piano').forEach(chk => {
                     chk.addEventListener('change', (e) => {
                         const ufId = e.target.dataset.ufId;
@@ -114,8 +114,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (oreInput) {
                             oreInput.disabled = !e.target.checked;
                         }
+                        updateUfHoursCounter();
+                        updatePreview();
                     });
                 });
+
+                container.querySelectorAll('.input-ore-uf').forEach(input => {
+                    ['input', 'keyup', 'change'].forEach(evt => {
+                        input.addEventListener(evt, () => {
+                            updateUfHoursCounter();
+                            updatePreview();
+                        });
+                    });
+                });
+
+                updateUfHoursCounter();
 
             } else {
                 container.innerHTML = '<div class="text-danger small">Impossibile caricare le Unità Formative.</div>';
@@ -126,6 +139,58 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     loadUnitaFormative();
+
+    function updateUfHoursCounter() {
+        const targetOreAula = parseInt(oreTeoria ? oreTeoria.value : 0) || 0;
+        let sumAssigned = 0;
+
+        const checkedChks = document.querySelectorAll('.chk-uf-piano:checked');
+        checkedChks.forEach(chk => {
+            const ufId = chk.dataset.ufId;
+            const oreInput = document.getElementById(`oreUf_${ufId}`);
+            sumAssigned += parseInt(oreInput ? oreInput.value : 0) || 0;
+        });
+
+        const restanti = targetOreAula - sumAssigned;
+
+        const valOreAulaTarget = document.getElementById('valOreAulaTarget');
+        const valOreUfAssegnate = document.getElementById('valOreUfAssegnate');
+        const valOreUfRestanti = document.getElementById('valOreUfRestanti');
+        const ufBadgeStatus = document.getElementById('ufBadgeStatus');
+        const ufCounterHintMessage = document.getElementById('ufCounterHintMessage');
+        const boxOreUfRestanti = document.getElementById('boxOreUfRestanti');
+
+        if (valOreAulaTarget) valOreAulaTarget.textContent = `${targetOreAula}h`;
+        if (valOreUfAssegnate) valOreUfAssegnate.textContent = `${sumAssigned}h`;
+        if (valOreUfRestanti) valOreUfRestanti.textContent = `${restanti}h`;
+
+        if (ufBadgeStatus && valOreUfRestanti && boxOreUfRestanti) {
+            if (targetOreAula === 0 && sumAssigned === 0) {
+                ufBadgeStatus.className = 'badge bg-secondary text-white px-3 py-2 rounded-pill font-monospace fw-bold';
+                ufBadgeStatus.textContent = 'Inserire ore aula';
+                valOreUfRestanti.className = 'fw-bold fs-5 text-muted';
+                if (ufCounterHintMessage) ufCounterHintMessage.textContent = 'Inserisci le ore di aula dell\'edizione per iniziare il bilanciamento UF.';
+            } else if (restanti > 0) {
+                ufBadgeStatus.className = 'badge bg-warning text-dark px-3 py-2 rounded-pill font-monospace fw-bold';
+                ufBadgeStatus.textContent = `Mancano ${restanti}h da associare`;
+                valOreUfRestanti.className = 'fw-bold fs-5 text-warning';
+                if (ufCounterHintMessage) ufCounterHintMessage.textContent = `Assegna ancora ${restanti}h alle Unità Formative per completare il bilanciamento (deve arrivare a 0h).`;
+            } else if (restanti === 0) {
+                ufBadgeStatus.className = 'badge bg-success text-white px-3 py-2 rounded-pill font-monospace fw-bold';
+                ufBadgeStatus.textContent = `✓ Bilancio Perfetto (0h restanti)`;
+                valOreUfRestanti.className = 'fw-bold fs-5 text-success';
+                if (ufCounterHintMessage) ufCounterHintMessage.textContent = `✓ Perfetto! Tutte le ${targetOreAula}h di aula sono state correttamente distribuite nelle Unità Formative.`;
+            } else {
+                const eccedenza = Math.abs(restanti);
+                ufBadgeStatus.className = 'badge bg-danger text-white px-3 py-2 rounded-pill font-monospace fw-bold';
+                ufBadgeStatus.textContent = `⚠ Eccedenza di ${eccedenza}h`;
+                valOreUfRestanti.className = 'fw-bold fs-5 text-danger';
+                if (ufCounterHintMessage) ufCounterHintMessage.textContent = `⚠ Attenzione: le ore inserite nelle UF (${sumAssigned}h) superano di ${eccedenza}h le ore di aula (${targetOreAula}h).`;
+            }
+        }
+
+        return { targetOreAula, sumAssigned, restanti };
+    }
 
     async function loadCorsiEsistenti() {
         try {
@@ -164,24 +229,24 @@ document.addEventListener('DOMContentLoaded', () => {
     async function salvaPianoStudioEdizione(idCorsoAttivo) {
         if (!idCorsoAttivo) return;
         const checkedUfs = Array.from(document.querySelectorAll('.chk-uf-piano:checked'));
-        for (const chk of checkedUfs) {
+        const items = checkedUfs.map(chk => {
             const ufId = parseInt(chk.value);
             const oreInput = document.getElementById(`oreUf_${ufId}`);
-            const oreVal = parseInt(oreInput ? oreInput.value : 0) || 0;
+            return {
+                id_unita_formativa: ufId,
+                ore_dedicate: parseInt(oreInput ? oreInput.value : 0) || 0
+            };
+        });
 
-            try {
-                await fetchAutenticata(`${API_URL}/piano-studio`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id_corso_attivo: idCorsoAttivo,
-                        id_unita_formativa: ufId,
-                        ore_dedicate: oreVal
-                    })
-                });
-            } catch (e) {
-                console.error(`Errore salvataggio piano studio per UF #${ufId}:`, e);
-            }
+        const res = await fetchAutenticata(`${API_URL}/corsi-attivi/${idCorsoAttivo}/piano-studio`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: items })
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || 'Errore durante il salvataggio del piano studio.');
         }
     }
 
@@ -443,7 +508,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 checkDate.classList.remove('filled');
             }
 
-            if (totOre > 0 && tVal > 0) {
+            const { targetOreAula, sumAssigned, restanti } = updateUfHoursCounter();
+
+            if (totOre > 0 && tVal > 0 && restanti === 0) {
                 checkOre.classList.add('filled');
                 completedSteps++;
             } else {
@@ -558,6 +625,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 isValid = false;
             } else {
                 tollUscita.classList.remove('is-invalid');
+            }
+
+            // Informativo sul bilancio ore UF (non bloccante per il salvataggio)
+            const checkedUfs = Array.from(document.querySelectorAll('.chk-uf-piano:checked'));
+            let sumUfOre = 0;
+            checkedUfs.forEach(chk => {
+                const ufId = chk.dataset.ufId;
+                const oreInput = document.getElementById(`oreUf_${ufId}`);
+                sumUfOre += parseInt(oreInput ? oreInput.value : 0) || 0;
+            });
+
+            if (sumUfOre !== tVal) {
+                const diff = tVal - sumUfOre;
+                if (diff > 0) {
+                    showToastCustom(`Nota: Mancano ancora ${diff}h da associare nelle UF, ma l'edizione verrà comunque salvata.`, 'warning');
+                } else {
+                    showToastCustom(`Nota: Il totale ore UF supera le ore di aula di ${Math.abs(diff)}h, ma l'edizione verrà comunque salvata.`, 'warning');
+                }
             }
         }
 

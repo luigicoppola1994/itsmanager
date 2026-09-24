@@ -511,8 +511,17 @@ async function loadEditEdizionePianoStudio(idCorsoAttivo) {
                     if (oreInput) {
                         oreInput.disabled = !e.target.checked;
                     }
+                    updateEditEdizioneUfCounter();
                 });
             });
+
+            container.querySelectorAll('.input-ore-edit-uf').forEach(input => {
+                ['input', 'keyup', 'change'].forEach(evt => {
+                    input.addEventListener(evt, updateEditEdizioneUfCounter);
+                });
+            });
+
+            updateEditEdizioneUfCounter();
         } else {
             container.innerHTML = '<div class="text-danger small py-2">Impossibile caricare le Unità Formative.</div>';
         }
@@ -520,6 +529,53 @@ async function loadEditEdizionePianoStudio(idCorsoAttivo) {
         console.error('Errore caricamento Piano Studio per modale:', e);
         container.innerHTML = '<div class="text-danger small py-2">Errore di connessione.</div>';
     }
+}
+
+function updateEditEdizioneUfCounter() {
+    const tInput = document.getElementById('editEdizioneOreTeoria');
+    const targetOreAula = parseInt(tInput ? tInput.value : 0) || 0;
+    let sumAssigned = 0;
+
+    const checkedChks = document.querySelectorAll('.chk-edit-uf-piano:checked');
+    checkedChks.forEach(chk => {
+        const ufId = chk.dataset.ufId;
+        const oreInput = document.getElementById(`oreEditUf_${ufId}`);
+        sumAssigned += parseInt(oreInput ? oreInput.value : 0) || 0;
+    });
+
+    const restanti = targetOreAula - sumAssigned;
+
+    const valOreAulaTarget = document.getElementById('editEdizioneValOreAulaTarget');
+    const valOreUfAssegnate = document.getElementById('editEdizioneValOreUfAssegnate');
+    const valOreUfRestanti = document.getElementById('editEdizioneValOreUfRestanti');
+    const ufBadgeStatus = document.getElementById('editEdizioneUfBadgeStatus');
+
+    if (valOreAulaTarget) valOreAulaTarget.textContent = `${targetOreAula}h`;
+    if (valOreUfAssegnate) valOreUfAssegnate.textContent = `${sumAssigned}h`;
+    if (valOreUfRestanti) valOreUfRestanti.textContent = `${restanti}h`;
+
+    if (ufBadgeStatus && valOreUfRestanti) {
+        if (targetOreAula === 0 && sumAssigned === 0) {
+            ufBadgeStatus.className = 'badge bg-secondary text-white px-3 py-1 rounded-pill font-monospace fw-bold';
+            ufBadgeStatus.textContent = 'Inserire ore aula';
+            valOreUfRestanti.className = 'fw-bold fs-6 text-muted';
+        } else if (restanti > 0) {
+            ufBadgeStatus.className = 'badge bg-warning text-dark px-3 py-1 rounded-pill font-monospace fw-bold';
+            ufBadgeStatus.textContent = `Mancano ${restanti}h da associare`;
+            valOreUfRestanti.className = 'fw-bold fs-6 text-warning';
+        } else if (restanti === 0) {
+            ufBadgeStatus.className = 'badge bg-success text-white px-3 py-1 rounded-pill font-monospace fw-bold';
+            ufBadgeStatus.textContent = `✓ Bilancio Perfetto (0h restanti)`;
+            valOreUfRestanti.className = 'fw-bold fs-6 text-success';
+        } else {
+            const eccedenza = Math.abs(restanti);
+            ufBadgeStatus.className = 'badge bg-danger text-white px-3 py-1 rounded-pill font-monospace fw-bold';
+            ufBadgeStatus.textContent = `⚠ Eccedenza di ${eccedenza}h`;
+            valOreUfRestanti.className = 'fw-bold fs-6 text-danger';
+        }
+    }
+
+    return { targetOreAula, sumAssigned, restanti };
 }
 
 // Event listener per la sottomissione del form di modifica edizione
@@ -538,7 +594,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (tInput && sInput) {
             ['input', 'keyup', 'change'].forEach(evt => {
-                tInput.addEventListener(evt, updateModaleTot);
+                tInput.addEventListener(evt, () => {
+                    updateModaleTot();
+                    updateEditEdizioneUfCounter();
+                });
                 sInput.addEventListener(evt, updateModaleTot);
             });
         }
@@ -569,6 +628,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Calcolo bilancio ore UF (non bloccante per il salvataggio)
+            const { targetOreAula, sumAssigned, restanti } = updateEditEdizioneUfCounter();
+
             const payload = {
                 id_corso: parseInt(idCorso),
                 etichetta: etichetta || null,
@@ -597,40 +659,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (res.ok) {
                     // Sincronizza Piano Studio (Unità Formative) per l'Edizione
                     const currentCheckedUfs = Array.from(document.querySelectorAll('.chk-edit-uf-piano:checked'));
-                    const currentCheckedIds = new Set(currentCheckedUfs.map(c => parseInt(c.value)));
-
-                    // 1. Salva/Aggiorna UF selezionate
-                    for (const chk of currentCheckedUfs) {
+                    const items = currentCheckedUfs.map(chk => {
                         const ufId = parseInt(chk.value);
                         const oreInput = document.getElementById(`oreEditUf_${ufId}`);
-                        const oreVal = parseInt(oreInput ? oreInput.value : 0) || 0;
+                        return {
+                            id_unita_formativa: ufId,
+                            ore_dedicate: parseInt(oreInput ? oreInput.value : 0) || 0
+                        };
+                    });
 
-                        try {
-                            await fetchAutenticata(`${API_URL}/piano-studio`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    id_corso_attivo: parseInt(id),
-                                    id_unita_formativa: ufId,
-                                    ore_dedicate: oreVal
-                                })
-                            });
-                        } catch (e) {
-                            console.error(`Errore salvataggio piano studio per UF #${ufId}:`, e);
-                        }
-                    }
+                    const syncRes = await fetchAutenticata(`${API_URL}/corsi-attivi/${id}/piano-studio`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: items })
+                    });
 
-                    // 2. Rimuovi UF deselezionate
-                    for (const initialUfId of currentEditInitialPianoStudioUfIds) {
-                        if (!currentCheckedIds.has(initialUfId)) {
-                            try {
-                                await fetchAutenticata(`${API_URL}/piano-studio/${id}/${initialUfId}`, {
-                                    method: 'DELETE'
-                                });
-                            } catch (e) {
-                                console.error(`Errore eliminazione piano studio per UF #${initialUfId}:`, e);
-                            }
-                        }
+                    if (!syncRes.ok) {
+                        const errSync = await syncRes.json().catch(() => ({}));
+                        showToast(errSync.detail || "Errore durante il salvataggio del piano studio.", true);
+                        btn.disabled = false;
+                        btn.textContent = 'Salva Modifiche';
+                        return;
                     }
 
                     closeModal('editEdizioneModal');

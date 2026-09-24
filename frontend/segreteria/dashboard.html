@@ -238,8 +238,43 @@
                                 <i class="bi bi-book-half text-primary me-1"></i> Piano Studio Edizione (Unità Formative & Ore Dedicate)
                             </label>
                             <p class="small text-muted mb-2">
-                                Seleziona le Unità Formative collegate a questa edizione del corso ed indica le ore dedicate.
+                                Seleziona le Unità Formative collegate a questa edizione ed indica le ore dedicate. La somma deve essere uguale alle ore di aula dell'edizione.
                             </p>
+
+                            <!-- CONTATORE DINAMICO BILANCIO ORE UF (MODALE EDIT EDIZIONE) -->
+                            <div id="editEdizioneUfHoursCounterCard" class="card p-3 mb-3 border-0 shadow-sm rounded-3" style="background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-2 small">
+                                        <i class="bi bi-calculator-fill text-primary"></i>
+                                        <span>Bilancio Ore Unità Formative</span>
+                                    </div>
+                                    <div id="editEdizioneUfBadgeStatus" class="badge bg-warning text-dark px-3 py-1 rounded-pill font-monospace fw-bold" style="font-size:0.78rem;">
+                                        Mancano 0h da associare
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-2 text-center">
+                                    <div class="col-4">
+                                        <div class="p-2 bg-white rounded border">
+                                            <div class="text-muted small text-uppercase fw-semibold" style="font-size:0.65rem;">Ore Aula</div>
+                                            <div class="fw-bold fs-6 text-primary" id="editEdizioneValOreAulaTarget">0h</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-white rounded border">
+                                            <div class="text-muted small text-uppercase fw-semibold" style="font-size:0.65rem;">Totale Ore UF</div>
+                                            <div class="fw-bold fs-6 text-dark" id="editEdizioneValOreUfAssegnate">0h</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-white rounded border" id="editEdizioneBoxOreUfRestanti">
+                                            <div class="text-muted small text-uppercase fw-semibold" style="font-size:0.65rem;">Ore Restanti</div>
+                                            <div class="fw-bold fs-6 text-warning" id="editEdizioneValOreUfRestanti">0h</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div id="editEdizioneUfList" class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
                                 <div class="text-muted small py-2"><i class="bi bi-arrow-repeat spin me-2"></i>Caricamento Unità Formative...</div>
                             </div>

@@ -119,6 +119,28 @@ def create_missing_tables():
         else:
             print("  ✓ Colonna 'etichetta' già presente in 'corsi_attivi'.")
 
+        # Aggiunge la colonna 'nazione_nascita' a utenti se non esiste già
+        result = conn.execute(text("""
+            SELECT COUNT(*) as cnt 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+              AND TABLE_NAME = 'utenti' 
+              AND COLUMN_NAME = 'nazione_nascita'
+        """))
+        row = result.fetchone()
+        if row[0] == 0:
+            print("Aggiunta colonna 'nazione_nascita' alla tabella 'utenti'...")
+            try:
+                conn.execute(text("""
+                    ALTER TABLE `utenti`
+                    ADD COLUMN `nazione_nascita` VARCHAR(100) NULL AFTER `citta_nascita`
+                """))
+                print("  ✓ Colonna 'nazione_nascita' aggiunta a 'utenti'.")
+            except Exception as e:
+                print(f"  ⚠ Errore su utenti: {e}")
+        else:
+            print("  ✓ Colonna 'nazione_nascita' già presente in 'utenti'.")
+
         conn.commit()
         print("\n✅ Tutte le tabelle sono state create con successo!")
 

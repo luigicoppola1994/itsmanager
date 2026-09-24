@@ -52,6 +52,7 @@ class UtenteBase(BaseModel):
     Codice_Fiscale: Optional[str] = None
     Data_Nascita: Optional[str] = None    # Stringa ISO (es. "1990-05-15") o None
     Citta_Nascita: Optional[str] = None
+    Nazione_Nascita: Optional[str] = None
     Provincia_Nascita: Optional[str] = None
     Indirizzo_Residenza: Optional[str] = None
     Citta_Residenza: Optional[str] = None
@@ -112,6 +113,7 @@ class UtenteUpdate(BaseModel):
     Codice_Fiscale: Optional[str] = None
     Data_Nascita: Optional[str] = None
     Citta_Nascita: Optional[str] = None
+    Nazione_Nascita: Optional[str] = None
     Provincia_Nascita: Optional[str] = None
     Indirizzo_Residenza: Optional[str] = None
     Citta_Residenza: Optional[str] = None
@@ -226,6 +228,15 @@ class CorsoAttivoUnitaFormativaCreate(CorsoAttivoUnitaFormativaBase):
 class CorsoAttivoUnitaFormativaResponse(CorsoAttivoUnitaFormativaBase):
     class Config:
         from_attributes = True
+
+
+class CorsoAttivoPianoStudioSyncItem(BaseModel):
+    id_unita_formativa: int
+    ore_dedicate: int
+
+class CorsoAttivoPianoStudioSyncRequest(BaseModel):
+    items: List[CorsoAttivoPianoStudioSyncItem]
+
 
 
 # --- Schema per la tabella Calendario ---
