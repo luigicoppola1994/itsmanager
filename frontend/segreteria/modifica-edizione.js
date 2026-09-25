@@ -308,13 +308,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const balance = updateUfHoursCounter();
-        if (balance.restanti !== 0) {
-            if (balance.restanti > 0) {
-                showToast(`Bilancio UF incompleto: mancano ${balance.restanti}h da associare alle Unità Formative.`, true);
-            } else {
-                showToast(`Bilancio UF eccedente: le ore assegnate superano di ${Math.abs(balance.restanti)}h le ore di aula.`, true);
-            }
+        if (balance.restanti < 0) {
+            showToast(`Bilancio UF eccedente: le ore assegnate superano di ${Math.abs(balance.restanti)}h le ore di aula.`, true);
             return;
+        } else if (balance.restanti > 0) {
+            showToast(`Nota: Mancano ancora ${balance.restanti}h da associare nelle UF, ma l'edizione verrà comunque salvata.`);
         }
 
         const btnText = submitBtn.querySelector('.btn-nc-text');

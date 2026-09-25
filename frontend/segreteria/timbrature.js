@@ -327,7 +327,7 @@ function renderTableEditionView() {
                     <div class="fw-bold text-dark fs-6 mb-1">Nessuno studente iscritto a questa edizione</div>
                     <div class="small text-muted mb-3">Assegna gli studenti a quest'aula per registrare e visualizzare le loro timbrature.</div>
                     ${idEdizione ? `
-                        <a href="gestione-aula.html?id=${idEdizione}" class="btn btn-primary btn-sm fw-bold">
+                        <a href="aule.html?id=${idEdizione}" class="btn btn-primary btn-sm fw-bold">
                             <i class="bi bi-person-plus-fill me-1"></i>Assegna Studenti all'Edizione (Gestione Aula)
                         </a>
                     ` : ''}

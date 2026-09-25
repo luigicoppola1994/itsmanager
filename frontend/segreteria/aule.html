@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITS Manager - Gestione Aula & Studenti</title>
+    <title>ITS Manager - Segreteria | Gestione Aule</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,11 +18,47 @@
     <link rel="stylesheet" href="../shared/styles.css?v=2.1">
     <link rel="stylesheet" href="segreteria.css?v=3.0">
     <link rel="stylesheet" href="nuovo-corso.css?v=2.1">
+
+    <style>
+        .aula-selector-card {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color, #e2e8f0);
+        }
+        .aula-selector-header {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-dark, #1e293b);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .select-custom {
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            padding: 10px 14px;
+            font-size: 0.92rem;
+            font-weight: 500;
+            color: #334155;
+            background-color: #f8fafc;
+            transition: all 0.2s;
+        }
+        .select-custom:focus {
+            background-color: #ffffff;
+            border-color: var(--primary-color, #2563eb);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            outline: none;
+        }
+    </style>
 </head>
 <body>
 
     <div class="app-wrapper">
-        <!-- SIDEBAR A SINISTRA -->
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-brand-block">
@@ -48,7 +84,7 @@
 
             <ul class="sidebar-nav">
                 <li>
-                    <a href="dashboard.html" class="nav-item-link active" id="navCorsi" title="Corsi">
+                    <a href="dashboard.html" class="nav-item-link" id="navCorsi" title="Corsi">
                         <i class="bi bi-journal-bookmark-fill"></i>
                         <span class="nav-label">Corsi</span>
                     </a>
@@ -66,7 +102,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="aule.html" class="nav-item-link" id="navAule" title="Aule">
+                    <a href="aule.html" class="nav-item-link active" id="navAule" title="Aule">
                         <i class="bi bi-door-open-fill"></i>
                         <span class="nav-label">Aule</span>
                     </a>
@@ -103,9 +139,7 @@
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
                     <span class="breadcrumb-section">Segreteria</span>
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
-                    <a href="dashboard.html" class="breadcrumb-section" style="text-decoration:none;">Corsi</a>
-                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
-                    <span class="breadcrumb-current">Gestione Aula</span>
+                    <span class="breadcrumb-current">Gestione Aule</span>
                 </nav>
                 <div class="rubick-top-bar-actions">
                     <div class="rubick-icon-badge" title="Notifiche">
@@ -126,16 +160,16 @@
                         Corsi
                     </a>
                     <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
-                    <span class="nc-breadcrumb-current" id="headerBreadcrumbCurrent">Gestione Aula & Studenti</span>
+                    <span class="nc-breadcrumb-current" id="headerBreadcrumbCurrent">Gestione Aule & Studenti</span>
                 </div>
 
                 <div class="nc-header-row">
                     <div>
                         <h1 class="nc-title">
-                            <span class="nc-title-icon"><i class="bi bi-people-fill"></i></span>
-                            <span id="pageTitleText">Gestione Aula & Studenti</span>
+                            <span class="nc-title-icon"><i class="bi bi-door-open-fill"></i></span>
+                            <span id="pageTitleText">Gestione Aule & Studenti</span>
                         </h1>
-                        <p class="nc-subtitle" id="pageSubtitleText">Assegna o rimuovi gli studenti iscritti a questa specifica edizione del corso.</p>
+                        <p class="nc-subtitle" id="pageSubtitleText">Seleziona il corso e l'edizione per visualizzare e gestire la composizione degli studenti dell'aula.</p>
                     </div>
                     <a href="dashboard.html" class="btn-back">
                         <i class="bi bi-arrow-left"></i>
@@ -144,8 +178,47 @@
                 </div>
             </div>
 
-            <!-- FORM CARD LAYOUT -->
-            <div class="nc-form-layout">
+            <!-- SELETTORE CORSO E EDIZIONE -->
+            <div class="aula-selector-card">
+                <div class="aula-selector-header">
+                    <i class="bi bi-funnel-fill text-primary"></i>
+                    <span>Seleziona Corso ed Edizione Aula</span>
+                </div>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label for="selectCorso" class="form-label small fw-semibold text-secondary mb-1">Corso Didattico</label>
+                        <select id="selectCorso" class="form-select select-custom">
+                            <option value="">-- Caricamento corsi... --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label for="selectEdizione" class="form-label small fw-semibold text-secondary mb-1">Edizione Aula</label>
+                        <select id="selectEdizione" class="form-select select-custom" disabled>
+                            <option value="">-- Prima seleziona un corso --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" id="btnVisualizzaAula" class="btn btn-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-1" style="border-radius: 10px; height: 42px;" disabled>
+                            <i class="bi bi-eye-fill"></i>
+                            <span>VISUALIZZA</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATO INIZIALE: NESSUNA EDIZIONE SELEZIONATA -->
+            <div id="noSelectionState" class="nc-form-card text-center py-5" style="display: block;">
+                <div class="py-4">
+                    <i class="bi bi-door-open display-3 text-muted mb-3 d-block"></i>
+                    <h4 class="fw-bold text-dark mb-2">Seleziona un'Edizione per Gestire l'Aula</h4>
+                    <p class="text-secondary max-w-md mx-auto" style="max-width: 460px;">
+                        Scegli il corso e l'edizione dal menu in alto per visualizzare l'elenco degli studenti iscritti ed eseguire le modifiche.
+                    </p>
+                </div>
+            </div>
+
+            <!-- FORM CARD LAYOUT (VISIBILE DOPO SELEZIONE EDIZIONE) -->
+            <div class="nc-form-layout" id="aulaContentLayout" style="display: none;">
 
                 <!-- COLONNA SINISTRA: SELEZIONE STUDENTI -->
                 <div class="nc-form-card">
@@ -297,6 +370,6 @@
     <div class="toast" id="toast">Operazione completata!</div>
 
     <script src="../shared/auth.js"></script>
-    <script src="gestione-aula.js?v=1.0"></script>
+    <script src="aule.js?v=1.0"></script>
 </body>
 </html>

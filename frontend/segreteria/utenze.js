@@ -79,6 +79,12 @@ async function loadUtenti() {
         const res = await fetchAutenticata(`${API_URL}/users`);
         if (!res.ok) throw new Error('Errore caricamento utenti');
         allUtenti = await res.json();
+        // Ordina utenti per cognome e poi nome in ordine alfabetico
+        allUtenti.sort((a, b) => {
+            const compCognome = (a.Cognome || '').localeCompare(b.Cognome || '', 'it', { sensitivity: 'base' });
+            if (compCognome !== 0) return compCognome;
+            return (a.Nome || '').localeCompare(b.Nome || '', 'it', { sensitivity: 'base' });
+        });
         updateStats();
         renderGrid();
     } catch (e) {
@@ -124,9 +130,10 @@ function renderGrid() {
     const count   = document.getElementById('tableCount');
 
     let filtered = allUtenti.filter(u => {
-        const fullName = `${u.Nome} ${u.Cognome}`.toLowerCase();
+        const fullNameCN = `${u.Cognome} ${u.Nome}`.toLowerCase();
+        const fullNameNC = `${u.Nome} ${u.Cognome}`.toLowerCase();
         const email    = (u.Email || '').toLowerCase();
-        const matchSearch = !search || fullName.includes(search) || email.includes(search);
+        const matchSearch = !search || fullNameCN.includes(search) || fullNameNC.includes(search) || email.includes(search);
 
         let matchFilter = true;
         if (activeFilter !== 'all') {
@@ -153,14 +160,14 @@ function renderGrid() {
     if (tbody) tbody.innerHTML = filtered.map((u, index) => renderUserRow(u, index)).join('');
 }
 
-function getInitials(nome, cognome) {
-    return `${(nome||'').charAt(0)}${(cognome||'').charAt(0)}`.toUpperCase();
+function getInitials(cognome, nome) {
+    return `${(cognome||'').charAt(0)}${(nome||'').charAt(0)}`.toUpperCase();
 }
 
 function renderUserRow(u, index) {
     const ruoloNome  = getRuoloNome(u);
     const style      = getRuoloStyle(ruoloNome);
-    const initials   = getInitials(u.Nome, u.Cognome);
+    const initials   = getInitials(u.Cognome, u.Nome);
 
     let dataNascitaFormatted = '\u2014';
     if (u.Data_Nascita) {
@@ -180,7 +187,7 @@ function renderUserRow(u, index) {
                 <div class="user-name-cell">
                     <div class="user-avatar-inline">${initials}</div>
                     <div>
-                        <div class="name"><a href="nuovo-utente.html?id=${u.id_utente}" class="text-decoration-none text-dark fw-bold">${u.Nome} ${u.Cognome}</a></div>
+                        <div class="name"><a href="nuovo-utente.html?id=${u.id_utente}" class="text-decoration-none text-dark fw-bold">${u.Cognome} ${u.Nome}</a></div>
                         <div class="email">${u.Email || '\u2014'}</div>
                     </div>
                 </div>
@@ -204,7 +211,7 @@ function renderUserRow(u, index) {
                         <i class="bi bi-info-circle-fill"></i>
                     </a>
                     <a href="nuovo-utente.html?id=${u.id_utente}" class="btn-action-icon" title="Modifica Utente"><i class="bi bi-pencil-fill"></i></a>
-                    <button class="btn-action-icon danger" onclick="deleteUtente(${u.id_utente}, '${safeName} ${safeSurname}')" title="Elimina Utente">
+                    <button class="btn-action-icon danger" onclick="deleteUtente(${u.id_utente}, '${safeSurname} ${safeName}')" title="Elimina Utente">
                         <i class="bi bi-trash3-fill"></i>
                     </button>
                 </div>

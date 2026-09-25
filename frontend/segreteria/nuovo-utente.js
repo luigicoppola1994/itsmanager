@@ -255,37 +255,6 @@ function updatePreview() {
 }
 
 // ============================================================
-// Validazione Codice Fiscale (Regex + CIN Checksum)
-// ============================================================
-function validateCodiceFiscale(cf) {
-    if (!cf || typeof cf !== 'string') return false;
-    const cleanCF = cf.trim().toUpperCase();
-    const pattern = /^[A-Z]{6}[0-9]{2}[A-EHLMPRST][0-9]{2}[A-Z][0-9]{3}[A-Z]$/;
-    if (!pattern.test(cleanCF)) return false;
-
-    const setOdd = {
-        '0': 1, '1': 0, '2': 5, '3': 7, '4': 9, '5': 13, '6': 15, '7': 17, '8': 19, '9': 21,
-        'A': 1, 'B': 0, 'C': 5, 'D': 7, 'E': 9, 'F': 13, 'G': 15, 'H': 17, 'I': 19, 'J': 21,
-        'K': 2, 'L': 4, 'M': 18, 'N': 20, 'O': 11, 'P': 3, 'Q': 6, 'R': 8, 'S': 12, 'T': 14,
-        'U': 16, 'V': 10, 'W': 22, 'X': 25, 'Y': 24, 'Z': 23
-    };
-    const setEven = {
-        '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
-        'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9,
-        'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19,
-        'U': 20, 'V': 21, 'W': 22, 'X': 23, 'Y': 24, 'Z': 25
-    };
-
-    let s = 0;
-    for (let i = 0; i < 15; i++) {
-        const char = cleanCF.charAt(i);
-        s += (i % 2 === 0) ? (setOdd[char] ?? 0) : (setEven[char] ?? 0);
-    }
-    const expectedChar = String.fromCharCode(65 + (s % 26));
-    return cleanCF.charAt(15) === expectedChar;
-}
-
-// ============================================================
 // Password Generator & Strength Meter
 // ============================================================
 function generateRandomPassword() {
@@ -491,11 +460,11 @@ async function handleSubmit(e) {
 
     // STEP 1 Validation
     if (!nome) {
-        if (errNome) errNome.textContent = 'Il nome Ã¨ obbligatorio.';
+        if (errNome) errNome.textContent = 'Il nome è obbligatorio.';
         hasErrors = true;
     }
     if (!cognome) {
-        if (errCognome) errCognome.textContent = 'Il cognome Ã¨ obbligatorio.';
+        if (errCognome) errCognome.textContent = 'Il cognome è obbligatorio.';
         hasErrors = true;
     }
     if (!email || !email.includes('@')) {
@@ -507,58 +476,55 @@ async function handleSubmit(e) {
         hasErrors = true;
     }
     if (!isEditMode && !password) {
-        if (errPassword) errPassword.textContent = 'La password Ã¨ obbligatoria per i nuovi utenti.';
+        if (errPassword) errPassword.textContent = 'La password è obbligatoria per i nuovi utenti.';
         hasErrors = true;
     }
 
     // STEP 2 Dati Anagrafici Validation
     if (!genere) {
-        if (errGenere) errGenere.textContent = 'Il genere Ã¨ obbligatorio.';
+        if (errGenere) errGenere.textContent = 'Il genere è obbligatorio.';
         hasErrors = true;
     }
     if (!cf) {
-        if (errCF) errCF.textContent = 'Il codice fiscale Ã¨ obbligatorio.';
-        hasErrors = true;
-    } else if (!validateCodiceFiscale(cf)) {
-        if (errCF) errCF.textContent = 'Codice Fiscale non valido (formato o carattere di controllo errati).';
+        if (errCF) errCF.textContent = 'Il codice fiscale è obbligatorio.';
         hasErrors = true;
     }
     if (!dataNascita) {
-        if (errDataNascita) errDataNascita.textContent = 'La data di nascita Ã¨ obbligatoria.';
+        if (errDataNascita) errDataNascita.textContent = 'La data di nascita è obbligatoria.';
         hasErrors = true;
     }
     if (!isItaliana && !nazionalitaVal) {
-        if (errNazionalita) errNazionalita.textContent = 'La nazionalitÃ  Ã¨ obbligatoria per utenti esteri.';
+        if (errNazionalita) errNazionalita.textContent = 'La nazionalità è obbligatoria per utenti esteri.';
         hasErrors = true;
     }
     if (!cittaNascita) {
-        if (errCittaNascita) errCittaNascita.textContent = 'La cittÃ  di nascita Ã¨ obbligatoria.';
+        if (errCittaNascita) errCittaNascita.textContent = 'La città di nascita è obbligatoria.';
         hasErrors = true;
     }
     if (isItaliana && !provinciaNascita) {
-        if (errProvinciaNascita) errProvinciaNascita.textContent = 'La provincia di nascita Ã¨ obbligatoria.';
+        if (errProvinciaNascita) errProvinciaNascita.textContent = 'La provincia di nascita è obbligatoria.';
         hasErrors = true;
     }
 
     // STEP 3 Residenza Validation
     if (!indirizzo) {
-        if (errIndirizzo) errIndirizzo.textContent = 'L\'indirizzo di residenza Ã¨ obbligatorio.';
+        if (errIndirizzo) errIndirizzo.textContent = "L'indirizzo di residenza è obbligatorio.";
         hasErrors = true;
     }
     if (!telefono) {
-        if (errTelefono) errTelefono.textContent = 'Il numero di telefono Ã¨ obbligatorio.';
+        if (errTelefono) errTelefono.textContent = 'Il numero di telefono è obbligatorio.';
         hasErrors = true;
     }
     if (!cittaResidenza) {
-        if (errCittaResidenza) errCittaResidenza.textContent = 'La cittÃ  di residenza Ã¨ obbligatoria.';
+        if (errCittaResidenza) errCittaResidenza.textContent = 'La città di residenza è obbligatoria.';
         hasErrors = true;
     }
     if (!cap) {
-        if (errCap) errCap.textContent = 'Il CAP Ã¨ obbligatorio.';
+        if (errCap) errCap.textContent = 'Il CAP è obbligatorio.';
         hasErrors = true;
     }
     if (!provincia) {
-        if (errProvincia) errProvincia.textContent = 'La provincia di residenza Ã¨ obbligatoria.';
+        if (errProvincia) errProvincia.textContent = 'La provincia di residenza è obbligatoria.';
         hasErrors = true;
     }
 

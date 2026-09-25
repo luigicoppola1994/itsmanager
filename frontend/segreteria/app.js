@@ -67,6 +67,9 @@ async function loadDashboardData() {
                 };
             });
 
+            // Ordina i corsi in ordine alfabetico per nome
+            masterCoursesList.sort((a, b) => (a.Nome || '').localeCompare(b.Nome || '', 'it', { sensitivity: 'base' }));
+
             renderCorsi(masterCoursesList);
         } else {
             console.error("Errore API", await corsiRes.text(), await corsiAttiviRes.text());
@@ -254,7 +257,7 @@ function renderCorsi(list) {
         } else if (aulaBtn) {
             e.stopPropagation();
             const id = aulaBtn.dataset.id;
-            window.location.href = `gestione-aula.html?id=${id}`;
+            window.location.href = `aule.html?id=${id}`;
         }
     }, false);
 }
@@ -365,7 +368,7 @@ window.openEditEdizione = function(id) {
 };
 
 window.openAulaModal = function(id) {
-    window.location.href = `gestione-aula.html?id=${id}`;
+    window.location.href = `aule.html?id=${id}`;
 };
 
 // -----------------------------------------
