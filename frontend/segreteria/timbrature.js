@@ -1,9 +1,9 @@
 // ==============================================================================
 // timbrature.js — Gestione Timbrature & Presenze per Segreteria
-// v3.0 — Con validazione calendario: timbrature solo quando previsto dal calendario
+// v4.0 — Layout e UX conformi ad Aule/Corsi (Selezione Corso/Edizione + Tasto Visualizza)
 // ==============================================================================
 
-// Helper per eseguire chiamate autenticate
+// Helper per chiamate autenticate
 async function fetchWithAuth(endpoint, options = {}) {
     const base = typeof API_URL !== 'undefined' ? API_URL : 'http://localhost:8000';
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
@@ -20,14 +20,15 @@ async function fetchWithAuth(endpoint, options = {}) {
     }
 }
 
-
 // ── STATO APPLICAZIONE ──
 let allCorsiMaster = [];
 let allCorsiAttivi = [];
 let currentEditionStudents = [];
-let currentPresenze = [];
-let currentLezioneInfo = null;      // Info sulla lezione del giorno dal calendario
-let lezionePrevisitaFlag = false;   // True se c'è una lezione programmata per la data selezionata
+let currentEdizioneId = null;
+let currentEdizioneInfo = null;
+let currentLezioneInfo = null;
+let lezionePrevisitaFlag = false;
+
 let modalTimbraturaInstance = null;
 let modalAppelloInstance = null;
 
@@ -42,71 +43,108 @@ function getTodayDateStr() {
 
 // Inizializzazione al caricamento del DOM
 document.addEventListener('DOMContentLoaded', async () => {
-    // Inizializza i modali Bootstrap
+    // Modal Bootstrap
     const modalElTimbratura = document.getElementById('modalTimbratura');
-    if (modalElTimbratura) {
-        modalTimbraturaInstance = new bootstrap.Modal(modalElTimbratura);
-    }
+    if (modalElTimbratura) modalTimbraturaInstance = new bootstrap.Modal(modalElTimbratura);
+
     const modalElAppello = document.getElementById('modalAppelloRapido');
-    if (modalElAppello) {
-        modalAppelloInstance = new bootstrap.Modal(modalElAppello);
+    if (modalElAppello) modalAppelloInstance = new bootstrap.Modal(modalElAppello);
+
+    // Imposta data odierna come default
+    const filterDataInput = document.getElementById('filterData');
+    if (filterDataInput && !filterDataInput.value) {
+        filterDataInput.value = getTodayDateStr();
     }
+    const appelloDataInput = document.getElementById('appelloData');
+    if (appelloDataInput) appelloDataInput.value = getTodayDateStr();
 
-    // Imposta data di default ad oggi su tutti i campi data
-    const today = getTodayDateStr();
-    ['filterData', 'appelloData', 'inputDataPresenza'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = today;
-    });
+    // Elements
+    const selectCorso = document.getElementById('selectCorso');
+    const selectEdizione = document.getElementById('selectEdizione');
+    const btnVisualizza = document.getElementById('btnVisualizzaTimbrature');
+    const noSelectionState = document.getElementById('noSelectionState');
+    const timbratureContentLayout = document.getElementById('timbratureContentLayout');
 
-    // Carica Corsi e Edizioni
+    // Load Corsi ed Edizioni
     await loadCorsiAndEdizioni();
 
-    // Event listeners
+    // Event listeners principali
     setupEventListeners();
 
-    // Carica subito la vista iniziale
-    await loadPresenzeData();
+    // Check URL params (?id=X oppure ?id_edizione=X)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlEdizioneId = parseInt(urlParams.get('id_edizione') || urlParams.get('id'));
+
+    if (urlEdizioneId && selectCorso && selectEdizione) {
+        const edFound = allCorsiAttivi.find(e => (e.id_corso_attivo || e.id_edizione) === urlEdizioneId);
+        if (edFound) {
+            selectCorso.value = edFound.id_corso;
+            populateEdizioniSelect(edFound.id_corso);
+            selectEdizione.value = urlEdizioneId;
+            if (btnVisualizza) btnVisualizza.disabled = false;
+            await loadPresenzeData(urlEdizioneId);
+        }
+    }
 });
 
 function setupEventListeners() {
-    // Dropdown Corso: al cambio aggiorna il dropdown Edizioni e ricarica
-    document.getElementById('filterCorso')?.addEventListener('change', onCorsoChange);
+    const selectCorso = document.getElementById('selectCorso');
+    const selectEdizione = document.getElementById('selectEdizione');
+    const btnVisualizza = document.getElementById('btnVisualizzaTimbrature');
+    const noSelectionState = document.getElementById('noSelectionState');
+    const timbratureContentLayout = document.getElementById('timbratureContentLayout');
+    const searchInput = document.getElementById('searchStudente');
 
-    // Dropdown Edizione: al cambio ricarica gli studenti dell'edizione
-    document.getElementById('filterEdizione')?.addEventListener('change', loadPresenzeData);
+    // Change handler Corso
+    if (selectCorso) {
+        selectCorso.addEventListener('change', (e) => {
+            const idCorso = e.target.value;
+            populateEdizioniSelect(idCorso);
+            currentEdizioneId = null;
+            if (btnVisualizza) btnVisualizza.disabled = true;
+            if (noSelectionState) noSelectionState.style.display = 'block';
+            if (timbratureContentLayout) timbratureContentLayout.style.display = 'none';
+            history.replaceState(null, '', window.location.pathname);
+        });
+    }
 
-    // Data Presenza
-    document.getElementById('filterData')?.addEventListener('change', loadPresenzeData);
-    document.getElementById('btnOggi')?.addEventListener('click', () => {
-        document.getElementById('filterData').value = getTodayDateStr();
-        loadPresenzeData();
-    });
+    // Change handler Edizione
+    if (selectEdizione) {
+        selectEdizione.addEventListener('change', (e) => {
+            const idEdiz = parseInt(e.target.value);
+            if (!idEdiz) {
+                currentEdizioneId = null;
+                if (btnVisualizza) btnVisualizza.disabled = true;
+                if (noSelectionState) noSelectionState.style.display = 'block';
+                if (timbratureContentLayout) timbratureContentLayout.style.display = 'none';
+                history.replaceState(null, '', window.location.pathname);
+            } else {
+                if (btnVisualizza) btnVisualizza.disabled = false;
+            }
+        });
+    }
 
-    // Aggiorna manuale
-    document.getElementById('btnApplicaFiltri')?.addEventListener('click', loadPresenzeData);
+    // Click handler Visualizza
+    if (btnVisualizza) {
+        btnVisualizza.addEventListener('click', async () => {
+            const idEdiz = parseInt(selectEdizione?.value);
+            if (!idEdiz) return;
+            history.replaceState(null, '', `${window.location.pathname}?id_edizione=${idEdiz}`);
+            await loadPresenzeData(idEdiz);
+        });
+    }
 
-    // Ricerca testuale con debounce
+    // Change Date Filter -> ricarica dati edizione corrente
+    // (rimosso - non più presente nella pagina semplificata)
+
+    // Search input debounce
     let searchTimeout;
-    document.getElementById('searchStudente')?.addEventListener('input', () => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(renderTable, 180);
-    });
-
-    // Modale Nuova Timbratura
-    document.getElementById('btnNuovaTimbratura')?.addEventListener('click', openModalNuovaTimbratura);
-    document.getElementById('formTimbratura')?.addEventListener('submit', handleSaveTimbratura);
-
-    // Modale Appello Rapido
-    document.getElementById('btnOpenAppelloRapido')?.addEventListener('click', openModalAppelloRapido);
-    document.getElementById('appelloEdizioneSelect')?.addEventListener('change', loadAppelloStudentiList);
-    document.getElementById('appelloData')?.addEventListener('change', loadAppelloStudentiList);
-    document.getElementById('btnSegnaTuttiPresenti')?.addEventListener('click', () => setAllPresenceState(true));
-    document.getElementById('btnSegnaTuttiAssenti')?.addEventListener('click', () => setAllPresenceState(false));
-    document.getElementById('btnSalvaAppello')?.addEventListener('click', handleSaveBatchAppello);
-
-    // Esportazione CSV
-    document.getElementById('btnExportCSV')?.addEventListener('click', exportCSV);
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(renderTableEditionView, 180);
+        });
+    }
 
     // Logout
     document.getElementById('logoutBtn')?.addEventListener('click', () => {
@@ -123,23 +161,17 @@ async function loadCorsiAndEdizioni() {
             fetchWithAuth('/corsi'),
             fetchWithAuth('/corsi-attivi')
         ]);
-        if (resCorsi.ok) allCorsiMaster = await resCorsi.json();
-        if (resEdizioni.ok) allCorsiAttivi = await resEdizioni.json();
-
-        const corsoSelect = document.getElementById('filterCorso');
-        if (corsoSelect) {
-            corsoSelect.innerHTML = '<option value="">-- Seleziona un Corso --</option>';
-            allCorsiMaster.forEach(c => {
-                const edizioniCount = allCorsiAttivi.filter(ca => ca.id_corso === c.id_corso && !ca.archiviato).length;
-                corsoSelect.innerHTML += `<option value="${c.id_corso}">${escapeHtml(c.Nome)} (${edizioniCount} ediz.)</option>`;
-            });
-            if (allCorsiMaster.length > 0) {
-                corsoSelect.value = allCorsiMaster[0].id_corso;
-                onCorsoChange();
-            }
+        if (resCorsi.ok) {
+            allCorsiMaster = await resCorsi.json();
+            allCorsiMaster.sort((a, b) => (a.Nome || '').localeCompare(b.Nome || '', 'it', { sensitivity: 'base' }));
+        }
+        if (resEdizioni.ok) {
+            allCorsiAttivi = await resEdizioni.json();
         }
 
-        // Popola select appello rapido
+        populateCorsiSelect();
+
+        // Popola anche il select del modale Appello Rapido
         const appelloSelect = document.getElementById('appelloEdizioneSelect');
         if (appelloSelect) {
             appelloSelect.innerHTML = '<option value="">-- Seleziona Edizione --</option>';
@@ -151,94 +183,113 @@ async function loadCorsiAndEdizioni() {
         }
     } catch (e) {
         console.error('Errore nel caricamento di corsi ed edizioni:', e);
+        showToast('danger', 'Errore', 'Impossibile caricare corsi ed edizioni.');
     }
 }
 
-function onCorsoChange() {
-    const idCorso = document.getElementById('filterCorso')?.value;
-    const edizioneSelect = document.getElementById('filterEdizione');
+function populateCorsiSelect() {
+    const corsoSelect = document.getElementById('selectCorso');
+    if (!corsoSelect) return;
 
+    corsoSelect.innerHTML = '<option value="">-- Seleziona un Corso --</option>';
+    allCorsiMaster.forEach(c => {
+        const edizioniCount = allCorsiAttivi.filter(ca => ca.id_corso === c.id_corso && !ca.archiviato).length;
+        corsoSelect.innerHTML += `<option value="${c.id_corso}">${escapeHtml(c.Nome)} (${edizioniCount} ediz.)</option>`;
+    });
+}
+
+function populateEdizioniSelect(idCorso) {
+    const edizioneSelect = document.getElementById('selectEdizione');
+    const btnVisualizza = document.getElementById('btnVisualizzaTimbrature');
     if (!edizioneSelect) return;
 
+    edizioneSelect.innerHTML = '';
     if (!idCorso) {
-        edizioneSelect.innerHTML = '<option value="">-- Seleziona prima un corso --</option>';
+        edizioneSelect.innerHTML = '<option value="">-- Prima seleziona un corso --</option>';
         edizioneSelect.disabled = true;
-        loadPresenzeData();
+        if (btnVisualizza) btnVisualizza.disabled = true;
         return;
     }
 
-    // Filtra le edizioni di quel corso
     const edizioniFiltrate = allCorsiAttivi.filter(ca => String(ca.id_corso) === String(idCorso) && !ca.archiviato);
 
     if (edizioniFiltrate.length === 0) {
-        edizioneSelect.innerHTML = '<option value="">Nessuna edizione attiva per questo corso</option>';
+        edizioneSelect.innerHTML = '<option value="">-- Nessuna edizione attiva per questo corso --</option>';
         edizioneSelect.disabled = true;
+        if (btnVisualizza) btnVisualizza.disabled = true;
     } else {
         edizioneSelect.disabled = false;
-        edizioneSelect.innerHTML = '';
-        edizioniFiltrate.forEach((ca, idx) => {
-            const label = ca.etichetta || `Edizione #${ca.id_corso_attivo} (${ca.data_inizio || 'N.D.'})`;
-            edizioneSelect.innerHTML += `<option value="${ca.id_corso_attivo}">${escapeHtml(label)}</option>`;
+        edizioneSelect.innerHTML = '<option value="">-- Seleziona un\'Edizione --</option>';
+        edizioniFiltrate.forEach(ca => {
+            const edId = ca.id_corso_attivo || ca.id_edizione;
+            const label = ca.etichetta || `Edizione #${edId}`;
+            const dateRange = (ca.data_inizio && ca.data_fine)
+                ? ` (${formatDateItalian(ca.data_inizio)} - ${formatDateItalian(ca.data_fine)})`
+                : '';
+            edizioneSelect.innerHTML += `<option value="${edId}">${escapeHtml(label)}${dateRange}</option>`;
         });
-        // Seleziona la prima edizione
-        edizioneSelect.value = edizioniFiltrate[0].id_corso_attivo;
+        if (btnVisualizza) btnVisualizza.disabled = true;
     }
-
-    loadPresenzeData();
 }
 
-// ── CARICAMENTO PRESENZE ──
-async function loadPresenzeData() {
-    const idEdizione = document.getElementById('filterEdizione')?.value || '';
+// ── CARICAMENTO REGISTRO PRESENZE PER EDIZIONE ──
+
+async function loadPresenzeData(idEdizione) {
+    if (!idEdizione) return;
+
+    currentEdizioneId = idEdizione;
     const targetDate = document.getElementById('filterData')?.value || getTodayDateStr();
+
+    const noSelectionState = document.getElementById('noSelectionState');
+    const timbratureContentLayout = document.getElementById('timbratureContentLayout');
+
+    if (noSelectionState) noSelectionState.style.display = 'none';
+    if (timbratureContentLayout) timbratureContentLayout.style.display = 'block';
 
     const tbody = document.getElementById('tbodyTimbrature');
     if (tbody) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-5 text-muted">
+                <td colspan="2" class="text-center py-5 text-muted">
                     <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-                    Caricamento in corso...
+                    Caricamento registro studenti in corso...
                 </td>
             </tr>
         `;
     }
 
-    const labelData = document.getElementById('labelDataSelezionata');
-    if (labelData) labelData.textContent = `Data: ${formatDateItalian(targetDate)}`;
-
-    // Reset banner lezione
-    updateLessonBanner(null, null);
+    // Carica info edizione per l'intestazione
+    try {
+        const resEd = await fetchWithAuth(`/corsi-attivi/${idEdizione}`);
+        if (resEd.ok) {
+            currentEdizioneInfo = await resEd.json();
+            const titleEl = document.getElementById('registroEdizioneTitle');
+            if (titleEl) {
+                const corsoNome = currentEdizioneInfo.corso ? currentEdizioneInfo.corso.Nome : 'Edizione';
+                const edLabel = currentEdizioneInfo.etichetta || `Edizione #${idEdizione}`;
+                titleEl.textContent = `${corsoNome} — ${edLabel}`;
+            }
+        }
+    } catch (e) {
+        console.error('Errore recupero info edizione:', e);
+    }
 
     try {
-        if (idEdizione) {
-            const res = await fetchWithAuth(`/presenze/appello/${idEdizione}?data_presenza=${targetDate}`);
-            if (!res.ok) throw new Error('Errore nel recupero presenze edizione');
-            const data = await res.json();
-            currentEditionStudents = data.studenti || [];
-            lezionePrevisitaFlag = data.lezione_prevista || false;
-            currentLezioneInfo = data.lezioni || [];
+        const res = await fetchWithAuth(`/presenze/appello/${idEdizione}?data_presenza=${targetDate}`);
+        if (!res.ok) throw new Error('Errore nel recupero presenze dell\'edizione');
+        
+        const data = await res.json();
+        currentEditionStudents = data.studenti || [];
 
-            updateLessonBanner(currentLezioneInfo, lezionePrevisitaFlag);
-            updateKPIsFromAppello(currentEditionStudents);
-            renderTableEditionView();
-        } else {
-            lezionePrevisitaFlag = true; // Vista generale: non bloccare
-            currentLezioneInfo = null;
-            updateLessonBanner(null, null); // nasconde banner in vista generale
-            const res = await fetchWithAuth(`/presenze?data_presenza=${targetDate}`);
-            if (!res.ok) throw new Error('Errore nel recupero registro');
-            currentPresenze = await res.json();
-            await loadGeneralStats(targetDate);
-            renderTableGeneralView();
-        }
+        renderTableEditionView();
     } catch (err) {
         console.error('Errore nel caricamento presenze:', err);
+        showToast('danger', 'Errore Caricamento', err.message);
         if (tbody) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center py-4 text-danger">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Errore nel caricamento dei dati. Riprova.
+                    <td colspan="2" class="text-center py-4 text-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Errore durante il caricamento dei dati. Riprova.
                     </td>
                 </tr>
             `;
@@ -247,6 +298,7 @@ async function loadPresenzeData() {
 }
 
 // ── BANNER STATO LEZIONE ──
+
 function updateLessonBanner(lezioni, prevista) {
     const banner = document.getElementById('lessonStatusBanner');
     if (!banner) return;
@@ -278,26 +330,21 @@ function updateLessonBanner(lezioni, prevista) {
                 <div class="lesson-banner-icon"><i class="bi bi-calendar-x-fill"></i></div>
                 <div class="lesson-banner-body">
                     <div class="lesson-banner-title">Nessuna lezione in calendario per questa data</div>
-                    <div class="lesson-banner-sub">Le timbrature possono essere registrate solo nelle giornate con lezioni pianificate. Vai al <a href="calendario.html" class="text-warning fw-bold">Calendario</a> per aggiungere lezioni.</div>
+                    <div class="lesson-banner-sub">Non ci sono lezioni pianificate nel calendario per il giorno selezionato. Vai al <a href="calendario.html" class="text-warning fw-bold">Calendario</a> per pianificare lezioni.</div>
                 </div>
-                <div class="lesson-banner-badge"><span class="badge bg-warning text-dark fs-6">Timbrature disabilitate</span></div>
+                <div class="lesson-banner-badge"><span class="badge bg-warning text-dark fs-6">Nessuna Lezione</span></div>
             </div>
         `;
     }
 
-    const btnNuova = document.getElementById('btnNuovaTimbratura');
     const btnAppello = document.getElementById('btnOpenAppelloRapido');
-    if (btnNuova) {
-        btnNuova.disabled = !prevista;
-        btnNuova.title = prevista ? 'Registra nuova timbratura' : 'Non ci sono lezioni programmate per questa data';
-    }
     if (btnAppello) {
         btnAppello.disabled = !prevista;
         btnAppello.title = prevista ? 'Apri appello rapido' : 'Non ci sono lezioni programmate per questa data';
     }
 }
 
-// ── RENDERING TABELLA: VISTA STUDENTI EDIZIONE CORSO ──
+// ── RENDERING TABELLA REGISTRO STUDENTI ──
 
 function renderTableEditionView() {
     const tbody = document.getElementById('tbodyTimbrature');
@@ -315,20 +362,19 @@ function renderTableEditionView() {
     }
 
     if (badgeCount) {
-        badgeCount.textContent = `${filtered.length} studenti iscritti`;
+        badgeCount.textContent = `${filtered.length} student${filtered.length === 1 ? 'e' : 'i'}`;
     }
 
     if (filtered.length === 0) {
-        const idEdizione = document.getElementById('filterEdizione')?.value;
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-5 text-muted">
+                <td colspan="2" class="text-center py-5 text-muted">
                     <div class="mb-2"><i class="bi bi-people fs-1 text-secondary"></i></div>
-                    <div class="fw-bold text-dark fs-6 mb-1">Nessuno studente iscritto a questa edizione</div>
-                    <div class="small text-muted mb-3">Assegna gli studenti a quest'aula per registrare e visualizzare le loro timbrature.</div>
-                    ${idEdizione ? `
-                        <a href="aule.html?id=${idEdizione}" class="btn btn-primary btn-sm fw-bold">
-                            <i class="bi bi-person-plus-fill me-1"></i>Assegna Studenti all'Edizione (Gestione Aula)
+                    <div class="fw-bold text-dark fs-6 mb-1">Nessuno studente trovato</div>
+                    <div class="small text-muted mb-3">Nessuno studente corrisponde ai criteri di ricerca o è iscritto all'aula.</div>
+                    ${currentEdizioneId ? `
+                        <a href="aule.html?id=${currentEdizioneId}" class="btn btn-primary btn-sm fw-bold">
+                            <i class="bi bi-person-plus-fill me-1"></i>Assegna Studenti all'Edizione
                         </a>
                     ` : ''}
                 </td>
@@ -337,86 +383,26 @@ function renderTableEditionView() {
         return;
     }
 
-    const targetDate = document.getElementById('filterData')?.value || getTodayDateStr();
     let html = '';
-
     filtered.forEach(s => {
         const initials = `${(s.nome || '')[0] || ''}${(s.cognome || '')[0] || ''}`.toUpperCase() || 'ST';
-        const isPresent = s.presente === true;
-        const oraIn = s.ora_ingresso ? s.ora_ingresso.substring(0, 5) : null;
-        const oraOut = s.ora_uscita ? s.ora_uscita.substring(0, 5) : null;
-        const oreEffettive = calculateHours(oraIn, oraOut);
-
-        const isRitardo = s.note && s.note.toLowerCase().includes('ritardo');
-        const badgeIngressoClass = isRitardo ? 'time-badge-late' : (oraIn ? 'time-badge-in' : 'time-badge-none');
-        const badgeUscitaClass = oraOut ? 'time-badge-out' : 'time-badge-none';
-
-        let statoBadge = '';
-        if (isPresent) {
-            if (isRitardo) {
-                statoBadge = '<span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i>Ritardo</span>';
-            } else if (s.note && s.note.toLowerCase().includes('uscita')) {
-                statoBadge = '<span class="badge bg-info text-dark"><i class="bi bi-box-arrow-right me-1"></i>Uscita Anticipata</span>';
-            } else {
-                statoBadge = '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Presente</span>';
-            }
-        } else {
-            statoBadge = '<span class="badge bg-secondary"><i class="bi bi-dash-circle me-1"></i>Non timbrato</span>';
-        }
-
-        // Azioni condizionate dalla disponibilità della lezione
-        let azioniHtml = '';
-        if (lezionePrevisitaFlag) {
-            if (isPresent) {
-                azioniHtml = `
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="openModalModificaDaAppello(${s.id_utente})" title="Modifica Timbratura">
-                            <i class="bi bi-pencil-fill"></i>
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="eliminaTimbraturaDaAppello(${s.id_presenza})" title="Elimina / Segna Assente">
-                            <i class="bi bi-trash-fill"></i>
-                        </button>
-                    </div>
-                `;
-            } else {
-                azioniHtml = `
-                    <button class="btn btn-sm btn-success fw-bold px-3" onclick="registraTimbraturaRapida(${s.id_utente})" title="Registra Presenza Ora">
-                        <i class="bi bi-plus-lg me-1"></i>Timbra
-                    </button>
-                `;
-            }
-        } else {
-            azioniHtml = `<span class="text-muted small"><i class="bi bi-lock-fill me-1"></i>Nessuna lezione</span>`;
-        }
+        const dettaglioUrl = `dettaglio-timbrature.html?id_utente=${s.id_utente}&id_edizione=${currentEdizioneId || ''}`;
 
         html += `
-            <tr class="${isPresent ? 'row-present' : 'row-absent'}">
+            <tr>
                 <td class="ps-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="student-avatar" style="${!isPresent ? 'background:#94a3b8;' : ''}">${initials}</div>
+                    <a href="${dettaglioUrl}" class="d-flex align-items-center gap-3 text-decoration-none text-dark py-1">
+                        <div class="student-avatar">${initials}</div>
                         <div>
                             <div class="fw-bold text-dark">${escapeHtml(s.cognome)} ${escapeHtml(s.nome)}</div>
                             <div class="small text-muted">${escapeHtml(s.email || s.codice_fiscale || 'Studente')}</div>
                         </div>
-                    </div>
-                </td>
-                <td>
-                    ${oraIn ? `<span class="time-badge time-badge-in"><i class="bi bi-box-arrow-in-right"></i> ${oraIn}</span>` : '<span class="time-badge time-badge-none">—</span>'}
-                </td>
-                <td>
-                    ${oraOut ? `<span class="time-badge time-badge-out"><i class="bi bi-box-arrow-right"></i> ${oraOut}</span>` : '<span class="time-badge time-badge-none">—</span>'}
-                </td>
-                <td>
-                    <span class="fw-bold ${isPresent ? 'text-primary' : 'text-muted'}">${oreEffettive}</span>
-                </td>
-                <td>
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        ${statoBadge}
-                        ${s.note ? `<span class="small text-muted" title="${escapeHtml(s.note)}"><i class="bi bi-chat-left-text"></i> ${escapeHtml(s.note)}</span>` : ''}
-                    </div>
+                    </a>
                 </td>
                 <td class="text-end pe-4">
-                    ${azioniHtml}
+                    <a href="${dettaglioUrl}" class="btn btn-sm btn-primary fw-bold d-inline-flex align-items-center gap-1">
+                        <i class="bi bi-clock-history"></i> Visualizza Timbrature
+                    </a>
                 </td>
             </tr>
         `;
@@ -424,261 +410,6 @@ function renderTableEditionView() {
 
     tbody.innerHTML = html;
 }
-
-// ── RENDERING TABELLA: VISTA GENERALE ──
-
-function renderTableGeneralView() {
-    const tbody = document.getElementById('tbodyTimbrature');
-    const badgeCount = document.getElementById('badgeCount');
-    const searchQuery = (document.getElementById('searchStudente')?.value || '').toLowerCase().trim();
-
-    if (!tbody) return;
-
-    let filtered = currentPresenze;
-    if (searchQuery) {
-        filtered = currentPresenze.filter(p => {
-            const u = p.utente;
-            if (!u) return false;
-            const fullName = `${u.Nome} ${u.Cognome} ${u.Email} ${u.Codice_Fiscale || ''}`.toLowerCase();
-            return fullName.includes(searchQuery);
-        });
-    }
-
-    if (badgeCount) badgeCount.textContent = `${filtered.length} record`;
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" class="text-center py-5 text-muted">
-                    <div class="mb-2"><i class="bi bi-inbox fs-2 text-secondary"></i></div>
-                    Nessuna timbratura registrata per la data selezionata.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    let html = '';
-    filtered.forEach(p => {
-        const u = p.utente || { Nome: 'Utente', Cognome: `#${p.id_utente}` };
-        const initials = `${(u.Nome || '')[0] || ''}${(u.Cognome || '')[0] || ''}`.toUpperCase() || 'ST';
-        const oraIn = p.ora_ingresso ? p.ora_ingresso.substring(0, 5) : null;
-        const oraOut = p.ora_uscita ? p.ora_uscita.substring(0, 5) : null;
-        const oreEffettive = calculateHours(oraIn, oraOut);
-
-        const isRitardo = p.note && p.note.toLowerCase().includes('ritardo');
-        const badgeIngressoClass = isRitardo ? 'time-badge-late' : (oraIn ? 'time-badge-in' : 'time-badge-none');
-        const badgeUscitaClass = oraOut ? 'time-badge-out' : 'time-badge-none';
-
-        html += `
-            <tr>
-                <td class="ps-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="student-avatar">${initials}</div>
-                        <div>
-                            <div class="fw-bold text-dark">${escapeHtml(u.Cognome)} ${escapeHtml(u.Nome)}</div>
-                            <div class="small text-muted">${escapeHtml(u.Email || u.Codice_Fiscale || 'Studente')}</div>
-                        </div>
-                    </div>
-                </td>
-                <td class="fw-semibold text-secondary">${formatDateItalian(p.data_presenza)}</td>
-                <td>${oraIn ? `<span class="time-badge ${badgeIngressoClass}"><i class="bi bi-box-arrow-in-right"></i> ${oraIn}</span>` : '—'}</td>
-                <td>${oraOut ? `<span class="time-badge ${badgeUscitaClass}"><i class="bi bi-box-arrow-right"></i> ${oraOut}</span>` : '—'}</td>
-                <td><span class="fw-bold text-primary">${oreEffettive}</span></td>
-                <td>
-                    <span class="badge ${isRitardo ? 'bg-warning text-dark' : 'bg-success'}">${isRitardo ? 'Ritardo' : 'Presente'}</span>
-                    ${p.note ? `<span class="small text-muted ms-1">${escapeHtml(p.note)}</span>` : ''}
-                </td>
-                <td class="text-end pe-4">
-                    <button class="btn btn-sm btn-outline-danger" onclick="eliminaTimbraturaDaAppello(${p.id_presenza})">
-                        <i class="bi bi-trash-fill"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-
-    tbody.innerHTML = html;
-}
-
-function renderTable() {
-    const idEdizione = document.getElementById('filterEdizione')?.value;
-    if (idEdizione) renderTableEditionView();
-    else renderTableGeneralView();
-}
-
-// ── AGGIORNAMENTO STATISTICHE / KPI ──
-
-function updateKPIsFromAppello(studenti) {
-    const total = studenti.length;
-    const presenti = studenti.filter(s => s.presente === true).length;
-    const ritardi = studenti.filter(s => s.presente && s.note && s.note.toLowerCase().includes('ritardo')).length;
-    const assenti = total - presenti;
-    const percPresenza = total > 0 ? Math.round((presenti / total) * 100) : 0;
-
-    document.getElementById('kpiPresenti').textContent = presenti;
-    document.getElementById('kpiRitardi').textContent = ritardi;
-    document.getElementById('kpiAssenti').textContent = assenti;
-    document.getElementById('kpiTotaleStudenti').textContent = total;
-
-    const progressBar = document.getElementById('presenzaProgressBar');
-    if (progressBar) {
-        progressBar.style.width = `${percPresenza}%`;
-        progressBar.setAttribute('aria-valuenow', percPresenza);
-        progressBar.textContent = total > 0 ? `${percPresenza}%` : '';
-        progressBar.className = `progress-bar ${percPresenza >= 80 ? 'bg-success' : percPresenza >= 50 ? 'bg-warning' : 'bg-danger'}`;
-    }
-    const percLabel = document.getElementById('percPresenzaLabel');
-    if (percLabel) percLabel.textContent = total > 0 ? `${percPresenza}% di presenze` : '—';
-}
-
-async function loadGeneralStats(targetDate) {
-    try {
-        const res = await fetchWithAuth(`/presenze/stats?data_presenza=${targetDate}`);
-        if (res.ok) {
-            const stats = await res.json();
-            document.getElementById('kpiPresenti').textContent = stats.totale_presenti || 0;
-            document.getElementById('kpiRitardi').textContent = stats.ritardi || 0;
-            document.getElementById('kpiAssenti').textContent = stats.assenti || 0;
-            document.getElementById('kpiTotaleStudenti').textContent = stats.totale_studenti || 0;
-        }
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-// ── GESTIONE TIMBRATURA SINGOLA ──
-
-function openModalNuovaTimbratura() {
-    if (!lezionePrevisitaFlag) {
-        showToast('warning', 'Nessuna lezione prevista', 'Non è possibile registrare timbrature senza una lezione pianificata nel calendario per questa data.');
-        return;
-    }
-    document.getElementById('modalTimbraturaTitle').innerHTML = '<i class="bi bi-clock-fill me-2"></i>Registra Nuova Timbratura';
-    document.getElementById('editIdPresenza').value = '';
-    
-    const modalSelect = document.getElementById('inputStudente');
-    modalSelect.innerHTML = '<option value="">-- Seleziona uno studente --</option>';
-    currentEditionStudents.forEach(s => {
-        modalSelect.innerHTML += `<option value="${s.id_utente}">${escapeHtml(s.cognome)} ${escapeHtml(s.nome)}</option>`;
-    });
-    modalSelect.disabled = false;
-
-    // Pre-popola orari dalla lezione del giorno se disponibili
-    const defaultIn = currentLezioneInfo?.[0]?.ora_inizio || '09:00';
-    const defaultOut = currentLezioneInfo?.[0]?.ora_fine || '13:00';
-    document.getElementById('inputDataPresenza').value = document.getElementById('filterData')?.value || getTodayDateStr();
-    document.getElementById('inputOraIngresso').value = defaultIn;
-    document.getElementById('inputOraUscita').value = defaultOut;
-    document.getElementById('inputNote').value = '';
-    modalTimbraturaInstance?.show();
-}
-
-window.registraTimbraturaRapida = function(idUtente) {
-    if (!lezionePrevisitaFlag) {
-        showToast('warning', 'Nessuna lezione prevista', 'Non è possibile registrare timbrature senza una lezione pianificata nel calendario per questa data.');
-        return;
-    }
-    const s = currentEditionStudents.find(item => item.id_utente === idUtente);
-    if (!s) return;
-
-    document.getElementById('modalTimbraturaTitle').innerHTML = `<i class="bi bi-clock-fill me-2"></i>Timbratura per ${escapeHtml(s.nome)} ${escapeHtml(s.cognome)}`;
-    document.getElementById('editIdPresenza').value = '';
-    
-    const modalSelect = document.getElementById('inputStudente');
-    modalSelect.innerHTML = `<option value="${s.id_utente}" selected>${escapeHtml(s.cognome)} ${escapeHtml(s.nome)}</option>`;
-    modalSelect.disabled = true;
-
-    const defaultIn = currentLezioneInfo?.[0]?.ora_inizio || '09:00';
-    const defaultOut = currentLezioneInfo?.[0]?.ora_fine || '13:00';
-    document.getElementById('inputDataPresenza').value = document.getElementById('filterData')?.value || getTodayDateStr();
-    document.getElementById('inputOraIngresso').value = defaultIn;
-    document.getElementById('inputOraUscita').value = defaultOut;
-    document.getElementById('inputNote').value = '';
-    modalTimbraturaInstance?.show();
-};
-
-window.openModalModificaDaAppello = function(idUtente) {
-    const s = currentEditionStudents.find(item => item.id_utente === idUtente);
-    if (!s) return;
-
-    document.getElementById('modalTimbraturaTitle').innerHTML = `<i class="bi bi-pencil-square me-2"></i>Modifica Timbratura di ${escapeHtml(s.nome)} ${escapeHtml(s.cognome)}`;
-    document.getElementById('editIdPresenza').value = s.id_presenza || '';
-    
-    const modalSelect = document.getElementById('inputStudente');
-    modalSelect.innerHTML = `<option value="${s.id_utente}" selected>${escapeHtml(s.cognome)} ${escapeHtml(s.nome)}</option>`;
-    modalSelect.disabled = true;
-
-    document.getElementById('inputDataPresenza').value = document.getElementById('filterData')?.value || getTodayDateStr();
-    document.getElementById('inputOraIngresso').value = s.ora_ingresso ? s.ora_ingresso.substring(0, 5) : '';
-    document.getElementById('inputOraUscita').value = s.ora_uscita ? s.ora_uscita.substring(0, 5) : '';
-    document.getElementById('inputNote').value = s.note || '';
-
-    modalTimbraturaInstance?.show();
-};
-
-async function handleSaveTimbratura(e) {
-    e.preventDefault();
-    const editId = document.getElementById('editIdPresenza').value;
-    const idUtente = parseInt(document.getElementById('inputStudente').value);
-    const dataPresenza = document.getElementById('inputDataPresenza').value;
-    const oraIn = document.getElementById('inputOraIngresso').value || null;
-    const oraOut = document.getElementById('inputOraUscita').value || null;
-    const note = document.getElementById('inputNote').value.trim();
-
-    if (!idUtente || !dataPresenza) {
-        alert('Seleziona studente e data');
-        return;
-    }
-
-    const payload = {
-        id_utente: idUtente,
-        data_presenza: dataPresenza,
-        ora_ingresso: oraIn ? `${oraIn}:00` : null,
-        ora_uscita: oraOut ? `${oraOut}:00` : null,
-        note: note
-    };
-
-    try {
-        let res;
-        if (editId) {
-            res = await fetchWithAuth(`/presenze/${editId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-        } else {
-            res = await fetchWithAuth('/presenze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-        }
-
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.detail || 'Errore salvataggio');
-        }
-
-        modalTimbraturaInstance?.hide();
-        await loadPresenzeData();
-    } catch (err) {
-        alert(`Errore: ${err.message}`);
-    }
-}
-
-window.eliminaTimbraturaDaAppello = async function(idPresenza) {
-    if (!idPresenza) return;
-    if (!confirm('Sei sicuro di voler eliminare questa timbratura e segnare lo studente come assente?')) return;
-
-    try {
-        const res = await fetchWithAuth(`/presenze/${idPresenza}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error('Errore durante l\'eliminazione');
-        await loadPresenzeData();
-    } catch (err) {
-        alert(`Impossibile eliminare: ${err.message}`);
-    }
-};
 
 // ── APPELLO RAPIDO BATCH ──
 
@@ -687,26 +418,18 @@ function openModalAppelloRapido() {
         showToast('warning', 'Nessuna lezione prevista', 'Non è possibile fare l\'appello senza una lezione pianificata nel calendario per questa data.');
         return;
     }
-    const currentEdizione = document.getElementById('filterEdizione')?.value;
     const appelloSelect = document.getElementById('appelloEdizioneSelect');
-    if (appelloSelect && currentEdizione) appelloSelect.value = currentEdizione;
-    document.getElementById('appelloData').value = document.getElementById('filterData')?.value || getTodayDateStr();
+    if (appelloSelect && currentEdizioneId) appelloSelect.value = currentEdizioneId;
+    
+    const filterDataVal = document.getElementById('filterData')?.value || getTodayDateStr();
+    if (document.getElementById('appelloData')) {
+        document.getElementById('appelloData').value = filterDataVal;
+    }
 
-    // Pre-popola orari dalla lezione del giorno
     const defaultIn = currentLezioneInfo?.[0]?.ora_inizio || '09:00';
     const defaultOut = currentLezioneInfo?.[0]?.ora_fine || '13:00';
     if (document.getElementById('appelloOraInDefault')) document.getElementById('appelloOraInDefault').value = defaultIn;
     if (document.getElementById('appelloOraOutDefault')) document.getElementById('appelloOraOutDefault').value = defaultOut;
-
-    // Mostra info lezione nel modal
-    const lessonInfoModal = document.getElementById('appelloLessonInfo');
-    if (lessonInfoModal && currentLezioneInfo && currentLezioneInfo.length > 0) {
-        const lStr = currentLezioneInfo.map(l => `${l.ora_inizio}–${l.ora_fine}${l.modulo ? ` · ${l.modulo}` : ''}`).join(' | ');
-        lessonInfoModal.innerHTML = `<i class="bi bi-calendar-check text-success me-1"></i><strong>Lezione:</strong> ${escapeHtml(lStr)}`;
-        lessonInfoModal.style.display = '';
-    } else if (lessonInfoModal) {
-        lessonInfoModal.style.display = 'none';
-    }
 
     modalAppelloInstance?.show();
     loadAppelloStudentiList();
@@ -816,10 +539,17 @@ function setAllPresenceState(present) {
 async function handleSaveBatchAppello() {
     const idEdizione = document.getElementById('appelloEdizioneSelect')?.value;
     const dataAppello = document.getElementById('appelloData')?.value;
-    if (!idEdizione || !dataAppello) { alert('Seleziona edizione e data dell\'appello'); return; }
+
+    if (!idEdizione || !dataAppello) {
+        showToast('warning', 'Campi Mancanti', 'Seleziona edizione e data dell\'appello.');
+        return;
+    }
 
     const rows = document.querySelectorAll('.batch-student-row');
-    if (rows.length === 0) { alert('Nessuno studente presente nella lista'); return; }
+    if (rows.length === 0) {
+        showToast('warning', 'Lista Vuota', 'Nessuno studente presente nella lista.');
+        return;
+    }
 
     const presenzeList = [];
     rows.forEach(row => {
@@ -847,16 +577,17 @@ async function handleSaveBatchAppello() {
         if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Errore salvataggio registro'); }
         const result = await res.json();
         modalAppelloInstance?.hide();
-        await loadPresenzeData();
+        if (currentEdizioneId) await loadPresenzeData(currentEdizioneId);
         showToast('success', 'Appello salvato!', `${result.salvate} presenze registrate/aggiornate con successo.`);
     } catch (err) {
-        alert(`Errore: ${err.message}`);
+        showToast('danger', 'Errore Salvataggio', err.message);
     } finally {
         if (btnSalva) { btnSalva.disabled = false; btnSalva.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-1"></i>Salva Registro Presenze'; }
     }
 }
 
 // ── TOAST NOTIFICATIONS ──
+
 function showToast(type, title, message) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -890,13 +621,25 @@ function showToast(type, title, message) {
 
 function calculateHours(timeIn, timeOut) {
     if (!timeIn || !timeOut) return '—';
-    const [hIn, mIn] = timeIn.split(':').map(Number);
-    const [hOut, mOut] = timeOut.split(':').map(Number);
-    const minTotal = (hOut * 60 + mOut) - (hIn * 60 + mIn);
-    if (minTotal <= 0) return '0h 00m';
-    const h = Math.floor(minTotal / 60);
-    const m = minTotal % 60;
+    const minIn = timeToMinutes(timeIn);
+    const minOut = timeToMinutes(timeOut);
+    if (minIn === null || minOut === null || minOut <= minIn) return '0h 00m';
+    return formatMinutesToHours(minOut - minIn);
+}
+
+function formatMinutesToHours(minuti) {
+    if (!minuti || minuti <= 0) return '0h 00m';
+    const h = Math.floor(minuti / 60);
+    const m = minuti % 60;
     return `${h}h ${String(m).padStart(2, '0')}m`;
+}
+
+function timeToMinutes(tStr) {
+    if (!tStr) return null;
+    const clean = String(tStr).substring(0, 5);
+    const parts = clean.split(':').map(Number);
+    if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
+    return parts[0] * 60 + parts[1];
 }
 
 function formatDateItalian(dateStr) {
@@ -919,20 +662,19 @@ function escapeHtml(text) {
 }
 
 function exportCSV() {
-    const list = currentEditionStudents.length > 0 ? currentEditionStudents : currentPresenze;
-    if (!list || list.length === 0) {
-        alert('Nessun dato da esportare');
+    if (!currentEditionStudents || currentEditionStudents.length === 0) {
+        showToast('warning', 'Nessun dato', 'Nessun dato da esportare.');
         return;
     }
 
     const dataSel = document.getElementById('filterData')?.value || getTodayDateStr();
     let csv = 'ID_UTENTE;COGNOME;NOME;EMAIL;CODICE_FISCALE;DATA;PRESENTE;ORA_INGRESSO;ORA_USCITA;ORE_EFFETTIVE;NOTE\n';
     
-    list.forEach(item => {
-        const cognome = item.cognome || item.utente?.Cognome || '';
-        const nome = item.nome || item.utente?.Nome || '';
-        const email = item.email || item.utente?.Email || '';
-        const cf = item.codice_fiscale || item.utente?.Codice_Fiscale || '';
+    currentEditionStudents.forEach(item => {
+        const cognome = item.cognome || '';
+        const nome = item.nome || '';
+        const email = item.email || '';
+        const cf = item.codice_fiscale || '';
         const dataP = item.data_presenza || dataSel;
         const pres = item.presente !== false ? 'SI' : 'NO';
         const oraIn = item.ora_ingresso ? item.ora_ingresso.substring(0, 5) : '';

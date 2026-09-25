@@ -330,3 +330,11 @@ class PresenzaBatchCreate(BaseModel):
     presenze: List[PresenzaBatchItem]
 
 
+class PresenzaBadgeRequest(BaseModel):
+    id_utente: int
+    data_presenza: Optional[date] = None
+    ora_badge: Optional[time] = None
+    note: Optional[str] = None
+
+
+

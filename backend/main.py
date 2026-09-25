@@ -1635,24 +1635,49 @@ def get_appello_giorno(
         presenze = db.query(models.Presenza).filter(
             models.Presenza.data_presenza == target_date,
             models.Presenza.id_utente.in_(studenti_ids)
-        ).all()
+        ).order_by(models.Presenza.id_presenza.asc()).all()
         for p in presenze:
-            presenze_map[p.id_utente] = p
+            if p.id_utente not in presenze_map:
+                presenze_map[p.id_utente] = []
+            presenze_map[p.id_utente].append(p)
             
     result = []
     for s in studenti_iscritti:
-        p = presenze_map.get(s.id_utente)
+        p_list = presenze_map.get(s.id_utente, [])
+        total_minutes = 0
+        for p in p_list:
+            if p.ora_ingresso and p.ora_uscita:
+                m_in = p.ora_ingresso.hour * 60 + p.ora_ingresso.minute
+                m_out = p.ora_uscita.hour * 60 + p.ora_uscita.minute
+                if m_out > m_in:
+                    total_minutes += (m_out - m_in)
+                    
+        first_p = p_list[0] if p_list else None
+        last_p = p_list[-1] if p_list else None
+        is_in_aula = (last_p is not None and last_p.ora_uscita is None)
+
         result.append({
             "id_utente": s.id_utente,
             "nome": s.Nome,
             "cognome": s.Cognome,
             "email": s.Email,
             "codice_fiscale": s.Codice_Fiscale,
-            "id_presenza": p.id_presenza if p else None,
-            "presente": p is not None,
-            "ora_ingresso": p.ora_ingresso.strftime("%H:%M") if (p and p.ora_ingresso) else None,
-            "ora_uscita": p.ora_uscita.strftime("%H:%M") if (p and p.ora_uscita) else None,
-            "note": p.note if p else ""
+            "id_presenza": last_p.id_presenza if last_p else None,
+            "presente": len(p_list) > 0,
+            "in_aula": is_in_aula,
+            "ora_ingresso": first_p.ora_ingresso.strftime("%H:%M") if (first_p and first_p.ora_ingresso) else None,
+            "ora_uscita": last_p.ora_uscita.strftime("%H:%M") if (last_p and last_p.ora_uscita) else None,
+            "note": " | ".join([p.note for p in p_list if p.note]) if p_list else "",
+            "minuti_totali": total_minutes,
+            "timbrature": [
+                {
+                    "id_presenza": p.id_presenza,
+                    "ora_ingresso": p.ora_ingresso.strftime("%H:%M") if p.ora_ingresso else None,
+                    "ora_uscita": p.ora_uscita.strftime("%H:%M") if p.ora_uscita else None,
+                    "note": p.note or ""
+                }
+                for p in p_list
+            ]
         })
     
     lezioni_info = [
@@ -1672,6 +1697,85 @@ def get_appello_giorno(
         "lezioni": lezioni_info,
         "studenti": result
     }
+
+
+@app.post("/presenze/badge")
+def badge_presenza(
+    badge_data: schemas.PresenzaBadgeRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Simula una timbratura con badge aziendale.
+    - Se non ci sono timbrature nella giornata, o l'ultima ha già l'uscita -> crea INGRESSO.
+    - Se l'ultima timbratura ha solo l'ingresso aperto -> registra l'USCITA.
+    """
+    from datetime import datetime
+    utente = db.query(models.Utente).filter(models.Utente.id_utente == badge_data.id_utente).first()
+    if not utente:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+        
+    target_date = badge_data.data_presenza or date.today()
+    now_time = badge_data.ora_badge or datetime.now().time()
+    
+    existing = db.query(models.Presenza).filter(
+        models.Presenza.id_utente == badge_data.id_utente,
+        models.Presenza.data_presenza == target_date
+    ).order_by(models.Presenza.id_presenza.asc()).all()
+    
+    last_p = existing[-1] if existing else None
+    
+    if last_p and last_p.ora_uscita is None:
+        # Registra USCITA
+        last_p.ora_uscita = now_time
+        if badge_data.note:
+            last_p.note = f"{last_p.note} | {badge_data.note}" if last_p.note else badge_data.note
+        try:
+            db.commit()
+            db.refresh(last_p)
+            return {
+                "tipo": "uscita",
+                "messaggio": f"Uscita registrata alle {now_time.strftime('%H:%M')} per {utente.Cognome} {utente.Nome}",
+                "presenza": {
+                    "id_presenza": last_p.id_presenza,
+                    "id_utente": last_p.id_utente,
+                    "data_presenza": last_p.data_presenza.isoformat(),
+                    "ora_ingresso": last_p.ora_ingresso.strftime("%H:%M") if last_p.ora_ingresso else None,
+                    "ora_uscita": last_p.ora_uscita.strftime("%H:%M") if last_p.ora_uscita else None,
+                    "note": last_p.note
+                }
+            }
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=extract_sql_error_message(e))
+    else:
+        # Crea nuovo INGRESSO
+        nuova = models.Presenza(
+            id_utente=badge_data.id_utente,
+            data_presenza=target_date,
+            ora_ingresso=now_time,
+            ora_uscita=None,
+            note=badge_data.note
+        )
+        db.add(nuova)
+        try:
+            db.commit()
+            db.refresh(nuova)
+            return {
+                "tipo": "ingresso",
+                "messaggio": f"Ingresso registrato alle {now_time.strftime('%H:%M')} per {utente.Cognome} {utente.Nome}",
+                "presenza": {
+                    "id_presenza": nuova.id_presenza,
+                    "id_utente": nuova.id_utente,
+                    "data_presenza": nuova.data_presenza.isoformat(),
+                    "ora_ingresso": nuova.ora_ingresso.strftime("%H:%M") if nuova.ora_ingresso else None,
+                    "ora_uscita": None,
+                    "note": nuova.note
+                }
+            }
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=extract_sql_error_message(e))
+
 
 
 @app.post("/presenze", response_model=schemas.PresenzaResponse, status_code=status.HTTP_201_CREATED)

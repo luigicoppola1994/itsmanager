@@ -572,7 +572,7 @@ ALTER TABLE `modulo`
 --
 ALTER TABLE `presenze`
   ADD PRIMARY KEY (`id_presenza`),
-  ADD UNIQUE KEY `uk_utente_data` (`id_utente`,`data_presenza`);
+  ADD KEY `id_utente` (`id_utente`);
 
 --
 -- Indexes for table `province`

@@ -8,133 +8,55 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="../assets/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- Custom Segreteria CSS -->
+    <!-- Custom Segreteria CSS (Stile Aule / Corsi) -->
     <link rel="stylesheet" href="../shared/styles.css?v=2.1">
     <link rel="stylesheet" href="segreteria.css?v=3.0">
+    <link rel="stylesheet" href="nuovo-corso.css?v=2.1">
 
     <style>
-        /* ── SPECIFIC STYLES FOR TIMBRATURE ── */
-        .timbrature-hero {
-            background: linear-gradient(135deg, #3a6f9f 0%, #4682B4 100%);
-            border-radius: 12px;
-            padding: 24px 28px;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        .aula-selector-card {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 20px 24px;
             margin-bottom: 24px;
-            box-shadow: 0 4px 16px rgba(70, 130, 180, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color, #e2e8f0);
         }
-
-        .timbrature-hero-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .timbrature-hero-icon {
-            width: 54px;
-            height: 54px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(8px);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-            flex-shrink: 0;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .timbrature-hero h2 {
-            font-size: 1.5rem;
+        .aula-selector-header {
+            font-size: 0.95rem;
             font-weight: 700;
-            margin: 0 0 4px;
-        }
-
-        .timbrature-hero p {
-            margin: 0;
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
-
-        /* KPI Stats Grid */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .kpi-card {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 18px 20px;
+            color: var(--text-dark, #1e293b);
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            transition: transform 0.2s, box-shadow 0.2s;
+            gap: 8px;
         }
-
-        .kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.06);
-        }
-
-        .kpi-icon-box {
-            width: 46px;
-            height: 46px;
+        .select-custom {
             border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.35rem;
-            flex-shrink: 0;
+            border: 1px solid #cbd5e1;
+            padding: 10px 14px;
+            font-size: 0.92rem;
+            font-weight: 500;
+            color: #334155;
+            background-color: #f8fafc;
+            transition: all 0.2s;
+        }
+        .select-custom:focus {
+            background-color: #ffffff;
+            border-color: var(--primary-color, #2563eb);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            outline: none;
         }
 
-        .kpi-blue { background: #eaf2f8; color: #4682B4; }
-        .kpi-green { background: #e8f5e9; color: #2e7d32; }
-        .kpi-orange { background: #fff3e0; color: #ef6c00; }
-        .kpi-red { background: #ffebee; color: #c62828; }
-
-        .kpi-info .kpi-value {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #1e293b;
-            line-height: 1.1;
-        }
-
-        .kpi-info .kpi-label {
-            font-size: 0.78rem;
-            color: #64748b;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 2px;
-        }
-
-        /* Filter Panel */
-        .filter-panel {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 18px 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-
-        /* Table User Avatar */
         .student-avatar {
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             border-radius: 8px;
             background: #4682B4;
             color: white;
@@ -150,7 +72,7 @@
             font-family: 'Roboto', monospace;
             font-size: 0.85rem;
             font-weight: 600;
-            padding: 3px 8px;
+            padding: 4px 10px;
             border-radius: 6px;
             display: inline-flex;
             align-items: center;
@@ -159,86 +81,10 @@
 
         .time-badge-in { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
         .time-badge-out { background: #e3f2fd; color: #0d47a1; border: 1px solid #bbdefb; }
-        .time-badge-late { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
         .time-badge-none { background: #f1f5f9; color: #94a3b8; border: 1px dashed #cbd5e1; }
 
-        /* Lesson Status Banner */
-        .lesson-banner {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 14px 20px;
-            border-radius: 10px;
-        }
-
-        .lesson-banner-ok {
-            background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
-            border: 1px solid #a5d6a7;
-        }
-
-        .lesson-banner-warn {
-            background: linear-gradient(135deg, #fff8e1, #fff3e0);
-            border: 1px solid #ffcc02;
-        }
-
-        .lesson-banner-icon {
-            font-size: 1.8rem;
-            flex-shrink: 0;
-        }
-
-        .lesson-banner-ok .lesson-banner-icon { color: #2e7d32; }
-        .lesson-banner-warn .lesson-banner-icon { color: #f57c00; }
-
-        .lesson-banner-body {
-            flex: 1;
-        }
-
-        .lesson-banner-title {
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: #1e293b;
-        }
-
-        .lesson-banner-warn .lesson-banner-title { color: #7c4d00; }
-
-        .lesson-banner-sub {
-            font-size: 0.83rem;
-            color: #475569;
-            margin-top: 2px;
-        }
-
-        .lesson-banner-warn .lesson-banner-sub { color: #78530a; }
-        .lesson-banner-badge { flex-shrink: 0; }
-
-        /* Row states */
         .row-present td { background-color: #fafffe !important; }
         .row-absent td { background-color: #f8f9fa !important; opacity: 0.85; }
-
-        /* Presence progress */
-        .presence-progress-wrap {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 16px 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-
-        /* Quick Batch Modal styling */
-        .batch-student-row {
-            padding: 10px 14px;
-            border-bottom: 1px solid #f1f5f9;
-            transition: background 0.15s;
-        }
-
-        .batch-student-row:hover {
-            background: #f8fafc;
-        }
-
-        .batch-student-row.is-absent {
-            background: #fff5f5;
-            opacity: 0.75;
-        }
     </style>
 </head>
 <body>
@@ -317,7 +163,7 @@
             <!-- TOP BAR -->
             <div class="rubick-top-bar">
                 <nav class="rubick-breadcrumb" aria-label="breadcrumb">
-                    <span class="breadcrumb-root"><i class="bi bi-mortarboard-fill me-1" style="color: var(--primary-color);"></i>ITS Manager</span>
+                    <span class="breadcrumb-root"><i class="bi bi-mortarboard-fill me-1 text-primary"></i>ITS Manager</span>
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
                     <span class="breadcrumb-section">Segreteria</span>
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
@@ -332,312 +178,126 @@
                 </div>
             </div>
 
-            <!-- HERO -->
-            <div class="timbrature-hero">
-                <div class="timbrature-hero-left">
-                    <div class="timbrature-hero-icon">
-                        <i class="bi bi-clock-history"></i>
-                    </div>
+            <!-- BREADCRUMB + TITOLO -->
+            <div class="nc-page-header">
+                <div class="nc-breadcrumb">
+                    <a href="dashboard.html" class="nc-breadcrumb-link">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        Corsi
+                    </a>
+                    <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
+                    <span class="nc-breadcrumb-current" id="headerBreadcrumbCurrent">Gestione Timbrature & Studenti</span>
+                </div>
+
+                <div class="nc-header-row">
                     <div>
-                        <h2>Registro Timbrature & Presenze</h2>
-                        <p>Monitora e gestisci gli ingressi, le uscite, i ritardi e le assenze degli studenti in tempo reale.</p>
+                        <h1 class="nc-title">
+                            <span class="nc-title-icon"><i class="bi bi-clock-history"></i></span>
+                            <span id="pageTitleText">Gestione Timbrature & Presenze</span>
+                        </h1>
+                        <p class="nc-subtitle" id="pageSubtitleText">Seleziona il corso e l'edizione per visualizzare gli studenti e gestire il registro delle presenze.</p>
                     </div>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-light fw-bold" id="btnOpenAppelloRapido" style="color: #3a6f9f; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        <i class="bi bi-clipboard-check-fill me-1"></i>Appello Rapido
-                    </button>
-                    <button class="btn btn-outline-light fw-bold" id="btnNuovaTimbratura">
-                        <i class="bi bi-plus-circle-fill me-1"></i>Nuova Timbratura
-                    </button>
-                </div>
-            </div>
-
-            <!-- KPI STATS -->
-            <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div class="kpi-icon-box kpi-green">
-                        <i class="bi bi-person-check-fill"></i>
-                    </div>
-                    <div class="kpi-info">
-                        <div class="kpi-value" id="kpiPresenti">0</div>
-                        <div class="kpi-label">Presenti</div>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon-box kpi-orange">
-                        <i class="bi bi-hourglass-split"></i>
-                    </div>
-                    <div class="kpi-info">
-                        <div class="kpi-value" id="kpiRitardi">0</div>
-                        <div class="kpi-label">Ritardi</div>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon-box kpi-red">
-                        <i class="bi bi-person-x-fill"></i>
-                    </div>
-                    <div class="kpi-info">
-                        <div class="kpi-value" id="kpiAssenti">0</div>
-                        <div class="kpi-label">Assenti</div>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon-box kpi-blue">
-                        <i class="bi bi-people-fill"></i>
-                    </div>
-                    <div class="kpi-info">
-                        <div class="kpi-value" id="kpiTotaleStudenti">0</div>
-                        <div class="kpi-label">Iscritti Totali</div>
-                    </div>
+                    <a href="dashboard.html" class="btn-back">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>Torna ai corsi</span>
+                    </a>
                 </div>
             </div>
 
-            <!-- LESSON STATUS BANNER -->
-            <div id="lessonStatusBanner" style="display:none; margin-bottom: 16px;"></div>
-
-            <!-- ATTENDANCE PROGRESS BAR -->
-            <div class="presence-progress-wrap" id="presenceProgressWrap">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="fw-bold small text-muted"><i class="bi bi-bar-chart-fill me-1"></i>Percentuale di Presenza</span>
-                    <span class="small fw-bold text-secondary" id="percPresenzaLabel">—</span>
+            <!-- SELETTORE CORSO E EDIZIONE (STILE AULE) -->
+            <div class="aula-selector-card">
+                <div class="aula-selector-header">
+                    <i class="bi bi-funnel-fill text-primary"></i>
+                    <span>Seleziona Corso ed Edizione per le Timbrature</span>
                 </div>
-                <div class="progress" style="height: 10px; border-radius: 8px;">
-                    <div class="progress-bar" id="presenzaProgressBar" role="progressbar" style="width: 0%; border-radius: 8px;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-            </div>
-
-            <!-- FILTERS PANEL -->
-            <div class="filter-panel">
                 <div class="row g-3 align-items-end">
-                    <!-- Seleziona Corso -->
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold small text-muted mb-1">
-                            <i class="bi bi-journal-bookmark me-1"></i>1. Corso
-                        </label>
-                        <select class="form-select" id="filterCorso">
-                            <option value="">-- Seleziona Corso --</option>
+                    <div class="col-md-5">
+                        <label for="selectCorso" class="form-label small fw-semibold text-secondary mb-1">Corso Didattico</label>
+                        <select id="selectCorso" class="form-select select-custom">
+                            <option value="">-- Caricamento corsi... --</option>
                         </select>
                     </div>
-
-                    <!-- Seleziona Edizione -->
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold small text-muted mb-1">
-                            <i class="bi bi-mortarboard me-1"></i>2. Edizione del Corso
-                        </label>
-                        <select class="form-select" id="filterEdizione" disabled>
-                            <option value="">-- Seleziona prima un corso --</option>
+                    <div class="col-md-5">
+                        <label for="selectEdizione" class="form-label small fw-semibold text-secondary mb-1">Edizione Aula</label>
+                        <select id="selectEdizione" class="form-select select-custom" disabled>
+                            <option value="">-- Prima seleziona un corso --</option>
                         </select>
                     </div>
-
-                    <!-- Data -->
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold small text-muted mb-1">
-                            <i class="bi bi-calendar-event me-1"></i>3. Data Presenza
-                        </label>
-                        <div class="input-group">
-                            <input type="date" class="form-control" id="filterData">
-                            <button class="btn btn-outline-secondary btn-sm" type="button" id="btnOggi" title="Imposta data di oggi">Oggi</button>
-                        </div>
-                    </div>
-
-                    <!-- Cerca Studente / Filtri -->
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold small text-muted mb-1">
-                            <i class="bi bi-search me-1"></i>Cerca Studente
-                        </label>
-                        <div class="d-flex gap-2">
-                            <input type="text" class="form-control" id="searchStudente" placeholder="Nome o CF...">
-                            <button class="btn btn-outline-primary" id="btnApplicaFiltri" title="Aggiorna Registro">
-                                <i class="bi bi-arrow-clockwise"></i>
-                            </button>
-                            <button class="btn btn-outline-secondary" id="btnExportCSV" title="Esporta CSV">
-                                <i class="bi bi-download"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TABELLA TIMBRATURE -->
-            <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
-                <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
-                    <h5 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
-                        <i class="bi bi-card-checklist text-primary"></i>
-                        <span>Registro Presenze</span>
-                        <span class="badge bg-light text-secondary border ms-2" id="badgeCount">0 record</span>
-                    </h5>
-                    <div class="small text-muted" id="labelDataSelezionata">Data: —</div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" id="tableTimbrature">
-                        <thead style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-                            <tr>
-                                <th class="ps-4" style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Studente</th>
-                                <th style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Ingresso</th>
-                                <th style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Uscita</th>
-                                <th style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Ore Effettive</th>
-                                <th style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Stato / Note</th>
-                                <th class="text-end pe-4" style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Azioni</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyTimbrature">
-                            <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
-                                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-                                    Caricamento registro timbrature...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </main>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         MODALE: NUOVA / MODIFICA TIMBRATURA
-         ═══════════════════════════════════════════════ -->
-    <div class="modal fade" id="modalTimbratura" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
-                <div class="modal-header bg-primary text-white" style="border-radius: 14px 14px 0 0;">
-                    <h5 class="modal-title fw-bold" id="modalTimbraturaTitle">
-                        <i class="bi bi-clock-fill me-2"></i>Registra Timbratura
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
-                </div>
-                <form id="formTimbratura">
-                    <div class="modal-body p-4">
-                        <input type="hidden" id="editIdPresenza" value="">
-
-                        <!-- Studente -->
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small text-muted">Seleziona Studente *</label>
-                            <select class="form-select" id="inputStudente" required>
-                                <option value="">-- Seleziona uno studente --</option>
-                            </select>
-                        </div>
-
-                        <!-- Data -->
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small text-muted">Data Presenza *</label>
-                            <input type="date" class="form-control" id="inputDataPresenza" required>
-                        </div>
-
-                        <!-- Orari -->
-                        <div class="row g-3 mb-3">
-                            <div class="col-6">
-                                <label class="form-label fw-bold small text-muted">Ora Ingresso</label>
-                                <input type="time" class="form-control" id="inputOraIngresso">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label fw-bold small text-muted">Ora Uscita</label>
-                                <input type="time" class="form-control" id="inputOraUscita">
-                            </div>
-                        </div>
-
-                        <!-- Note / Giustificativo -->
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small text-muted">Note / Giustificativo</label>
-                            <textarea class="form-control" id="inputNote" rows="2" placeholder="Es. Entrata posticipata autorizzata, Ritardo 15 min..."></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer bg-light p-3">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                        <button type="submit" class="btn btn-primary fw-bold" id="btnSalvaTimbratura">
-                            <i class="bi bi-check-lg me-1"></i>Salva Timbratura
+                    <div class="col-md-2">
+                        <button type="button" id="btnVisualizzaTimbrature" class="btn btn-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-1" style="border-radius: 10px; height: 42px;" disabled>
+                            <i class="bi bi-eye-fill"></i>
+                            <span>VISUALIZZA</span>
                         </button>
                     </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         MODALE: APPELLO RAPIDO PER CLASSE / EDIZIONE
-         ═══════════════════════════════════════════════ -->
-    <div class="modal fade" id="modalAppelloRapido" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
-                <div class="modal-header bg-dark text-white" style="border-radius: 14px 14px 0 0;">
-                    <h5 class="modal-title fw-bold">
-                        <i class="bi bi-clipboard-check-fill text-warning me-2"></i>Appello Rapido & Timbrature Classe
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
                 </div>
-                <div class="modal-body p-4">
-                    <!-- Configurazione rapida dell'appello -->
-                    <div class="p-3 mb-4 rounded-3" style="background-color: #f1f5f9; border: 1px solid #e2e8f0;">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold small text-muted">Edizione Corso *</label>
-                                <select class="form-select" id="appelloEdizioneSelect">
-                                    <option value="">-- Seleziona Edizione --</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-bold small text-muted">Data Appello *</label>
-                                <input type="date" class="form-control" id="appelloData">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label fw-bold small text-muted">Orario Default In/Out</label>
-                                <div class="d-flex gap-1">
-                                    <input type="time" class="form-control form-control-sm" id="appelloOraInDefault" value="09:00">
-                                    <input type="time" class="form-control form-control-sm" id="appelloOraOutDefault" value="13:00">
-                                </div>
-                            </div>
-                            <div class="col-md-3 d-flex gap-2">
-                                <button type="button" class="btn btn-outline-success btn-sm w-100 fw-bold" id="btnSegnaTuttiPresenti">
-                                    <i class="bi bi-check-all me-1"></i>Tutti Presenti
-                                </button>
-                                <button type="button" class="btn btn-outline-danger btn-sm w-100 fw-bold" id="btnSegnaTuttiAssenti">
-                                    <i class="bi bi-x-lg me-1"></i>Tutti Assenti
-                                </button>
+            </div>
+
+            <!-- STATO INIZIALE: NESSUNA EDIZIONE SELEZIONATA -->
+            <div id="noSelectionState" class="nc-form-card text-center py-5" style="display: block;">
+                <div class="py-4">
+                    <i class="bi bi-clock-history display-3 text-muted mb-3 d-block"></i>
+                    <h4 class="fw-bold text-dark mb-2">Seleziona un'Edizione per Visualizzare le Timbrature</h4>
+                    <p class="text-secondary max-w-md mx-auto" style="max-width: 480px;">
+                        Scegli il corso e l'edizione dal menu in alto e clicca sul pulsante <strong>VISUALIZZA</strong> per caricare il registro studenti e gestire le presenze.
+                    </p>
+                </div>
+            </div>
+
+            <!-- CONTENUTO TIMBRATURE (VISIBILE DOPO SELEZIONE E CLIC SU VISUALIZZA) -->
+            <div id="timbratureContentLayout" style="display: none;">
+
+                <!-- BARRA RICERCA -->
+                <div class="p-3 bg-white rounded-3 border shadow-sm mb-4">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control border-start-0 ps-0" id="searchStudente" placeholder="Cerca studente per Nome, Cognome o CF...">
                             </div>
                         </div>
+                        <div class="col-md-6 d-flex justify-content-end">
+                            <span class="badge bg-light text-secondary border fs-6 px-3 py-2" id="badgeCount">0 studenti</span>
+                        </div>
                     </div>
-                    <!-- Info lezione nel modal appello -->
-                    <div id="appelloLessonInfo" class="small text-success mt-2 mb-2 px-1" style="display:none;"></div>
+                </div>
 
-                    <!-- Elenco Studenti per Appello -->
+                <!-- TABELLA STUDENTI -->
+                <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
+                    <div class="card-header bg-white py-3 px-4 border-bottom">
+                        <h5 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-people-fill text-primary"></i>
+                            <span id="registroEdizioneTitle">Elenco Studenti Edizione</span>
+                        </h5>
+                    </div>
+
                     <div class="table-responsive">
-                        <table class="table table-bordered align-middle">
-                            <thead class="table-light">
+                        <table class="table table-hover align-middle mb-0" id="tableTimbrature">
+                            <thead style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
                                 <tr>
-                                    <th style="width: 45px;" class="text-center">Pres.</th>
-                                    <th>Studente</th>
-                                    <th style="width: 130px;">Ora Ingresso</th>
-                                    <th style="width: 130px;">Ora Uscita</th>
-                                    <th>Note / Segnalazioni</th>
+                                    <th class="ps-4" style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Studente</th>
+                                    <th class="text-end pe-4" style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Azioni</th>
                                 </tr>
                             </thead>
-                            <tbody id="tbodyAppello">
+                            <tbody id="tbodyTimbrature">
                                 <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">
-                                        Seleziona un'edizione per visualizzare gli studenti iscritti.
+                                    <td colspan="2" class="text-center py-5 text-muted">
+                                        Seleziona un'edizione e clicca su Visualizza per caricare l'elenco.
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-                <div class="modal-footer bg-light p-3">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
-                    <button type="button" class="btn btn-success fw-bold px-4" id="btnSalvaAppello">
-                        <i class="bi bi-cloud-arrow-up-fill me-1"></i>Salva Registro Presenze
-                    </button>
-                </div>
+
             </div>
-        </div>
+
+        </main>
     </div>
 
     <!-- Bootstrap 5 Bundle JS -->
     <script src="../assets/bootstrap.bundle.min.js"></script>
     <script src="../shared/auth.js?v=2.1"></script>
-    <script src="timbrature.js?v=3.0"></script>
+    <script src="timbrature.js?v=4.0"></script>
 
     <!-- Toast Container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer" style="z-index:9999;"></div>
