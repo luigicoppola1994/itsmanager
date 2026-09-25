@@ -392,7 +392,7 @@ function renderTableEditionView() {
             <tr>
                 <td class="ps-4">
                     <a href="${dettaglioUrl}" class="d-flex align-items-center gap-3 text-decoration-none text-dark py-1">
-                        <div class="student-avatar">${initials}</div>
+                        <div class="aula-student-avatar">${initials}</div>
                         <div>
                             <div class="fw-bold text-dark">${escapeHtml(s.cognome)} ${escapeHtml(s.nome)}</div>
                             <div class="small text-muted">${escapeHtml(s.email || s.codice_fiscale || 'Studente')}</div>

@@ -199,7 +199,7 @@ function updateHeaderAndSidebarInfo() {
     if (!s) return;
 
     const initials = `${(s.nome || '')[0] || ''}${(s.cognome || '')[0] || ''}`.toUpperCase() || 'ST';
-    
+
     const avatarEl = document.getElementById('studentHeaderAvatar');
     if (avatarEl) avatarEl.textContent = initials;
 
@@ -207,21 +207,15 @@ function updateHeaderAndSidebarInfo() {
     if (nameEl) nameEl.textContent = `${s.cognome} ${s.nome}`;
 
     const subEl = document.getElementById('studentHeaderSubtitle');
-    if (subEl) subEl.textContent = `Registro Timbrature & Gestione Calendario Studente (ID #${s.id_utente})`;
+    if (subEl) {
+        const parts = [];
+        if (s.email) parts.push(s.email);
+        if (s.codice_fiscale) parts.push(`CF: ${s.codice_fiscale}`);
+        parts.push(`ID #${s.id_utente}`);
+        subEl.textContent = parts.join(' — ');
+    }
 
-    const prevName = document.getElementById('previewStudentFullName');
-    if (prevName) prevName.textContent = `${s.cognome} ${s.nome}`;
-
-    const prevEmail = document.getElementById('previewStudentEmail');
-    if (prevEmail) prevEmail.textContent = s.email || 'Email non disponibile';
-
-    const prevCF = document.getElementById('previewStudentCF');
-    if (prevCF) prevCF.textContent = s.codice_fiscale ? `CF: ${s.codice_fiscale}` : '';
-
-    const studentIdTag = document.getElementById('previewStudentIdTag');
-    if (studentIdTag) studentIdTag.textContent = `ID #${s.id_utente}`;
-
-    // Calcola metriche generali presenze dello studente
+    // Metriche generali
     let totMinutiOverall = 0;
     currentStudentPresenzeList.forEach(p => {
         if (p.ora_ingresso && p.ora_uscita) {
@@ -244,7 +238,7 @@ function renderZucchettiWeekGrid() {
     if (!gridEl || !currentWeekMonday) return;
 
     const dayNamesShort = ['LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB', 'DOM'];
-    const monthNamesShort = ['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUO', 'AGO', 'SET', 'OTT', 'NOV', 'DIC'];
+    const monthNamesShort = ['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUG', 'AGO', 'SET', 'OTT', 'NOV', 'DIC'];
 
     const sundayDate = new Date(currentWeekMonday);
     sundayDate.setDate(sundayDate.getDate() + 6);
@@ -284,24 +278,22 @@ function renderZucchettiWeekGrid() {
                     isOpen = true;
                 }
             });
-
             if (isOpen) {
-                badgeHtml = `<div class="zucchetti-day-badge zucchetti-badge-present" title="In Aula"><i class="bi bi-door-open-fill me-1"></i>In Aula</div>`;
+                badgeHtml = `<div class="day-badge badge-open"><i class="bi bi-door-open-fill me-1"></i>In aula</div>`;
             } else {
-                const oreEff = formatMinutesToHours(totMin);
-                badgeHtml = `<div class="zucchetti-day-badge zucchetti-badge-present" title="Presente (${oreEff})"><i class="bi bi-check-circle me-1"></i>${oreEff}</div>`;
+                badgeHtml = `<div class="day-badge badge-ok"><i class="bi bi-check-circle me-1"></i>${formatMinutesToHours(totMin)}</div>`;
             }
         } else {
-            badgeHtml = `<div class="zucchetti-day-badge zucchetti-badge-none"><i class="bi bi-dash-circle me-1"></i>Non timbrato</div>`;
+            badgeHtml = `<div class="day-badge badge-none">—</div>`;
         }
 
         html += `
-            <div class="zucchetti-day-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}" 
-                 onclick="selectStudentCalDate('${dateStr}')" 
-                 title="Clicca per gestire ${dayNamesShort[i]} ${day}/${month}">
-                <div class="zucchetti-day-name">${dayNamesShort[i]}</div>
-                <div class="zucchetti-day-num">${day}</div>
-                <div class="zucchetti-day-month">${monthNamesShort[d.getMonth()]}</div>
+            <div class="day-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}"
+                 onclick="selectStudentCalDate('${dateStr}')"
+                 title="${dayNamesShort[i]} ${day}/${month}">
+                <div class="day-name">${dayNamesShort[i]}</div>
+                <div class="day-num">${day}</div>
+                <div class="day-month">${monthNamesShort[d.getMonth()]}</div>
                 ${badgeHtml}
             </div>
         `;
@@ -330,7 +322,7 @@ window.selectStudentCalDate = function(dateStr) {
 
 async function loadStudentDayData(targetDate) {
     const labelDate = document.getElementById('selectedDateLabel');
-    if (labelDate) labelDate.textContent = `Timbrature del Giorno: ${formatDateItalian(targetDate)}`;
+    if (labelDate) labelDate.textContent = `${formatDateItalian(targetDate)}`;
 
     const lessonBadgeEl = document.getElementById('dayLessonBadge');
     let defaultIn = '09:00';
@@ -349,7 +341,7 @@ async function loadStudentDayData(targetDate) {
                     if (l.ora_fine) defaultOut = l.ora_fine;
                     const lezioniStr = checkData.lezioni.map(x => `${x.ora_inizio}–${x.ora_fine}${x.modulo ? ` (${x.modulo})` : ''}`).join(' | ');
                     if (lessonBadgeEl) {
-                        lessonBadgeEl.innerHTML = `<span class="badge bg-success-subtle text-success border border-success px-3 py-2 fs-6"><i class="bi bi-calendar-check me-1"></i>Lezione: ${escapeHtml(lezioniStr)}</span>`;
+                        lessonBadgeEl.innerHTML = `<i class="bi bi-calendar-check text-success me-1"></i><span class="text-success fw-semibold">Lezione: ${escapeHtml(lezioniStr)}</span>`;
                     }
                     checkData.lezioni.forEach(lItem => {
                         const mIn = timeToMinutes(lItem.ora_inizio);
@@ -360,12 +352,14 @@ async function loadStudentDayData(targetDate) {
                     });
                 } else if (lessonBadgeEl) {
                     currentLezioneInfo = null;
-                    lessonBadgeEl.innerHTML = `<span class="badge bg-warning-subtle text-warning border border-warning px-3 py-2 fs-6"><i class="bi bi-calendar-x me-1"></i>Nessuna lezione programmata in questa data</span>`;
+                    lessonBadgeEl.innerHTML = `<i class="bi bi-calendar-x text-warning me-1"></i><span class="text-warning">Nessuna lezione programmata</span>`;
                 }
             }
         } catch (e) {
             console.error('Errore verificando calendario:', e);
         }
+    } else if (lessonBadgeEl) {
+        lessonBadgeEl.innerHTML = '';
     }
 
     const presenzeGiorno = currentStudentPresenzeList.filter(p => p.data_presenza === targetDate);
@@ -376,15 +370,23 @@ async function loadStudentDayData(targetDate) {
 }
 
 function renderDayIntervalliTable(presenzeGiorno) {
-    const tbody = document.getElementById('tbodyDayIntervalli');
+    const container = document.getElementById('timb-list-container');
     const totalEl = document.getElementById('dayTotalHours');
-    if (!tbody) return;
+    if (!container) return;
 
-    const maxLessonStr = currentDayMaxLessonMinutes > 0 ? ` / Max Lezione: ${formatMinutesToHours(currentDayMaxLessonMinutes)}` : '';
+    const maxLessonStr = currentDayMaxLessonMinutes > 0
+        ? ` — Max lezione: ${formatMinutesToHours(currentDayMaxLessonMinutes)}`
+        : '';
 
     if (presenzeGiorno.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted"><i class="bi bi-info-circle me-1"></i>Nessuna timbratura registrata per questo giorno. Seleziona l'orario di INGRESSO nel modulo in basso per creare la prima timbratura.</td></tr>`;
-        if (totalEl) totalEl.textContent = `Ore Totali Giornata: 0h 00m${maxLessonStr}`;
+        container.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-clock fs-2 d-block mb-2 text-secondary"></i>
+                <div class="fw-semibold mb-1">Nessuna timbratura per questo giorno</div>
+                <div class="small">Usa il modulo in basso per inserire la prima timbratura di ingresso.</div>
+            </div>
+        `;
+        if (totalEl) totalEl.textContent = `0h 00m totali${maxLessonStr}`;
         return;
     }
 
@@ -392,52 +394,53 @@ function renderDayIntervalliTable(presenzeGiorno) {
     let html = '';
 
     presenzeGiorno.forEach((p, idx) => {
-        const oraIn = p.ora_ingresso ? p.ora_ingresso.substring(0, 5) : null;
-        const oraOut = p.ora_uscita ? p.ora_uscita.substring(0, 5) : null;
-
-        let tipoLabel = '';
-        let btnUscitaQuick = '';
+        const oraIn  = p.ora_ingresso ? p.ora_ingresso.substring(0, 5) : null;
+        const oraOut = p.ora_uscita   ? p.ora_uscita.substring(0, 5)   : null;
 
         if (oraIn && oraOut) {
-            tipoLabel = '<span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1"><i class="bi bi-arrow-left-right me-1"></i>Ingresso e Uscita</span>';
             const mI = timeToMinutes(oraIn);
             const mO = timeToMinutes(oraOut);
             if (mO > mI) totMinuti += (mO - mI);
-        } else if (oraIn) {
-            tipoLabel = '<span class="badge bg-warning-subtle text-warning border border-warning px-2 py-1"><i class="bi bi-clock-history me-1"></i>Ingresso (In attesa di Uscita)</span>';
-            btnUscitaQuick = `
-                <button class="btn btn-sm btn-success py-0 px-2 me-1 fw-bold" onclick="editIntervallo(${p.id_presenza})" title="Inserisci orario di uscita">
-                    <i class="bi bi-box-arrow-right me-1"></i>Inserisci Uscita
-                </button>
-            `;
-        } else if (oraOut) {
-            tipoLabel = '<span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1"><i class="bi bi-box-arrow-right me-1"></i>Solo Uscita</span>';
         }
 
+        const chipIn = oraIn
+            ? `<span class="timb-time-chip chip-in"><i class="bi bi-box-arrow-in-right"></i>${oraIn}</span>`
+            : `<span class="timb-time-chip chip-missing">Ingresso mancante</span>`;
+
+        const chipOut = oraOut
+            ? `<span class="timb-time-chip chip-out"><i class="bi bi-box-arrow-right"></i>${oraOut}</span>`
+            : `<span class="timb-time-chip chip-missing">Uscita mancante</span>`;
+
+        const btnInserisciUscita = (!oraOut && oraIn)
+            ? `<button class="btn btn-sm btn-success fw-bold" onclick="editIntervallo(${p.id_presenza})" title="Inserisci uscita">
+                   <i class="bi bi-box-arrow-right me-1"></i>Inserisci Uscita
+               </button>`
+            : '';
+
         html += `
-            <tr>
-                <td class="ps-3 fw-bold">${idx + 1}</td>
-                <td>${tipoLabel}</td>
-                <td class="fw-bold text-success">${oraIn ? `<i class="bi bi-box-arrow-in-right me-1"></i>${oraIn}` : '—'}</td>
-                <td class="fw-bold text-danger">${oraOut ? `<i class="bi bi-box-arrow-right me-1"></i>${oraOut}` : '—'}</td>
-                <td class="small text-muted">${escapeHtml(p.note || '—')}</td>
-                <td class="text-end pe-3">
-                    <div class="btn-group btn-group-sm">
-                        ${btnUscitaQuick}
-                        <button class="btn btn-outline-primary py-0 px-2" onclick="editIntervallo(${p.id_presenza})" title="Modifica timbratura">
-                            <i class="bi bi-pencil-fill"></i>
-                        </button>
-                        <button class="btn btn-outline-danger py-0 px-2" onclick="deleteIntervallo(${p.id_presenza})" title="Elimina timbratura">
-                            <i class="bi bi-trash-fill"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
+            <div class="timb-card">
+                <div class="timb-num">${idx + 1}</div>
+                <div class="timb-times">
+                    ${chipIn}
+                    <i class="bi bi-arrow-right text-muted"></i>
+                    ${chipOut}
+                </div>
+                ${p.note ? `<div class="timb-note"><i class="bi bi-chat-left-text me-1 text-muted"></i>${escapeHtml(p.note)}</div>` : ''}
+                <div class="timb-actions">
+                    ${btnInserisciUscita}
+                    <button class="btn btn-sm btn-outline-primary" onclick="editIntervallo(${p.id_presenza})" title="Modifica">
+                        <i class="bi bi-pencil-fill"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteIntervallo(${p.id_presenza})" title="Elimina">
+                        <i class="bi bi-trash-fill"></i>
+                    </button>
+                </div>
+            </div>
         `;
     });
 
-    tbody.innerHTML = html;
-    if (totalEl) totalEl.textContent = `Ore Totali Giornata: ${formatMinutesToHours(totMinuti)}${maxLessonStr}`;
+    container.innerHTML = html;
+    if (totalEl) totalEl.textContent = `${formatMinutesToHours(totMinuti)} totali${maxLessonStr}`;
 }
 
 window.onTipoChange = function() {
@@ -469,6 +472,10 @@ window.resetForm = function(defaultIn = '09:00', defaultOut = '13:00', presenzeG
     const editIdInput = document.getElementById('studentCalPresenzaId');
     if (editIdInput) editIdInput.value = '';
 
+    // Rimuovi evidenziazione modifica
+    const formContainer = document.getElementById('formTimbContainer');
+    if (formContainer) formContainer.classList.remove('editing');
+
     const tipoSelect = document.getElementById('studentCalTipo');
     const subTitle = document.getElementById('formSubtitle');
 
@@ -479,48 +486,46 @@ window.resetForm = function(defaultIn = '09:00', defaultOut = '13:00', presenzeG
     const openRecord = (presenzeGiorno || []).find(p => p.ora_ingresso && !p.ora_uscita);
 
     if (!presenzeGiorno || presenzeGiorno.length === 0) {
-        // Scenario 1: Nessuna timbratura -> Solo Ingresso consentito per creare prima timbratura
+        // Scenario 1: prima timbratura del giorno
         if (tipoSelect) {
             tipoSelect.disabled = true;
-            tipoSelect.innerHTML = `<option value="ingresso" selected>Solo Ingresso</option>`;
+            tipoSelect.innerHTML = `<option value="ingresso" selected>↘ Solo Ingresso</option>`;
         }
-        document.getElementById('studentCalOraIn').value = defaultIn;
+        document.getElementById('studentCalOraIn').value  = defaultIn;
         document.getElementById('studentCalOraOut').value = '';
-        document.getElementById('studentCalNote').value = '';
-        if (subTitle) subTitle.textContent = 'Prima Timbratura del Giorno: Seleziona Ora di INGRESSO';
+        document.getElementById('studentCalNote').value   = '';
+        if (subTitle) subTitle.textContent = 'Prima timbratura — inserisci Ora di Ingresso';
     } else if (openRecord) {
-        // Scenario 2: Ingresso già registrato -> Completamento della timbratura (inserisci uscita)
+        // Scenario 2: ingresso già presente, manca uscita
         if (editIdInput) editIdInput.value = openRecord.id_presenza;
         if (tipoSelect) {
             tipoSelect.disabled = false;
             tipoSelect.innerHTML = `
-                <option value="completa" selected>Ingresso e Uscita</option>
-                <option value="uscita">Solo Uscita</option>
-                <option value="ingresso">Solo Ingresso</option>
+                <option value="completa" selected>⇄ Ingresso + Uscita</option>
+                <option value="uscita">↗ Solo Uscita</option>
+                <option value="ingresso">↘ Solo Ingresso</option>
             `;
         }
-        document.getElementById('studentCalOraIn').value = openRecord.ora_ingresso ? openRecord.ora_ingresso.substring(0, 5) : defaultIn;
+        document.getElementById('studentCalOraIn').value  = openRecord.ora_ingresso ? openRecord.ora_ingresso.substring(0, 5) : defaultIn;
         document.getElementById('studentCalOraOut').value = defaultOut;
-        document.getElementById('studentCalNote').value = openRecord.note || '';
-        if (subTitle) subTitle.textContent = `Timbratura di Ingresso trovata (${openRecord.ora_ingresso.substring(0, 5)}): Inserisci Ora di USCITA per completarla`;
+        document.getElementById('studentCalNote').value   = openRecord.note || '';
+        if (subTitle) subTitle.textContent = `Ingresso alle ${openRecord.ora_ingresso.substring(0, 5)} — inserisci Ora di Uscita`;
+        if (formContainer) formContainer.classList.add('editing');
     } else {
-        // Scenario 3: Timbrature precedenti gia complete -> Nuovo record per timbrature successive
+        // Scenario 3: tutte le timbrature precedenti complete, nuovo record
         if (tipoSelect) {
             tipoSelect.disabled = false;
             tipoSelect.innerHTML = `
-                <option value="ingresso" selected>Solo Ingresso</option>
-                <option value="completa">Ingresso e Uscita</option>
+                <option value="ingresso" selected>↘ Solo Ingresso</option>
+                <option value="completa">⇄ Ingresso + Uscita</option>
             `;
         }
-        let nextIn = defaultIn;
         const lastComplete = [...presenzeGiorno].filter(p => p.ora_uscita).pop();
-        if (lastComplete && lastComplete.ora_uscita) {
-            nextIn = lastComplete.ora_uscita.substring(0, 5);
-        }
-        document.getElementById('studentCalOraIn').value = nextIn;
+        const nextIn = (lastComplete && lastComplete.ora_uscita) ? lastComplete.ora_uscita.substring(0, 5) : defaultIn;
+        document.getElementById('studentCalOraIn').value  = nextIn;
         document.getElementById('studentCalOraOut').value = defaultOut;
-        document.getElementById('studentCalNote').value = '';
-        if (subTitle) subTitle.textContent = 'Inserisci Nuova Timbratura (Record Successivo)';
+        document.getElementById('studentCalNote').value   = '';
+        if (subTitle) subTitle.textContent = 'Nuova timbratura (record successivo)';
     }
 
     onTipoChange();
@@ -530,32 +535,41 @@ window.editIntervallo = function(idPresenza) {
     const p = currentStudentPresenzeList.find(x => x.id_presenza === idPresenza);
     if (!p) return;
 
-    document.getElementById('studentCalPresenzaId').value = p.id_presenza;
-    const oraIn = p.ora_ingresso ? p.ora_ingresso.substring(0, 5) : '';
-    const oraOut = p.ora_uscita ? p.ora_uscita.substring(0, 5) : '';
+    const editIdInput = document.getElementById('studentCalPresenzaId');
+    if (editIdInput) editIdInput.value = p.id_presenza;
 
-    document.getElementById('studentCalOraIn').value = oraIn;
+    const oraIn  = p.ora_ingresso ? p.ora_ingresso.substring(0, 5) : '';
+    const oraOut = p.ora_uscita   ? p.ora_uscita.substring(0, 5)   : '';
+
+    document.getElementById('studentCalOraIn').value  = oraIn;
     document.getElementById('studentCalOraOut').value = oraOut || (currentLezioneInfo?.[0]?.ora_fine || '13:00');
-    document.getElementById('studentCalNote').value = p.note || '';
+    document.getElementById('studentCalNote').value   = p.note || '';
 
     const tipoSelect = document.getElementById('studentCalTipo');
     if (tipoSelect) {
         tipoSelect.disabled = false;
         tipoSelect.innerHTML = `
-            <option value="completa">Ingresso e Uscita</option>
-            <option value="ingresso">Solo Ingresso</option>
-            <option value="uscita">Solo Uscita</option>
+            <option value="completa">⇄ Ingresso + Uscita</option>
+            <option value="ingresso">↘ Solo Ingresso</option>
+            <option value="uscita">↗ Solo Uscita</option>
         `;
         if (oraIn && oraOut) tipoSelect.value = 'completa';
-        else if (oraIn && !oraOut) tipoSelect.value = 'completa';
-        else if (oraOut && !oraIn) tipoSelect.value = 'uscita';
-        else tipoSelect.value = 'ingresso';
+        else if (oraIn)      tipoSelect.value = 'completa'; // pre-seleziona completa per agevolare inserimento uscita
+        else if (oraOut)     tipoSelect.value = 'uscita';
+        else                 tipoSelect.value = 'ingresso';
     }
 
     onTipoChange();
 
     const subTitle = document.getElementById('formSubtitle');
-    if (subTitle) subTitle.textContent = `Modifica Timbratura #${p.id_presenza}${!oraOut ? ' (Inserisci Ora di Uscita)' : ''}`;
+    if (subTitle) subTitle.textContent = `Modifica Timbratura #${p.id_presenza}${!oraOut ? ' — Inserisci Ora Uscita' : ''}`;
+
+    // Evidenzia il form
+    const formContainer = document.getElementById('formTimbContainer');
+    if (formContainer) {
+        formContainer.classList.add('editing');
+        formContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 };
 
 window.deleteIntervallo = async function(idPresenza) {
