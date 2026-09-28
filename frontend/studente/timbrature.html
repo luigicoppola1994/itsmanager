@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITS Manager - Studente | Dashboard</title>
+    <title>ITS Manager - Studente | Timbrature</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
@@ -40,7 +40,7 @@
 
             <ul class="sidebar-nav">
                 <li>
-                    <a href="dashboard.html" class="nav-item-link active" id="navDashboard" data-label="Dashboard">
+                    <a href="dashboard.html" class="nav-item-link" id="navDashboard" data-label="Dashboard">
                         <i class="bi bi-speedometer2"></i><span class="nav-label">Dashboard</span>
                     </a>
                 </li>
@@ -50,7 +50,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="timbrature.html" class="nav-item-link" id="navTimbrature" data-label="Timbrature">
+                    <a href="timbrature.html" class="nav-item-link active" id="navTimbrature" data-label="Timbrature">
                         <i class="bi bi-clock-history"></i><span class="nav-label">Timbrature</span>
                     </a>
                 </li>
@@ -73,7 +73,7 @@
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
                     <span class="breadcrumb-section">Studente</span>
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
-                    <span class="breadcrumb-current">Dashboard</span>
+                    <span class="breadcrumb-current">Timbrature</span>
                 </nav>
                 <div class="rubick-top-bar-actions">
                     <div class="rubick-icon-badge" title="Notifiche">
@@ -87,15 +87,20 @@
             <!-- PAGE HEADER -->
             <div class="nc-page-header">
                 <div class="nc-breadcrumb">
-                    <span class="nc-breadcrumb-current">Dashboard Studente</span>
+                    <a href="dashboard.html" class="nc-breadcrumb-link">
+                        <i class="bi bi-speedometer2"></i>
+                        Dashboard
+                    </a>
+                    <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
+                    <span class="nc-breadcrumb-current">Timbrature</span>
                 </div>
                 <div class="nc-header-row">
                     <div>
                         <h1 class="nc-title">
-                            <span class="nc-title-icon"><i class="bi bi-speedometer2"></i></span>
-                            <span>Dashboard</span>
+                            <span class="nc-title-icon"><i class="bi bi-clock-history"></i></span>
+                            <span>Timbrature</span>
                         </h1>
-                        <p class="nc-subtitle">Benvenuto nell'area studenti di ITS Manager</p>
+                        <p class="nc-subtitle">Visualizza le tue timbrature e presenze</p>
                     </div>
                 </div>
             </div>
@@ -103,7 +108,7 @@
             <!-- CONTENT -->
             <div class="text-center py-5">
                 <div class="spinner-border text-primary mb-3" role="status"></div>
-                <p class="text-muted fw-semibold">Caricamento dashboard in corso...</p>
+                <p class="text-muted fw-semibold">Caricamento timbrature in corso...</p>
             </div>
         </main>
     </div>

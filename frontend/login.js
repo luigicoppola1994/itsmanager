@@ -23,7 +23,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             const data = await response.json();
             localStorage.setItem('jwt_token', data.access_token);
             localStorage.setItem('user_role', data.ruolo || '');
-            
+            localStorage.setItem('user_id', data.id_utente || '');
+
             // Redirect based on role
             const role = data.ruolo ? data.ruolo.toLowerCase().trim() : '';
             if (role === 'super_admin') {

@@ -186,7 +186,7 @@ def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), 
     ruolo_nome = user.ruolo.Nome if user.ruolo else "studente"
 
     # Restituisce l'access token al frontend nel body JSON
-    return {"access_token": access_token, "token_type": "bearer", "ruolo": ruolo_nome}
+    return {"access_token": access_token, "token_type": "bearer", "ruolo": ruolo_nome, "id_utente": user.id_utente}
 
 
 # ==============================================================================
