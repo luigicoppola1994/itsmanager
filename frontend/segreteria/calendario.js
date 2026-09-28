@@ -15,9 +15,9 @@ let selectedCorsoId = null;
 let selectedCorsoAttivo = null;
 
 const COLOR_PALETTE = [
-    '#2563eb', '#059669', '#d97706', '#7c3aed',
-    '#dc2626', '#0891b2', '#4f46e5', '#ca8a04',
-    '#0d9488', '#9333ea', '#c026d3', '#0369a1'
+    '#4682B4', '#059669', '#d97706', '#7c3aed',
+    '#dc3545', '#0891b2', '#3a6f9f', '#ca8a04',
+    '#0d9488', '#9333ea', '#c026d3', '#315d87'
 ];
 
 // ── BOOTSTRAP INIT ───────────────────────────────────────────
@@ -199,6 +199,9 @@ async function enterCalendarView() {
     document.getElementById('calendarScreen').style.display = 'flex';
     document.getElementById('calendarScreen').style.flexDirection = 'column';
 
+    // Mostra barra azioni calendario
+    document.getElementById('calendarActionsBar').style.display = 'flex';
+
     // Carica piano studio per questa edizione
     await loadPianoStudio(selectedCorsoAttivo.id_corso_attivo);
 
@@ -217,6 +220,7 @@ function exitCalendarView() {
     document.getElementById('editionPickerScreen').style.display = 'flex';
     document.getElementById('editionPickerScreen').style.flexDirection = 'column';
     document.getElementById('breadcrumbLabel').textContent = 'Calendario';
+    document.getElementById('calendarActionsBar').style.display = 'none';
     selectedCorsoAttivo = null;
 
     // Rimuovi parametro URL senza ricaricare la pagina
@@ -354,16 +358,17 @@ function initFullCalendar() {
             const moduloNome  = props._moduloNome  || arg.event.title || 'Lezione';
             const docenteNome = props._docenteNome || '';
             const note        = props.note || '';
-            const borderColor = arg.event.borderColor || '#2563eb';
+            const borderColor = arg.event.borderColor || '#4682B4';
 
             return { html: `
-                <div class="fc-custom-card" style="border-left: 4px solid ${borderColor};">
+                <div class="fc-custom-card" style="border-left: 4px solid ${borderColor}; background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);">
                     <div class="fc-custom-time" style="color:${borderColor};">
-                        <i class="bi bi-clock me-1"></i>${arg.timeText}
+                        <i class="bi bi-clock"></i>
+                        <span>${arg.timeText}</span>
                     </div>
                     <div class="fc-custom-title">${moduloNome}</div>
-                    ${docenteNome ? `<div class="fc-custom-docente"><i class="bi bi-person-fill me-1"></i>${docenteNome}</div>` : ''}
-                    ${note ? `<div class="fc-custom-note"><i class="bi bi-geo-alt-fill me-1"></i>${note}</div>` : ''}
+                    ${docenteNome ? `<div class="fc-custom-docente"><i class="bi bi-person-fill"></i><span>${docenteNome}</span></div>` : ''}
+                    ${note ? `<div class="fc-custom-note"><i class="bi bi-geo-alt-fill"></i><span>${note}</span></div>` : ''}
                 </div>
             `};
         },

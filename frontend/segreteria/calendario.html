@@ -113,29 +113,23 @@
                 </div>
             </div>
 
-            <!-- PAGE HEADER UNIFORME (Req 6) -->
-            <div class="nc-page-header">
-                <div class="nc-breadcrumb">
-                    <a href="dashboard.html" class="nc-breadcrumb-link">
-                        <i class="bi bi-journal-bookmark-fill"></i>
-                        Corsi
-                    </a>
-                    <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
-                    <span class="nc-breadcrumb-current">Calendario Didattico</span>
+            <!-- BARRA SUPERIORE CON TITOLO -->
+            <div class="top-action-bar">
+                <div class="page-header-info">
+                    <h1>
+                        <i class="bi bi-calendar3 text-primary"></i>
+                        Calendario Didattico
+                    </h1>
+                    <p>Pianificazione lezioni, gestione docenti e monitoraggio budget ore</p>
                 </div>
-                <div class="nc-header-row">
-                    <div>
-                        <h1 class="nc-title">
-                            <span class="nc-title-icon"><i class="bi bi-calendar3"></i></span>
-                            <span>Calendario Didattico</span>
-                        </h1>
-                        <p class="nc-subtitle">Seleziona corso ed edizione per pianificare le lezioni, gestire i docenti e monitorare il budget ore.</p>
-                    </div>
-                    <a href="dashboard.html" class="btn-back">
-                        <i class="bi bi-arrow-left"></i>
-                        <span>Torna ai Corsi</span>
-                    </a>
-                </div>
+            </div>
+
+            <!-- BARRA AZIONI CALENDARIO -->
+            <div class="calendar-actions-bar" id="calendarActionsBar" style="display: none;">
+                <a href="dashboard.html" class="btn-back">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Torna ai Corsi</span>
+                </a>
             </div>
 
             <!-- ═══════════════════════════════════════════════
@@ -221,15 +215,19 @@
                     <div class="calendar-main-card">
                         <div class="cal-toolbar">
                             <span class="cal-toolbar-title">
-                                <i class="bi bi-info-circle me-1 text-primary"></i>
-                                Clicca su uno slot per aggiungere una lezione · Trascina per spostare
+                                <i class="bi bi-info-circle"></i>
+                                <span>Clicca su uno slot per aggiungere una lezione · Trascina per spostare</span>
                             </span>
-                            <button type="button" class="btn btn-primary btn-sm" id="btnNuovaLezione">
-                                <i class="bi bi-calendar-plus me-1"></i>Aggiungi Lezione
-                            </button>
-                            <button type="button" class="btn btn-success btn-sm ms-2" id="btnProgrammaSettimana">
-                                <i class="bi bi-calendar-range me-1"></i>Programma Settimana
-                            </button>
+                            <div class="cal-toolbar-actions">
+                                <button type="button" class="btn btn-primary btn-xs" id="btnNuovaLezione">
+                                    <i class="bi bi-calendar-plus"></i>
+                                    <span>Aggiungi Lezione</span>
+                                </button>
+                                <button type="button" class="btn btn-primary btn-xs" id="btnProgrammaSettimana">
+                                    <i class="bi bi-calendar-range"></i>
+                                    <span>Programma Settimana</span>
+                                </button>
+                            </div>
                         </div>
                         <div id="calendar"></div>
                     </div>
