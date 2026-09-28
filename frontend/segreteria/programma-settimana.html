@@ -124,7 +124,7 @@
                 <div class="nc-header-row">
                     <div>
                         <h1 class="nc-title">
-                            <span class="nc-title-icon" style="background:#ecfdf5; color:#059669;"><i class="bi bi-calendar-range-fill"></i></span>
+                            <span class="nc-title-icon" style="background:var(--primary-light); color:var(--primary-color);"><i class="bi bi-calendar-range-fill"></i></span>
                             <span>Programma Settimana</span>
                         </h1>
                         <p class="nc-subtitle">Genera automaticamente lezioni ricorsive su una o più settimane consecutive per una determinata materia.</p>
@@ -154,7 +154,7 @@
 
                 <!-- LEFT: Form -->
                 <div class="nc-form-card">
-                    <div class="nc-form-card-header" style="background: linear-gradient(135deg, #059669, #10b981); color:#fff;">
+                    <div class="nc-form-card-header" style="background: var(--primary-color); color:#fff;">
                         <i class="bi bi-magic"></i>
                         <span>Generazione Automatica Lezioni</span>
                     </div>
@@ -171,7 +171,7 @@
 
                         <!-- Sezione 1: Modulo e Docente -->
                         <div class="nc-section-title">
-                            <span class="nc-step-number" style="background:#059669;">1</span>
+                            <span class="nc-step-number" style="background:var(--primary-color);">1</span>
                             Modulo Didattico e Docente
                         </div>
 
@@ -188,7 +188,7 @@
                                     <div id="budgetInfoBox" style="display:none;" class="mt-2">
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <small class="text-muted" id="budgetLabel">Budget UF</small>
-                                            <small class="fw-bold" id="budgetValue" style="color:#059669;">—</small>
+                                            <small class="fw-bold" id="budgetValue" style="color:var(--primary-color);">—</small>
                                         </div>
                                         <div class="progress" style="height:6px; border-radius:999px;">
                                             <div id="budgetBar" class="progress-bar bg-success" style="width:0%;border-radius:999px;"></div>
@@ -211,7 +211,7 @@
 
                         <!-- Sezione 2: Periodo e Durata -->
                         <div class="nc-section-title">
-                            <span class="nc-step-number" style="background:#059669;">2</span>
+                            <span class="nc-step-number" style="background:var(--primary-color);">2</span>
                             Periodo e Durata Settimane
                         </div>
 
@@ -240,7 +240,7 @@
 
                         <!-- Sezione 3: Orari e Giorni -->
                         <div class="nc-section-title">
-                            <span class="nc-step-number" style="background:#059669;">3</span>
+                            <span class="nc-step-number" style="background:var(--primary-color);">3</span>
                             Giorni e Orario Standard
                         </div>
 
@@ -265,7 +265,7 @@
                                 <label class="fw-bold small text-dark mb-0">
                                     <i class="bi bi-calendar-week me-1 text-success"></i> Seleziona Giorni di Lezione
                                 </label>
-                                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="btnToggleOrariDifferenziati" style="color:#059669;">
+                                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="btnToggleOrariDifferenziati" style="color:var(--primary-color);">
                                     <i class="bi bi-clock-history me-1"></i><span id="labelToggleDiff">Personalizza orari (es. Mar e Gio 9-15)</span>
                                 </button>
                             </div>
@@ -322,7 +322,7 @@
 
                         <!-- Sezione 4: Note -->
                         <div class="nc-section-title">
-                            <span class="nc-step-number" style="background:#059669;">4</span>
+                            <span class="nc-step-number" style="background:var(--primary-color);">4</span>
                             Aula / Note (Opzionale)
                         </div>
 
@@ -340,7 +340,7 @@
                                 <i class="bi bi-x-lg"></i>
                                 Annulla
                             </a>
-                            <button type="submit" class="btn-nc-submit" id="btnSaveSettimana" style="background: linear-gradient(135deg, #059669, #10b981);">
+                            <button type="submit" class="btn-nc-submit" id="btnSaveSettimana" style="background: var(--primary-color);">
                                 <span class="btn-nc-text">
                                     <i class="bi bi-magic me-1"></i>
                                     Genera Programma Settimanale
@@ -356,22 +356,22 @@
 
                 <!-- RIGHT: Preview Panel -->
                 <div class="nc-preview-panel">
-                    <div class="nc-preview-header" style="border-bottom-color:#059669;">
-                        <i class="bi bi-eye-fill" style="color:#059669;"></i>
+                    <div class="nc-preview-header" style="border-bottom-color:var(--primary-color);">
+                        <i class="bi bi-eye-fill" style="color:var(--primary-color);"></i>
                         <span>Riepilogo Programmazione</span>
                     </div>
                     <p class="nc-preview-hint">Dettaglio delle lezioni che verranno inserite a calendario</p>
 
                     <div class="nc-preview-card">
-                        <div class="nc-preview-card-top" style="background: linear-gradient(135deg, #f0fdf4, #d1fae5); border-bottom-color:#a7f3d0;">
+                        <div class="nc-preview-card-top" style="background: var(--primary-color);">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="preview-badge-status" id="previewCorsoNome" style="background:#059669; color:#fff;">Corso</span>
+                                <span class="preview-badge-status" id="previewCorsoNome" style="background:rgba(255,255,255,0.2);">Corso</span>
                                 <span class="preview-badge-edition" id="previewEdizioneBadge">Edizione</span>
                             </div>
-                            <h3 class="nc-preview-title" id="previewModuloNome" style="color:#065f46;">—</h3>
+                            <h3 class="nc-preview-title" id="previewModuloNome">—</h3>
                         </div>
                         <div class="nc-preview-card-body">
-                            <div class="preview-dates-box mb-3" style="background:#f8fafc; border-left:3px solid #059669;">
+                            <div class="preview-dates-box mb-3" style="border-left:3px solid var(--primary-color);">
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="bi bi-calculator text-success fs-5"></i>
                                     <div>

@@ -1229,8 +1229,11 @@ function validateTimbraturaValues(dataPresenza, oraIn, oraOut, excludeId = null)
         });
 
         if (existingTotal + proposedDuration > currentDayMaxLessonMinutes) {
-            // Avviso ma non blocco tassativo: opzionale mostrare warning toast
-            console.warn('Ore complessive superano la durata massima delle lezioni previste.');
+            const existingHours = formatMinutesToHours(existingTotal);
+            const proposedHours = formatMinutesToHours(proposedDuration);
+            const totalHours = formatMinutesToHours(existingTotal + proposedDuration);
+            const maxHours = formatMinutesToHours(currentDayMaxLessonMinutes);
+            return `La somma delle ore delle timbrature (${totalHours}) supera le ore di lezione previste per questo giorno (${maxHours}). Ore attuali: ${existingHours}, questa timbratura: ${proposedHours}.`;
         }
     }
 

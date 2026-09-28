@@ -219,11 +219,9 @@ body {
     pointer-events: auto;
 }
 
-/* Nascondi il tooltip nativo (title) quando la sidebar è espansa */
-.nav-item-link[title] {
-    /* CSS non può rimuovere il tooltip nativo del browser:
-       i title vengono rimossi dall'HTML tramite JS al caricamento */
-}
+/* Nascondi il tooltip nativo (title) quando la sidebar è espansa
+   CSS non può rimuovere il tooltip nativo del browser:
+   i title vengono rimossi dall'HTML tramite JS al caricamento */
 
 .nav-item-link i {
     font-size: 1.05rem;
@@ -519,6 +517,7 @@ body {
 
 .btn-add-course:hover {
     background-color: var(--primary-hover);
+    color: #ffffff;
 }
 
 /* Individual Course Cards with Dropdown Table (Matching User Sketch) */
@@ -1082,6 +1081,7 @@ body {
 
 .btn-create-modal:hover {
     background-color: var(--primary-hover);
+    color: #ffffff;
 }
 
 .cursor-pointer {
@@ -1333,6 +1333,7 @@ body {
 .btn-primary:focus {
     background-color: #3a6f9f !important;
     border-color: #3a6f9f !important;
+    color: #ffffff !important;
     box-shadow: 0 4px 12px rgba(70, 130, 180, 0.30) !important;
     color: #ffffff !important;
 }
@@ -1436,6 +1437,7 @@ a:hover {
 
 .btn-create-modal:hover {
     background-color: #3a6f9f !important;
+    color: #ffffff !important;
 }
 
 .btn-outline-course {
@@ -1878,19 +1880,21 @@ a:hover {
 }
 
 /* Size fix per i pulsanti Salva e Annulla delle pagine e delle modali */
-.btn-nc-submit, 
+.btn-nc-submit,
 .btn-nc-cancel,
 .btn-primary,
 .btn-add-course,
 .modal-footer button,
 .nc-form-actions button,
 .nc-form-actions a {
-    padding: 6px 16px !important;
+    padding: 6px 12px !important;
     font-size: 0.85rem !important;
     font-weight: 600 !important;
     border-radius: 6px !important;
-    min-height: 36px !important;
+    min-height: 32px !important;
     height: auto !important;
+    width: auto !important;
+    flex: none !important;
 }
 
 .btn-nc-submit i,
@@ -2503,6 +2507,7 @@ p, li, td, th, label, span, div {
 .btn-xs.btn-primary:hover {
     background-color: #3a6f9f !important;
     border-color: #3a6f9f !important;
+    color: #ffffff !important;
     box-shadow: 0 2px 6px rgba(70, 130, 180, 0.25) !important;
 }
 

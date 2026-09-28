@@ -77,7 +77,7 @@ async function loadCorsoAttivo(idCorsoAttivo) {
 }
 
 async function loadDocenti() {
-    const res = await fetchAutenticata(`${API_URL}/utenti`);
+    const res = await fetchAutenticata(`${API_URL}/users`);
     if (!res.ok) return;
     const allUsers = await res.json();
 
