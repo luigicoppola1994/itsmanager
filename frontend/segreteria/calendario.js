@@ -1,5 +1,5 @@
 // ============================================================
-// calendario.js v2.0 — Gestione Calendario Didattico
+// calendario.js v3.0 — Gestione Calendario Didattico
 // ============================================================
 
 let calendar = null;
@@ -12,8 +12,7 @@ let lezioniList = [];     // Lezioni caricate correntemente
 
 // Selezione corrente
 let selectedCorsoId = null;
-let selectedCorsoAttivo = null; // oggetto completo con data_inizio, data_fine, ecc.
-let currentEditingLezioneId = null;
+let selectedCorsoAttivo = null;
 
 const COLOR_PALETTE = [
     '#2563eb', '#059669', '#d97706', '#7c3aed',
@@ -38,29 +37,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnGoToCalendar')?.addEventListener('click', enterCalendarView);
     document.getElementById('btnChangeEdizione')?.addEventListener('click', exitCalendarView);
 
-    // Listeners calendario
-    document.getElementById('btnNuovaLezione')?.addEventListener('click', () => openLezioneModal());
-    document.getElementById('btnProgrammaSettimana')?.addEventListener('click', () => openSettimanaModal());
-    document.getElementById('lezioneForm')?.addEventListener('submit', handleLezioneFormSubmit);
-    document.getElementById('settimanaForm')?.addEventListener('submit', handleSettimanaFormSubmit);
-    document.getElementById('btnDeleteLezione')?.addEventListener('click', handleDeleteLezione);
-    document.getElementById('btnToggleOrariDifferenziati')?.addEventListener('click', toggleOrariDifferenziati);
+    // Listeners navigazione a pagine standalone (Req 5)
+    document.getElementById('btnNuovaLezione')?.addEventListener('click', () => {
+        if (!selectedCorsoAttivo) return;
+        window.location.href = `nuova-lezione.html?id_corso_attivo=${selectedCorsoAttivo.id_corso_attivo}`;
+    });
+
+    document.getElementById('btnProgrammaSettimana')?.addEventListener('click', () => {
+        if (!selectedCorsoAttivo) return;
+        window.location.href = `programma-settimana.html?id_corso_attivo=${selectedCorsoAttivo.id_corso_attivo}`;
+    });
 
     // Filtro docente
     document.getElementById('selectDocenteFiltro')?.addEventListener('change', refreshCalendarEvents);
 
-    // Calcolo durata in tempo reale
-    document.getElementById('modalOraInizio')?.addEventListener('change', updateDurataCalc);
-    document.getElementById('modalOraFine')?.addEventListener('change', updateDurataCalc);
-
-    // Budget bar sul cambio modulo
-    document.getElementById('modalModulo')?.addEventListener('change', updateModalBudgetInfo);
-
-    // Change listeners per anteprima programmazione settimanale
-    ['settimanaDataInizio', 'settimanaNumeroSettimane', 'settimanaOraInizio', 'settimanaOraFine', 'diffMarInizio', 'diffMarFine', 'diffGioInizio', 'diffGioFine'].forEach(id => {
-        document.getElementById(id)?.addEventListener('change', updateSettimanaPreview);
-    });
-    document.querySelectorAll('.chk-giorno').forEach(chk => chk.addEventListener('change', updateSettimanaPreview));
+    // Auto-seleziona edizione se presente nei parametri URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramEdizioneId = parseInt(urlParams.get('id_corso_attivo'));
+    if (paramEdizioneId) {
+        const ed = corsiAttiviList.find(ca => ca.id_corso_attivo === paramEdizioneId);
+        if (ed) {
+            selectCorso(ed.id_corso);
+            selectEdizione(ed.id_corso_attivo);
+            await enterCalendarView();
+        }
+    }
 });
 
 // ═══════════════════════════════════════════════════
@@ -193,15 +194,6 @@ async function enterCalendarView() {
     document.getElementById('bannerDataFine').innerHTML   = `<i class="bi bi-stop-fill"></i><span>${fine}</span>`;
     document.getElementById('bannerDurataOre').innerHTML  = `<i class="bi bi-clock-history"></i><span>${durata}</span>`;
 
-    // Modal context
-    document.getElementById('modalEdizioneBadge').textContent = `Edizione: ${label}`;
-    document.getElementById('modalRangeDate').textContent = `${inizio} → ${fine}`;
-
-    // Restricts date input
-    if (selectedCorsoAttivo.data_inizio) document.getElementById('modalData').min = selectedCorsoAttivo.data_inizio;
-    if (selectedCorsoAttivo.data_fine)   document.getElementById('modalData').max = selectedCorsoAttivo.data_fine;
-    document.getElementById('modalDataHint').textContent = `Periodo: ${inizio} → ${fine}`;
-
     // Switch views
     document.getElementById('editionPickerScreen').style.display = 'none';
     document.getElementById('calendarScreen').style.display = 'flex';
@@ -226,6 +218,9 @@ function exitCalendarView() {
     document.getElementById('editionPickerScreen').style.flexDirection = 'column';
     document.getElementById('breadcrumbLabel').textContent = 'Calendario';
     selectedCorsoAttivo = null;
+
+    // Rimuovi parametro URL senza ricaricare la pagina
+    window.history.replaceState({}, document.title, window.location.pathname);
 }
 
 // ═══════════════════════════════════════════════════
@@ -234,7 +229,6 @@ function exitCalendarView() {
 
 async function loadDocenti() {
     const selectFiltro = document.getElementById('selectDocenteFiltro');
-    const selectModal  = document.getElementById('modalDocente');
 
     try {
         let ruoliMap = {};
@@ -257,15 +251,11 @@ async function loadDocenti() {
         if (!docentiList.length) docentiList = allUsers;
 
         let optFiltro = '<option value="">Tutti i docenti</option>';
-        let optModal  = '<option value="">-- Seleziona docente --</option>';
         docentiList.forEach(d => {
-            const name = `${d.Nome} ${d.Cognome}`;
-            optFiltro += `<option value="${d.id_utente}">${name}</option>`;
-            optModal  += `<option value="${d.id_utente}">${name}</option>`;
+            optFiltro += `<option value="${d.id_utente}">${d.Nome} ${d.Cognome}</option>`;
         });
 
         if (selectFiltro) selectFiltro.innerHTML = optFiltro;
-        if (selectModal)  selectModal.innerHTML  = optModal;
     } catch (e) {
         console.error('Errore docenti:', e);
     }
@@ -303,54 +293,7 @@ async function loadPianoStudio(idCorsoAttivo) {
         return { ...ps, uf_nome: uf ? uf.Nome : `UF #${ps.id_unita_formativa}` };
     });
 
-    // Popola la select moduli filtrata per UF del corso
-    await populateModalModuli(idCorsoAttivo);
-    // Renderizza sidebar budget
     renderOreSidebar({});
-}
-
-async function populateModalModuli(idCorsoAttivo) {
-    const sel = document.getElementById('modalModulo');
-    if (!sel) return;
-
-    let opts = '<option value="">-- Seleziona modulo --</option>';
-
-    if (pianostudioList && pianostudioList.length > 0) {
-        const ufMap = {};
-        pianostudioList.forEach(ps => {
-            ufMap[ps.id_unita_formativa] = ps;
-        });
-
-        const filteredModuli = moduliList.filter(m => ufMap[m.id_unita_formativa]);
-
-        if (filteredModuli.length > 0) {
-            const grouped = {};
-            filteredModuli.forEach(m => {
-                const ps = ufMap[m.id_unita_formativa];
-                const ufObj = unitaFormativeList.find(u => u.id_unita_formativa === m.id_unita_formativa);
-                const ufNome = ps.uf_nome || (ufObj ? ufObj.Nome : `Unità Formativa #${m.id_unita_formativa}`);
-                const oreLabel = ps.ore_dedicate ? ` (${ps.ore_dedicate}h)` : '';
-                const groupKey = `${ufNome}${oreLabel}`;
-
-                if (!grouped[groupKey]) grouped[groupKey] = [];
-                grouped[groupKey].push(m);
-            });
-
-            Object.entries(grouped).forEach(([groupLabel, moduli]) => {
-                opts += `<optgroup label="${groupLabel}">`;
-                moduli.forEach(m => {
-                    opts += `<option value="${m.id_modulo}">${m.Nome}</option>`;
-                });
-                opts += `</optgroup>`;
-            });
-        } else {
-            opts += `<option value="" disabled>Nessun modulo a catalogo associato alle UF di questa edizione</option>`;
-        }
-    } else {
-        opts += `<option value="" disabled>Nessuna Unità Formativa associata a questa edizione del corso</option>`;
-    }
-
-    sel.innerHTML = opts;
 }
 
 // ═══════════════════════════════════════════════════
@@ -364,13 +307,11 @@ function initFullCalendar() {
     const validRange = {};
     if (selectedCorsoAttivo?.data_inizio) validRange.start = selectedCorsoAttivo.data_inizio;
     if (selectedCorsoAttivo?.data_fine) {
-        // FullCalendar validRange.end è ESCLUSIVO: aggiungere 1 giorno per includere data_fine
         const endDate = new Date(selectedCorsoAttivo.data_fine);
         endDate.setDate(endDate.getDate() + 1);
         validRange.end = endDate.toISOString().split('T')[0];
     }
 
-    // Se oggi è nel range, mostra oggi; altrimenti mostra la data di inizio
     const today = new Date().toISOString().split('T')[0];
     const isInRange = (!selectedCorsoAttivo?.data_inizio || today >= selectedCorsoAttivo.data_inizio) &&
                       (!selectedCorsoAttivo?.data_fine   || today <= selectedCorsoAttivo.data_fine);
@@ -427,32 +368,32 @@ function initFullCalendar() {
             `};
         },
 
-        // Click slot vuoto → crea
+        // Click slot vuoto → Naviga alla pagina standalone di creazione
         select: (info) => {
-            // Verifica range valido
-            if (selectedCorsoAttivo) {
-                const data = info.startStr.split('T')[0];
-                if (selectedCorsoAttivo.data_inizio && data < selectedCorsoAttivo.data_inizio) {
-                    showToast(`Data fuori dal periodo del corso (inizio: ${formatDate(selectedCorsoAttivo.data_inizio)})`, true);
-                    calendar.unselect();
-                    return;
-                }
-                if (selectedCorsoAttivo.data_fine && data > selectedCorsoAttivo.data_fine) {
-                    showToast(`Data fuori dal periodo del corso (fine: ${formatDate(selectedCorsoAttivo.data_fine)})`, true);
-                    calendar.unselect();
-                    return;
-                }
+            if (!selectedCorsoAttivo) return;
+            const data = info.startStr.split('T')[0];
+            if (selectedCorsoAttivo.data_inizio && data < selectedCorsoAttivo.data_inizio) {
+                showToast(`Data fuori dal periodo del corso (inizio: ${formatDate(selectedCorsoAttivo.data_inizio)})`, true);
+                calendar.unselect();
+                return;
             }
+            if (selectedCorsoAttivo.data_fine && data > selectedCorsoAttivo.data_fine) {
+                showToast(`Data fuori dal periodo del corso (fine: ${formatDate(selectedCorsoAttivo.data_fine)})`, true);
+                calendar.unselect();
+                return;
+            }
+
             const startHour = info.startStr.includes('T') ? info.startStr.split('T')[1].substring(0, 5) : '09:00';
             const endHour   = info.endStr.includes('T')   ? info.endStr.split('T')[1].substring(0, 5)   : '13:00';
-            openLezioneModal(null, { data: info.startStr.split('T')[0], ora_inizio: startHour, ora_fine: endHour });
+            window.location.href = `nuova-lezione.html?id_corso_attivo=${selectedCorsoAttivo.id_corso_attivo}&data=${data}&ora_inizio=${startHour}&ora_fine=${endHour}`;
         },
 
-        // Click evento → modifica
+        // Click evento → Naviga alla pagina standalone di modifica
         eventClick: (info) => {
+            if (!selectedCorsoAttivo) return;
             const props = info.event.extendedProps || {};
             const eventId = info.event.id || props.id || props.id_lezione;
-            openLezioneModal({ ...props, id: eventId });
+            window.location.href = `nuova-lezione.html?id_corso_attivo=${selectedCorsoAttivo.id_corso_attivo}&id_lezione=${eventId}`;
         },
 
         // Drag & drop
@@ -515,14 +456,12 @@ async function refreshCalendarEvents() {
 // ═══════════════════════════════════════════════════
 
 function computeOrePianificate() {
-    // ore pianificate per uf_id -> minuti
     const orePerUf = {};
     lezioniList.forEach(l => {
         const modulo = moduliList.find(m => m.id_modulo === l.id_modulo);
         if (!modulo) return;
         const ufId = modulo.id_unita_formativa;
         if (!orePerUf[ufId]) orePerUf[ufId] = 0;
-        // calcola minuti tra ora_inizio e ora_fine
         const [hI, mI] = (l.ora_inizio || '00:00').split(':').map(Number);
         const [hF, mF] = (l.ora_fine   || '00:00').split(':').map(Number);
         orePerUf[ufId] += (hF * 60 + mF) - (hI * 60 + mI);
@@ -572,267 +511,6 @@ function updateOreSidebar() {
 }
 
 // ═══════════════════════════════════════════════════
-//  HELPERS ERRORE MODALE & API
-// ═══════════════════════════════════════════════════
-
-function showModalError(msg) {
-    const errorAlert = document.getElementById('modalAlertError');
-    const errorText  = document.getElementById('modalAlertErrorText');
-    if (!errorAlert || !errorText) return;
-
-    errorText.textContent = msg;
-    errorAlert.style.setProperty('display', 'flex', 'important');
-
-    const modalBody = document.querySelector('#lezioneModal .modal-body');
-    if (modalBody) modalBody.scrollTop = 0;
-}
-
-function hideModalError() {
-    const errorAlert = document.getElementById('modalAlertError');
-    if (errorAlert) {
-        errorAlert.style.setProperty('display', 'none', 'important');
-    }
-}
-
-async function parseApiError(res) {
-    try {
-        const data = await res.json();
-        if (typeof data.detail === 'string' && data.detail.trim()) {
-            return data.detail;
-        }
-        if (Array.isArray(data.detail) && data.detail.length > 0) {
-            return data.detail.map(d => d.msg || JSON.stringify(d)).join('; ');
-        }
-        if (data.message && typeof data.message === 'string') {
-            return data.message;
-        }
-    } catch (e) {
-        // Risposta non JSON
-    }
-    return `Errore server (${res.status}: ${res.statusText || 'Richiesta fallita'})`;
-}
-
-// ═══════════════════════════════════════════════════
-//  MODALE LEZIONE
-// ═══════════════════════════════════════════════════
-
-function openLezioneModal(lezioneData = null, presetData = null) {
-    const modalEl = document.getElementById('lezioneModal');
-    if (!modalEl) return;
-
-    document.getElementById('lezioneForm').reset();
-    document.getElementById('durataCalcAlert').style.display = 'none';
-    hideModalError();
-
-    const targetId = lezioneData ? (lezioneData.id || lezioneData.id_lezione) : null;
-
-    if (lezioneData && targetId) {
-        // Modalità MODIFICA
-        currentEditingLezioneId = targetId;
-        document.getElementById('lezioneId').value      = targetId;
-        document.getElementById('modalTitleText').textContent = `Modifica Lezione #${targetId}`;
-        document.getElementById('btnDeleteLezione').style.display = 'inline-block';
-        document.getElementById('modalModulo').value    = lezioneData.id_modulo || '';
-        document.getElementById('modalDocente').value   = lezioneData.id_utente || '';
-        document.getElementById('modalData').value      = lezioneData.data || '';
-        document.getElementById('modalOraInizio').value = (lezioneData.ora_inizio || '').substring(0, 5);
-        document.getElementById('modalOraFine').value   = (lezioneData.ora_fine   || '').substring(0, 5);
-        document.getElementById('modalNote').value      = lezioneData.note || '';
-    } else {
-        // Modalità CREAZIONE
-        currentEditingLezioneId = null;
-        document.getElementById('lezioneId').value = '';
-        document.getElementById('modalTitleText').textContent = 'Programma Nuova Lezione';
-        document.getElementById('btnDeleteLezione').style.display = 'none';
-
-        if (presetData) {
-            if (presetData.data)       document.getElementById('modalData').value      = presetData.data;
-            if (presetData.ora_inizio) document.getElementById('modalOraInizio').value = presetData.ora_inizio;
-            if (presetData.ora_fine)   document.getElementById('modalOraFine').value   = presetData.ora_fine;
-        } else {
-            // Default: primo giorno del corso
-            const defaultDate = selectedCorsoAttivo?.data_inizio || new Date().toISOString().split('T')[0];
-            document.getElementById('modalData').value = defaultDate;
-        }
-    }
-
-    // Range date
-    if (selectedCorsoAttivo?.data_inizio) document.getElementById('modalData').min = selectedCorsoAttivo.data_inizio;
-    if (selectedCorsoAttivo?.data_fine)   document.getElementById('modalData').max = selectedCorsoAttivo.data_fine;
-
-    updateDurataCalc();
-    updateModalBudgetInfo();
-
-    new bootstrap.Modal(modalEl).show();
-}
-
-function updateDurataCalc() {
-    hideModalError();
-    const inizio = document.getElementById('modalOraInizio')?.value;
-    const fine   = document.getElementById('modalOraFine')?.value;
-    const alert  = document.getElementById('durataCalcAlert');
-    const txt    = document.getElementById('durataCalcText');
-    if (!inizio || !fine) return;
-
-    const [hI, mI] = inizio.split(':').map(Number);
-    const [hF, mF] = fine.split(':').map(Number);
-    const diff = (hF * 60 + mF) - (hI * 60 + mI);
-
-    if (diff > 0) {
-        txt.textContent = `Durata lezione: ${minutiToOre(diff)}`;
-        alert.style.display = 'flex';
-    } else {
-        alert.style.display = 'none';
-    }
-}
-
-function updateModalBudgetInfo() {
-    hideModalError();
-    const selModulo = document.getElementById('modalModulo');
-    const infoDiv   = document.getElementById('modalModuloBudgetInfo');
-    if (!selModulo?.value) { infoDiv.style.display = 'none'; return; }
-
-    const modulo = moduliList.find(m => m.id_modulo === parseInt(selModulo.value));
-    if (!modulo) { infoDiv.style.display = 'none'; return; }
-
-    const ps = pianostudioList.find(p => p.id_unita_formativa === modulo.id_unita_formativa);
-    if (!ps) { infoDiv.style.display = 'none'; return; }
-
-    const budgetMin   = (ps.ore_dedicate || 0) * 60;
-    const orePerUf    = computeOrePianificate();
-    const usatiMin    = orePerUf[ps.id_unita_formativa] || 0;
-    const rimanentiMin = Math.max(budgetMin - usatiMin, 0);
-    const perc = budgetMin > 0 ? Math.min((usatiMin / budgetMin) * 100, 100) : 0;
-    const fillClass = perc >= 100 ? 'full' : perc >= 80 ? 'warn' : 'ok';
-
-    document.getElementById('modalBudgetLabel').textContent = `UF: ${ps.uf_nome || `UF #${ps.id_unita_formativa}`}`;
-    document.getElementById('modalBudgetValue').textContent = `${minutiToOre(usatiMin)} / ${ps.ore_dedicate || 0}h (rimangono ${minutiToOre(rimanentiMin)})`;
-    const bar = document.getElementById('modalBudgetBar');
-    bar.style.width = `${perc}%`;
-    bar.className = `uf-ore-bar-fill ${fillClass}`;
-    infoDiv.style.display = 'block';
-}
-
-// ═══════════════════════════════════════════════════
-//  SUBMIT FORM LEZIONE
-// ═══════════════════════════════════════════════════
-
-async function handleLezioneFormSubmit(e) {
-    e.preventDefault();
-    hideModalError();
-
-    const rawIdLezione  = document.getElementById('lezioneId')?.value || currentEditingLezioneId;
-    const idLezione     = (rawIdLezione !== null && rawIdLezione !== undefined && String(rawIdLezione).trim() !== '' && String(rawIdLezione) !== 'null' && String(rawIdLezione) !== 'undefined') ? String(rawIdLezione).trim() : null;
-    const idModulo      = parseInt(document.getElementById('modalModulo')?.value);
-    const idDocente     = parseInt(document.getElementById('modalDocente')?.value);
-    const dataLezione   = document.getElementById('modalData')?.value;
-    const oraInizio     = document.getElementById('modalOraInizio')?.value;
-    const oraFine       = document.getElementById('modalOraFine')?.value;
-    const note          = document.getElementById('modalNote')?.value?.trim();
-
-    if (!selectedCorsoAttivo) {
-        showModalError('Nessuna edizione di corso selezionata.');
-        showToast('Nessuna edizione selezionata.', true);
-        return;
-    }
-    if (!idModulo || !idDocente || !dataLezione || !oraInizio || !oraFine) {
-        showModalError('Compila tutti i campi obbligatori (Modulo, Docente, Data, Ora Inizio, Ora Fine).');
-        showToast('Compila tutti i campi obbligatori.', true);
-        return;
-    }
-    if (oraInizio >= oraFine) {
-        showModalError(`L'ora di inizio (${oraInizio}) deve essere precedente all'ora di fine (${oraFine}).`);
-        showToast('L\'ora di inizio deve essere prima dell\'ora di fine.', true);
-        return;
-    }
-
-    // Controllo range date edizione
-    if (selectedCorsoAttivo.data_inizio && dataLezione < selectedCorsoAttivo.data_inizio) {
-        showModalError(`La data della lezione (${formatDate(dataLezione)}) precede l'inizio dell'edizione (${formatDate(selectedCorsoAttivo.data_inizio)}).`);
-        showToast('Data lezione fuori dal periodo dell\'edizione.', true);
-        return;
-    }
-    if (selectedCorsoAttivo.data_fine && dataLezione > selectedCorsoAttivo.data_fine) {
-        showModalError(`La data della lezione (${formatDate(dataLezione)}) supera la fine dell'edizione (${formatDate(selectedCorsoAttivo.data_fine)}).`);
-        showToast('Data lezione fuori dal periodo dell\'edizione.', true);
-        return;
-    }
-
-    // Pre-verifica budget ore UF (frontend warning)
-    const modulo = moduliList.find(m => m.id_modulo === idModulo);
-    if (modulo) {
-        const ps = pianostudioList.find(p => p.id_unita_formativa === modulo.id_unita_formativa);
-        if (ps && ps.ore_dedicate > 0) {
-            const budgetMin = ps.ore_dedicate * 60;
-            const orePerUf = computeOrePianificate();
-            let usatiMin = orePerUf[ps.id_unita_formativa] || 0;
-            
-            // Se stiamo modificando una lezione esistente dello stesso modulo, sottrai la durata originale
-            if (idLezione) {
-                const vecchiaLez = lezioniList.find(l => l.id == idLezione);
-                if (vecchiaLez) {
-                    const [hI, mI] = (vecchiaLez.ora_inizio || '00:00').split(':').map(Number);
-                    const [hF, mF] = (vecchiaLez.ora_fine   || '00:00').split(':').map(Number);
-                    usatiMin -= ((hF * 60 + mF) - (hI * 60 + mI));
-                }
-            }
-
-            const [hI, mI] = oraInizio.split(':').map(Number);
-            const [hF, mF] = oraFine.split(':').map(Number);
-            const nuovaDurataMin = (hF * 60 + mF) - (hI * 60 + mI);
-
-            if ((usatiMin + nuovaDurataMin) > budgetMin) {
-                const superamentoMin = (usatiMin + nuovaDurataMin) - budgetMin;
-                showModalError(`Superamento budget ore! L'Unità Formativa '${ps.uf_nome || ''}' ha un budget massimo di ${ps.ore_dedicate}h. Con questa lezione supereresti il limite di ${minutiToOre(superamentoMin)}.`);
-                showToast('Superato il budget ore per questa Unità Formativa.', true);
-                return;
-            }
-        }
-    }
-
-    const payload = {
-        data: dataLezione,
-        ora_inizio: `${oraInizio}:00`,
-        ora_fine:   `${oraFine}:00`,
-        id_modulo:      idModulo,
-        id_utente:      idDocente,
-        id_corso_attivo: selectedCorsoAttivo.id_corso_attivo,
-        note: note || null
-    };
-
-    const isEdit = !!idLezione;
-    const url    = isEdit ? `${API_URL}/calendario/${idLezione}` : `${API_URL}/calendario`;
-    const method = isEdit ? 'PUT' : 'POST';
-    const saveBtn = document.getElementById('btnSaveLezione');
-    saveBtn.disabled = true;
-
-    try {
-        const res = await fetchAutenticata(url, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-            const errorReason = await parseApiError(res);
-            showModalError(errorReason);
-            showToast(errorReason, true);
-            return;
-        }
-
-        bootstrap.Modal.getInstance(document.getElementById('lezioneModal'))?.hide();
-        showToast(isEdit ? 'Lezione aggiornata con successo!' : 'Lezione programmata con successo!');
-        await refreshCalendarEvents();
-    } catch (err) {
-        const msg = err.message || 'Errore durante la connessione al server.';
-        showModalError(msg);
-        showToast(msg, true);
-    } finally {
-        saveBtn.disabled = false;
-    }
-}
-
-// ═══════════════════════════════════════════════════
 //  DRAG & DROP / RESIZE
 // ═══════════════════════════════════════════════════
 
@@ -844,7 +522,6 @@ async function handleEventMove(info) {
     const startH   = newStart.split('T')[1].substring(0, 5);
     const endH     = newEnd ? newEnd.split('T')[1].substring(0, 5) : '13:00';
 
-    // Controllo range date
     if (selectedCorsoAttivo) {
         if (selectedCorsoAttivo.data_inizio && dataStr < selectedCorsoAttivo.data_inizio) {
             info.revert();
@@ -889,31 +566,6 @@ async function handleEventMove(info) {
 }
 
 // ═══════════════════════════════════════════════════
-//  ELIMINA LEZIONE
-// ═══════════════════════════════════════════════════
-
-async function handleDeleteLezione() {
-    if (!currentEditingLezioneId) return;
-    if (!confirm('Eliminare questa lezione dal calendario?')) return;
-
-    try {
-        const res = await fetchAutenticata(`${API_URL}/calendario/${currentEditingLezioneId}`, { method: 'DELETE' });
-        if (!res.ok) {
-            const errorReason = await parseApiError(res);
-            showModalError(errorReason);
-            showToast(errorReason, true);
-            return;
-        }
-        bootstrap.Modal.getInstance(document.getElementById('lezioneModal'))?.hide();
-        showToast('Lezione eliminata con successo.');
-        await refreshCalendarEvents();
-    } catch (err) {
-        showModalError(err.message || 'Errore durante l\'eliminazione.');
-        showToast(err.message || 'Errore durante l\'eliminazione.', true);
-    }
-}
-
-// ═══════════════════════════════════════════════════
 //  UTILITY
 // ═══════════════════════════════════════════════════
 
@@ -931,6 +583,16 @@ function formatDate(dateStr) {
     } catch { return dateStr; }
 }
 
+async function parseApiError(res) {
+    try {
+        const data = await res.json();
+        if (typeof data.detail === 'string' && data.detail.trim()) return data.detail;
+        if (Array.isArray(data.detail) && data.detail.length > 0) return data.detail.map(d => d.msg || JSON.stringify(d)).join('; ');
+        if (data.message) return data.message;
+    } catch (e) {}
+    return `Errore server (${res.status})`;
+}
+
 function showToast(msg, isError = false) {
     const toast = document.getElementById('toast');
     if (!toast) return;
@@ -938,221 +600,3 @@ function showToast(msg, isError = false) {
     toast.className = `toast show${isError ? ' error' : ''}`;
     setTimeout(() => toast.classList.remove('show'), 3500);
 }
-
-// ═══════════════════════════════════════════════════
-//  MODALE PROGRAMMAZIONE SETTIMANALE IN 1 STEP
-// ═══════════════════════════════════════════════════
-
-function showSettimanaError(msg) {
-    const errAlert = document.getElementById('settimanaAlertError');
-    const errTxt   = document.getElementById('settimanaAlertErrorText');
-    if (!errAlert || !errTxt) return;
-    errTxt.textContent = msg;
-    errAlert.style.setProperty('display', 'flex', 'important');
-}
-
-function hideSettimanaError() {
-    const errAlert = document.getElementById('settimanaAlertError');
-    if (errAlert) errAlert.style.setProperty('display', 'none', 'important');
-}
-
-function toggleOrariDifferenziati() {
-    const box = document.getElementById('boxOrariDifferenziati');
-    if (!box) return;
-    const isHidden = box.style.display === 'none';
-    box.style.display = isHidden ? 'block' : 'none';
-    document.getElementById('labelToggleDiff').textContent = isHidden ? 'Usa orario unico standard' : 'Personalizza orari (es. Mar e Gio 9-15)';
-    updateSettimanaPreview();
-}
-
-async function openSettimanaModal() {
-    const modalEl = document.getElementById('settimanaModal');
-    if (!modalEl) return;
-
-    document.getElementById('settimanaForm').reset();
-    hideSettimanaError();
-
-    // Popola moduli e docenti
-    populateSettimanaModuli();
-    populateSettimanaDocenti();
-
-    // Data inizio default: inizio edizione o lunedì corrente
-    let defaultStart = selectedCorsoAttivo?.data_inizio;
-    if (!defaultStart) {
-        defaultStart = new Date().toISOString().split('T')[0];
-    }
-    document.getElementById('settimanaDataInizio').value = defaultStart;
-    if (selectedCorsoAttivo?.data_inizio) document.getElementById('settimanaDataInizio').min = selectedCorsoAttivo.data_inizio;
-    if (selectedCorsoAttivo?.data_fine)   document.getElementById('settimanaDataInizio').max = selectedCorsoAttivo.data_fine;
-
-    // Reset checkboxes
-    document.querySelectorAll('.chk-giorno').forEach(chk => {
-        chk.checked = parseInt(chk.value) < 5; // Lun-Ven true, Sab-Dom false
-    });
-
-    document.getElementById('boxOrariDifferenziati').style.display = 'none';
-    document.getElementById('labelToggleDiff').textContent = 'Personalizza orari (es. Mar e Gio 9-15)';
-
-    updateSettimanaPreview();
-    new bootstrap.Modal(modalEl).show();
-}
-
-function populateSettimanaModuli() {
-    const sel = document.getElementById('settimanaModulo');
-    if (!sel) return;
-    sel.innerHTML = document.getElementById('modalModulo')?.innerHTML || '<option value="">-- Seleziona modulo --</option>';
-}
-
-function populateSettimanaDocenti() {
-    const sel = document.getElementById('settimanaDocente');
-    if (!sel) return;
-    sel.innerHTML = document.getElementById('modalDocente')?.innerHTML || '<option value="">-- Seleziona docente --</option>';
-}
-
-function updateSettimanaPreview() {
-    hideSettimanaError();
-    const previewTxt = document.getElementById('settimanaPreviewText');
-    if (!previewTxt) return;
-
-    const dInizioStr = document.getElementById('settimanaDataInizio')?.value;
-    const nWeeks = parseInt(document.getElementById('settimanaNumeroSettimane')?.value || 1);
-    const oraInizioDef = document.getElementById('settimanaOraInizio')?.value;
-    const oraFineDef   = document.getElementById('settimanaOraFine')?.value;
-
-    if (!dInizioStr || !oraInizioDef || !oraFineDef) {
-        previewTxt.textContent = 'Riepilogo: Compila data e orario per l\'anteprima.';
-        return;
-    }
-
-    const isDiffActive = document.getElementById('boxOrariDifferenziati')?.style.display !== 'none';
-    const checkedDays = Array.from(document.querySelectorAll('.chk-giorno:checked')).map(c => parseInt(c.value));
-
-    let nLezioni = 0;
-    let nMinutiTotali = 0;
-
-    const startDate = new Date(dInizioStr);
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + (nWeeks * 7) - 1);
-
-    let curr = new Date(startDate);
-    while (curr <= endDate) {
-        const wd = (curr.getDay() + 6) % 7; // 0 = Lun, 6 = Dom
-        if (checkedDays.includes(wd)) {
-            nLezioni++;
-            let iStr = oraInizioDef;
-            let fStr = oraFineDef;
-
-            if (isDiffActive) {
-                if (wd === 1) { // Mar
-                    iStr = document.getElementById('diffMarInizio')?.value || oraInizioDef;
-                    fStr = document.getElementById('diffMarFine')?.value || oraFineDef;
-                } else if (wd === 3) { // Gio
-                    iStr = document.getElementById('diffGioInizio')?.value || oraInizioDef;
-                    fStr = document.getElementById('diffGioFine')?.value || oraFineDef;
-                }
-            }
-
-            const [hI, mI] = iStr.split(':').map(Number);
-            const [hF, mF] = fStr.split(':').map(Number);
-            nMinutiTotali += Math.max(0, (hF * 60 + mF) - (hI * 60 + mI));
-        }
-        curr.setDate(curr.getDate() + 1);
-    }
-
-    previewTxt.textContent = `Verranno create ${nLezioni} lezioni per un totale di ${minutiToOre(nMinutiTotali)} in ${nWeeks} settiman${nWeeks === 1 ? 'a' : 'e'}.`;
-}
-
-async function handleSettimanaFormSubmit(e) {
-    e.preventDefault();
-    hideSettimanaError();
-
-    if (!selectedCorsoAttivo) {
-        showSettimanaError('Nessuna edizione di corso selezionata.');
-        return;
-    }
-
-    const idModulo   = parseInt(document.getElementById('settimanaModulo')?.value);
-    const idDocente  = parseInt(document.getElementById('settimanaDocente')?.value);
-    const dInizio    = document.getElementById('settimanaDataInizio')?.value;
-    const nWeeks     = parseInt(document.getElementById('settimanaNumeroSettimane')?.value || 1);
-    const oraInizio  = document.getElementById('settimanaOraInizio')?.value;
-    const oraFine    = document.getElementById('settimanaOraFine')?.value;
-    const note       = document.getElementById('settimanaNote')?.value?.trim();
-
-    if (!idModulo || !idDocente || !dInizio || !oraInizio || !oraFine) {
-        showSettimanaError('Compila tutti i campi obbligatori (Modulo, Docente, Data Inizio, Ora Inizio, Ora Fine).');
-        return;
-    }
-    if (oraInizio >= oraFine) {
-        showSettimanaError('L\'ora di inizio deve essere precedente all\'ora di fine.');
-        return;
-    }
-
-    const checkedDays = Array.from(document.querySelectorAll('.chk-giorno:checked')).map(c => parseInt(c.value));
-    if (!checkedDays.length) {
-        showSettimanaError('Seleziona almeno un giorno della settimana.');
-        return;
-    }
-
-    const isDiffActive = document.getElementById('boxOrariDifferenziati')?.style.display !== 'none';
-    let orariDiff = null;
-
-    if (isDiffActive) {
-        orariDiff = {};
-        const marI = document.getElementById('diffMarInizio')?.value;
-        const marF = document.getElementById('diffMarFine')?.value;
-        const gioI = document.getElementById('diffGioInizio')?.value;
-        const gioF = document.getElementById('diffGioFine')?.value;
-
-        if (marI && marF) {
-            orariDiff['1'] = { attivo: checkedDays.includes(1), ora_inizio: `${marI}:00`, ora_fine: `${marF}:00` };
-        }
-        if (gioI && gioF) {
-            orariDiff['3'] = { attivo: checkedDays.includes(3), ora_inizio: `${gioI}:00`, ora_fine: `${gioF}:00` };
-        }
-    }
-
-    const payload = {
-        id_corso_attivo: selectedCorsoAttivo.id_corso_attivo,
-        id_modulo: idModulo,
-        id_utente: idDocente,
-        data_inizio: dInizio,
-        numero_settimane: nWeeks,
-        ora_inizio_default: `${oraInizio}:00`,
-        ora_fine_default: `${oraFine}:00`,
-        giorni_attivi: checkedDays,
-        orari_differenziati: orariDiff,
-        note: note || null
-    };
-
-    const saveBtn = document.getElementById('btnSaveSettimana');
-    saveBtn.disabled = true;
-
-    try {
-        const res = await fetchAutenticata(`${API_URL}/calendario/settimanale`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-            const errorReason = await parseApiError(res);
-            showSettimanaError(errorReason);
-            showToast(errorReason, true);
-            return;
-        }
-
-        const data = await res.json();
-        bootstrap.Modal.getInstance(document.getElementById('settimanaModal'))?.hide();
-        showToast(data.messaggio || `Programmate ${data.lezioni_create} lezioni con successo!`);
-        await refreshCalendarEvents();
-
-    } catch (err) {
-        const msg = err.message || 'Errore durante la creazione delle lezioni settimanali.';
-        showSettimanaError(msg);
-        showToast(msg, true);
-    } finally {
-        saveBtn.disabled = false;
-    }
-}
-

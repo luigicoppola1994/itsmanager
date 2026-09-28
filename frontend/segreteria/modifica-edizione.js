@@ -26,8 +26,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const oreStage = document.getElementById('editEdizioneOreStage');
     const durataOre = document.getElementById('editEdizioneDurataOre');
     const percAssenza = document.getElementById('editEdizionePercAssenza');
-    const tollIngresso = document.getElementById('editEdizioneTollIngresso');
-    const tollUscita = document.getElementById('editEdizioneTollUscita');
     const submitBtn = document.getElementById('submitBtn');
 
     // Elementi Anteprima
@@ -40,8 +38,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const previewOreAula = document.getElementById('previewOreAula');
     const previewOreStage = document.getElementById('previewOreStage');
     const previewAssenza = document.getElementById('previewAssenza');
-    const previewTollIngresso = document.getElementById('previewTollIngresso');
-    const previewTollUscita = document.getElementById('previewTollUscita');
 
     const checkDate = document.getElementById('checkDate');
     const checkOre = document.getElementById('checkOre');
@@ -108,10 +104,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         previewOreTotali.textContent = tot ? `${tot}h` : '—';
         setCheck(checkOre, t > 0);
 
-        // Tolleranze e Assenze
-        previewAssenza.textContent = `${percAssenza.value || 20}%`;
-        previewTollIngresso.innerHTML = `<i class="bi bi-box-arrow-in-right text-primary me-1"></i>Toll. Entrata: <strong>${tollIngresso.value || 15} min</strong>`;
-        previewTollUscita.innerHTML = `<i class="bi bi-box-arrow-right text-primary me-1"></i>Toll. Uscita: <strong>${tollUscita.value || 15} min</strong>`;
+        // Assenze
+        if (previewAssenza) previewAssenza.textContent = `${percAssenza.value || 20}%`;
 
         updateUfHoursCounter();
     }
@@ -178,8 +172,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Event listeners su input
-    [etichettaInput, dataInizio, dataFine, oreTeoria, oreStage, percAssenza, tollIngresso, tollUscita].forEach(input => {
-        ['input', 'change'].forEach(evt => input.addEventListener(evt, updatePreview));
+    [etichettaInput, dataInizio, dataFine, oreTeoria, oreStage, percAssenza].forEach(input => {
+        if (input) ['input', 'change'].forEach(evt => input.addEventListener(evt, updatePreview));
     });
 
     // Carica dati Edizione, Corso e Piano Studio
@@ -207,8 +201,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Trova corso
         const corsoPadre = allCorsi.find(c => c.id_corso === currentEdizioneData.id_corso);
         if (corsoPadre) {
-            previewCorsoNome.textContent = corsoPadre.Nome;
-            document.getElementById('headerBreadcrumbCurrent').textContent = `Modifica: ${currentEdizioneData.etichetta || corsoPadre.Nome}`;
+            if (previewCorsoNome) previewCorsoNome.textContent = corsoPadre.Nome;
+            const breadEl = document.getElementById('headerBreadcrumbCurrent');
+            if (breadEl) breadEl.textContent = `Modifica: ${currentEdizioneData.etichetta || corsoPadre.Nome}`;
         }
 
         // Popola campi
@@ -219,8 +214,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         oreTeoria.value = currentEdizioneData.ore_teoria_aula || 0;
         oreStage.value = currentEdizioneData.ore_stage || 0;
         percAssenza.value = currentEdizioneData.percentuale_ore_assenza || 20;
-        tollIngresso.value = currentEdizioneData.tolleranza_ingresso_minuti || 15;
-        tollUscita.value = currentEdizioneData.tolleranza_uscita_minuti || 15;
 
         // Render Unità Formative
         const ufContainer = document.getElementById('editEdizioneUfList');
@@ -289,8 +282,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const oreTeoriaVal = parseInt(oreTeoria.value) || 0;
         const oreStageVal = parseInt(oreStage.value) || 0;
         const percAssenzaVal = parseInt(percAssenza.value) || 0;
-        const tollIngVal = parseInt(tollIngresso.value) || 0;
-        const tollUscVal = parseInt(tollUscita.value) || 0;
 
         if (!dataInizio.value || !dataFine.value) {
             showToast("Inserisci sia la data di inizio che la data di fine.", true);
@@ -330,8 +321,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             ore_teoria_aula: oreTeoriaVal,
             ore_stage: oreStageVal,
             percentuale_ore_assenza: percAssenzaVal,
-            tolleranza_ingresso_minuti: tollIngVal,
-            tolleranza_uscita_minuti: tollUscVal,
             archiviato: false
         };
 

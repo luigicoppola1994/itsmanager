@@ -931,6 +931,7 @@ window.saveNewTimbraturaRow = async function() {
 
     const payload = {
         id_utente: currentStudentId,
+        id_corso_attivo: currentEdizioneId || null,
         data_presenza: currentSelectedCalDate,
         ora_ingresso: finalIn,
         ora_uscita: finalOut,
@@ -1032,6 +1033,7 @@ window.saveEditRowInline = async function(idPresenza) {
     }
 
     const payload = {
+        id_corso_attivo: currentEdizioneId || null,
         data_presenza: currentSelectedCalDate,
         ora_ingresso: finalIn,
         ora_uscita: finalOut,

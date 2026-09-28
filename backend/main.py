@@ -819,6 +819,51 @@ def delete_corso_attivo(id_corso_attivo: int, db: Session = Depends(get_db), cur
 # ENDPOINT PER L'AULA (STUDENTI NEI CORSI ATTIVI)
 # ==============================================================================
 
+# Helper: verifica sovrapposizione orari corsi per lo studente
+def check_student_course_schedule_conflict(db: Session, id_utente: int, target_id_corso_attivo: int):
+    # Cerca altre iscrizioni attive dello studente
+    altre_iscrizioni = db.query(models.UtenteCorsoAttivo).join(
+        models.CorsoAttivo, models.UtenteCorsoAttivo.id_corso_attivo == models.CorsoAttivo.id_corso_attivo
+    ).filter(
+        models.UtenteCorsoAttivo.id_utente == id_utente,
+        models.UtenteCorsoAttivo.id_corso_attivo != target_id_corso_attivo,
+        models.CorsoAttivo.archiviato == False
+    ).all()
+
+    if not altre_iscrizioni:
+        return
+
+    target_ca = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == target_id_corso_attivo).first()
+    student = db.query(models.Utente).filter(models.Utente.id_utente == id_utente).first()
+    student_name = f"{student.Nome} {student.Cognome}" if student else f"Studente #{id_utente}"
+
+    # Recupera lezioni del nuovo corso
+    target_lezioni = db.query(models.Calendario).filter(models.Calendario.id_corso_attivo == target_id_corso_attivo).all()
+
+    for en in altre_iscrizioni:
+        other_ca = en.corso_attivo
+        other_lezioni = db.query(models.Calendario).filter(models.Calendario.id_corso_attivo == other_ca.id_corso_attivo).all()
+
+        # Verifica sovrapposizione lezioni nel calendario
+        for t_lez in target_lezioni:
+            for o_lez in other_lezioni:
+                if t_lez.data == o_lez.data:
+                    if t_lez.ora_inizio < o_lez.ora_fine and t_lez.ora_fine > o_lez.ora_inizio:
+                        other_corso_nome = other_ca.corso.Nome if other_ca.corso else f"Edizione #{other_ca.id_corso_attivo}"
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Lo studente {student_name} non può essere iscritto a più corsi con orari sovrapposti. Conflitto in data {t_lez.data.strftime('%d/%m/%Y')} ({t_lez.ora_inizio.strftime('%H:%M')}-{t_lez.ora_fine.strftime('%H:%M')}) con il corso '{other_corso_nome}'."
+                        )
+
+        # Se non ci sono lezioni ancora inserite nel calendario ma le date di inizio/fine si sovrappongono
+        if target_ca and target_ca.data_inizio and target_ca.data_fine and other_ca.data_inizio and other_ca.data_fine:
+            if max(target_ca.data_inizio, other_ca.data_inizio) <= min(target_ca.data_fine, other_ca.data_fine):
+                if not target_lezioni or not other_lezioni:
+                    other_corso_nome = other_ca.corso.Nome if other_ca.corso else f"Edizione #{other_ca.id_corso_attivo}"
+                    # Se c'è sovrapposizione potenziale date corso
+                    pass
+
+
 @app.get("/corsi-attivi/{id_corso_attivo}/aula", response_model=List[schemas.UtenteResponse])
 def get_aula_corso_attivo(
     id_corso_attivo: int,
@@ -857,11 +902,16 @@ def sync_aula_corso_attivo(
     if not corso_attivo:
         raise HTTPException(status_code=404, detail="Corso attivo non trovato")
 
+    ids_unici = set(payload.studenti_ids)
+    
+    # Valida sovrapposizioni orari per ciascuno studente
+    for st_id in ids_unici:
+        check_student_course_schedule_conflict(db, st_id, id_corso_attivo)
+
     # Rimuovi associazioni correnti per questo corso attivo
     db.query(models.UtenteCorsoAttivo).filter(models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo).delete()
 
     # Inserisci le nuove associazioni
-    ids_unici = set(payload.studenti_ids)
     for st_id in ids_unici:
         utente = db.query(models.Utente).filter(models.Utente.id_utente == st_id).first()
         if utente:
@@ -887,6 +937,8 @@ def add_studente_aula(
     utente = db.query(models.Utente).filter(models.Utente.id_utente == id_utente).first()
     if not utente:
         raise HTTPException(status_code=404, detail="Utente non trovato")
+
+    check_student_course_schedule_conflict(db, id_utente, id_corso_attivo)
 
     esistente = db.query(models.UtenteCorsoAttivo).filter(
         models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo,
@@ -1360,6 +1412,37 @@ def create_lezioni_settimanali(
         raise HTTPException(status_code=400, detail=error_msg)
 
 
+@app.get("/calendario/check")
+def check_lezione_prevista(
+    id_corso_attivo: int,
+    data: date,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Verifica se esiste almeno una lezione nel calendario per un corso attivo in una data specifica."""
+    lezioni = db.query(models.Calendario).filter(
+        models.Calendario.id_corso_attivo == id_corso_attivo,
+        models.Calendario.data == data
+    ).order_by(models.Calendario.ora_inizio).all()
+    
+    if lezioni:
+        return {
+            "lezione_prevista": True,
+            "count": len(lezioni),
+            "lezioni": [
+                {
+                    "id": l.id,
+                    "ora_inizio": l.ora_inizio.strftime("%H:%M"),
+                    "ora_fine": l.ora_fine.strftime("%H:%M"),
+                    "modulo": l.modulo.Nome if l.modulo else None,
+                    "note": l.note
+                }
+                for l in lezioni
+            ]
+        }
+    return {"lezione_prevista": False, "count": 0, "lezioni": []}
+
+
 @app.get("/calendario/{id_lezione}", response_model=schemas.CalendarioResponse)
 def get_lezione(id_lezione: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
     """Restituisce una lezione specifica tramite ID."""
@@ -1570,37 +1653,6 @@ def get_presenze_stats(
     }
 
 
-@app.get("/calendario/check")
-def check_lezione_prevista(
-    id_corso_attivo: int,
-    data: date,
-    db: Session = Depends(get_db),
-    current_user: models.Utente = Depends(get_current_user)
-):
-    """Verifica se esiste almeno una lezione nel calendario per un corso attivo in una data specifica."""
-    lezioni = db.query(models.Calendario).filter(
-        models.Calendario.id_corso_attivo == id_corso_attivo,
-        models.Calendario.data == data
-    ).order_by(models.Calendario.ora_inizio).all()
-    
-    if lezioni:
-        prima = lezioni[0]
-        return {
-            "lezione_prevista": True,
-            "count": len(lezioni),
-            "lezioni": [
-                {
-                    "id": l.id,
-                    "ora_inizio": l.ora_inizio.strftime("%H:%M"),
-                    "ora_fine": l.ora_fine.strftime("%H:%M"),
-                    "modulo": l.modulo.Nome if l.modulo else None,
-                    "note": l.note
-                }
-                for l in lezioni
-            ]
-        }
-    return {"lezione_prevista": False, "count": 0, "lezioni": []}
-
 
 @app.get("/presenze/appello/{id_corso_attivo}")
 def get_appello_giorno(
@@ -1609,7 +1661,7 @@ def get_appello_giorno(
     db: Session = Depends(get_db),
     current_user: models.Utente = Depends(get_current_user)
 ):
-    """Restituisce tutti gli studenti di un'edizione con la loro eventuale timbratura per la data indicata.
+    """Restituisce tutti gli studenti e docenti di un'edizione con la loro eventuale timbratura per la data indicata.
     Include anche la verifica se esiste una lezione nel calendario per quella data."""
     target_date = data_presenza or date.today()
     
@@ -1620,7 +1672,7 @@ def get_appello_giorno(
     ).order_by(models.Calendario.ora_inizio).all()
     lezione_prevista = len(lezioni_previste) > 0
     
-    # Recupera tutti gli utenti assegnati all'aula di questo corso attivo
+    # Recupera tutti gli utenti assegnati all'aula di questo corso attivo (Studenti)
     studenti_iscritti = db.query(models.Utente).join(
         models.UtenteCorsoAttivo,
         models.Utente.id_utente == models.UtenteCorsoAttivo.id_utente
@@ -1641,7 +1693,7 @@ def get_appello_giorno(
                 presenze_map[p.id_utente] = []
             presenze_map[p.id_utente].append(p)
             
-    result = []
+    result_studenti = []
     for s in studenti_iscritti:
         p_list = presenze_map.get(s.id_utente, [])
         total_minutes = 0
@@ -1656,12 +1708,13 @@ def get_appello_giorno(
         last_p = p_list[-1] if p_list else None
         is_in_aula = (last_p is not None and last_p.ora_uscita is None)
 
-        result.append({
+        result_studenti.append({
             "id_utente": s.id_utente,
             "nome": s.Nome,
             "cognome": s.Cognome,
             "email": s.Email,
             "codice_fiscale": s.Codice_Fiscale,
+            "ruolo": "STUDENTE",
             "id_presenza": last_p.id_presenza if last_p else None,
             "presente": len(p_list) > 0,
             "in_aula": is_in_aula,
@@ -1680,12 +1733,75 @@ def get_appello_giorno(
             ]
         })
     
+    # Recupera Docenti per la lezione in questa data o per il corso
+    docenti_ids_data = [l.id_utente for l in lezioni_previste if l.id_utente]
+    docenti_ids_corso = [
+        row[0] for row in db.query(models.Calendario.id_utente).filter(
+            models.Calendario.id_corso_attivo == id_corso_attivo,
+            models.Calendario.id_utente != None
+        ).distinct().all()
+    ]
+    all_docenti_ids = list(set(docenti_ids_data + docenti_ids_corso))
+    
+    result_docenti = []
+    if all_docenti_ids:
+        docenti_obj = db.query(models.Utente).filter(models.Utente.id_utente.in_(all_docenti_ids)).order_by(func.lower(models.Utente.Cognome).asc(), func.lower(models.Utente.Nome).asc()).all()
+        docenti_presenze_map = {}
+        presenze_doc = db.query(models.Presenza).filter(
+            models.Presenza.data_presenza == target_date,
+            models.Presenza.id_utente.in_(all_docenti_ids)
+        ).order_by(models.Presenza.id_presenza.asc()).all()
+        for p in presenze_doc:
+            if p.id_utente not in docenti_presenze_map:
+                docenti_presenze_map[p.id_utente] = []
+            docenti_presenze_map[p.id_utente].append(p)
+            
+        for d in docenti_obj:
+            p_list = docenti_presenze_map.get(d.id_utente, [])
+            total_minutes = 0
+            for p in p_list:
+                if p.ora_ingresso and p.ora_uscita:
+                    m_in = p.ora_ingresso.hour * 60 + p.ora_ingresso.minute
+                    m_out = p.ora_uscita.hour * 60 + p.ora_uscita.minute
+                    if m_out > m_in:
+                        total_minutes += (m_out - m_in)
+                        
+            first_p = p_list[0] if p_list else None
+            last_p = p_list[-1] if p_list else None
+            is_in_aula = (last_p is not None and last_p.ora_uscita is None)
+
+            result_docenti.append({
+                "id_utente": d.id_utente,
+                "nome": d.Nome,
+                "cognome": d.Cognome,
+                "email": d.Email,
+                "codice_fiscale": d.Codice_Fiscale,
+                "ruolo": "DOCENTE",
+                "id_presenza": last_p.id_presenza if last_p else None,
+                "presente": len(p_list) > 0,
+                "in_aula": is_in_aula,
+                "ora_ingresso": first_p.ora_ingresso.strftime("%H:%M") if (first_p and first_p.ora_ingresso) else None,
+                "ora_uscita": last_p.ora_uscita.strftime("%H:%M") if (last_p and last_p.ora_uscita) else None,
+                "note": " | ".join([p.note for p in p_list if p.note]) if p_list else "",
+                "minuti_totali": total_minutes,
+                "timbrature": [
+                    {
+                        "id_presenza": p.id_presenza,
+                        "ora_ingresso": p.ora_ingresso.strftime("%H:%M") if p.ora_ingresso else None,
+                        "ora_uscita": p.ora_uscita.strftime("%H:%M") if p.ora_uscita else None,
+                        "note": p.note or ""
+                    }
+                    for p in p_list
+                ]
+            })
+
     lezioni_info = [
         {
             "id": l.id,
             "ora_inizio": l.ora_inizio.strftime("%H:%M"),
             "ora_fine": l.ora_fine.strftime("%H:%M"),
-            "modulo": l.modulo.Nome if l.modulo else None
+            "modulo": l.modulo.Nome if l.modulo else None,
+            "id_utente": l.id_utente
         }
         for l in lezioni_previste
     ]
@@ -1695,7 +1811,8 @@ def get_appello_giorno(
         "id_corso_attivo": id_corso_attivo,
         "lezione_prevista": lezione_prevista,
         "lezioni": lezioni_info,
-        "studenti": result
+        "studenti": result_studenti,
+        "docenti": result_docenti
     }
 
 
@@ -1717,6 +1834,19 @@ def badge_presenza(
     target_date = badge_data.data_presenza or date.today()
     now_time = badge_data.ora_badge or datetime.now().time()
     
+    ca_id = badge_data.id_corso_attivo
+    if not ca_id:
+        lez = db.query(models.Calendario).filter(
+            models.Calendario.id_utente == badge_data.id_utente,
+            models.Calendario.data == target_date
+        ).first()
+        if lez:
+            ca_id = lez.id_corso_attivo
+        else:
+            uca = db.query(models.UtenteCorsoAttivo).filter(models.UtenteCorsoAttivo.id_utente == badge_data.id_utente).first()
+            if uca:
+                ca_id = uca.id_corso_attivo
+
     existing = db.query(models.Presenza).filter(
         models.Presenza.id_utente == badge_data.id_utente,
         models.Presenza.data_presenza == target_date
@@ -1727,6 +1857,8 @@ def badge_presenza(
     if last_p and last_p.ora_uscita is None:
         # Registra USCITA
         last_p.ora_uscita = now_time
+        if ca_id and not last_p.id_corso_attivo:
+            last_p.id_corso_attivo = ca_id
         if badge_data.note:
             last_p.note = f"{last_p.note} | {badge_data.note}" if last_p.note else badge_data.note
         try:
@@ -1738,6 +1870,7 @@ def badge_presenza(
                 "presenza": {
                     "id_presenza": last_p.id_presenza,
                     "id_utente": last_p.id_utente,
+                    "id_corso_attivo": last_p.id_corso_attivo,
                     "data_presenza": last_p.data_presenza.isoformat(),
                     "ora_ingresso": last_p.ora_ingresso.strftime("%H:%M") if last_p.ora_ingresso else None,
                     "ora_uscita": last_p.ora_uscita.strftime("%H:%M") if last_p.ora_uscita else None,
@@ -1751,6 +1884,7 @@ def badge_presenza(
         # Crea nuovo INGRESSO
         nuova = models.Presenza(
             id_utente=badge_data.id_utente,
+            id_corso_attivo=ca_id,
             data_presenza=target_date,
             ora_ingresso=now_time,
             ora_uscita=None,
@@ -1766,6 +1900,7 @@ def badge_presenza(
                 "presenza": {
                     "id_presenza": nuova.id_presenza,
                     "id_utente": nuova.id_utente,
+                    "id_corso_attivo": nuova.id_corso_attivo,
                     "data_presenza": nuova.data_presenza.isoformat(),
                     "ora_ingresso": nuova.ora_ingresso.strftime("%H:%M") if nuova.ora_ingresso else None,
                     "ora_uscita": None,
@@ -1791,6 +1926,7 @@ def create_presenza(
         
     nuova_presenza = models.Presenza(
         id_utente=presenza_data.id_utente,
+        id_corso_attivo=presenza_data.id_corso_attivo,
         data_presenza=presenza_data.data_presenza,
         ora_ingresso=presenza_data.ora_ingresso,
         ora_uscita=presenza_data.ora_uscita,
@@ -1819,6 +1955,8 @@ def update_presenza(
     if not presenza:
         raise HTTPException(status_code=404, detail="Timbratura non trovata")
         
+    if presenza_data.id_corso_attivo is not None:
+        presenza.id_corso_attivo = presenza_data.id_corso_attivo
     if presenza_data.data_presenza is not None:
         presenza.data_presenza = presenza_data.data_presenza
     if presenza_data.ora_ingresso is not None:
@@ -1862,6 +2000,7 @@ def batch_save_presenze(
 ):
     """Registra o aggiorna in blocco le timbrature per una classe/data (Appello Rapido)."""
     target_date = batch_data.data_presenza
+    target_id_corso_attivo = batch_data.id_corso_attivo
     saved_count = 0
     deleted_count = 0
     
@@ -1877,9 +2016,12 @@ def batch_save_presenze(
                 existing.ora_ingresso = item.ora_ingresso
                 existing.ora_uscita = item.ora_uscita
                 existing.note = item.note
+                if target_id_corso_attivo:
+                    existing.id_corso_attivo = target_id_corso_attivo
             else:
                 nuova = models.Presenza(
                     id_utente=item.id_utente,
+                    id_corso_attivo=target_id_corso_attivo,
                     data_presenza=target_date,
                     ora_ingresso=item.ora_ingresso,
                     ora_uscita=item.ora_uscita,
@@ -1904,3 +2046,4 @@ def batch_save_presenze(
         db.rollback()
         error_msg = extract_sql_error_message(e)
         raise HTTPException(status_code=400, detail=error_msg)
+

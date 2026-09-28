@@ -2190,4 +2190,398 @@ p, li, td, th, label, span, div {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
 }
 
+/* ============================================================
+   CALENDARIO DIDATTICO STYLES (Req 6 & Req 7)
+   ============================================================ */
+
+/* Step Cards nella Selezione Edizione */
+.step-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    transition: all 0.25s ease;
+}
+
+.step-card.active {
+    border-color: #93c5fd;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.06);
+}
+
+.step-badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.step-badge-primary {
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.step-badge-secondary {
+    background: #e2e8f0;
+    color: #64748b;
+}
+
+.step-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.step-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* Griglie di selezione Corso ed Edizione */
+#corsiGrid, #edizioniGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+}
+
+.corso-card, .edizione-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.corso-card:hover, .edizione-card:hover {
+    background: #ffffff;
+    border-color: #93c5fd;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.08);
+    transform: translateY(-1px);
+}
+
+.corso-card.selected, .edizione-card.selected {
+    background: #eff6ff;
+    border-color: #2563eb;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
+}
+
+.corso-card-icon, .edizione-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: #e0e7ff;
+    color: #4338ca;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.corso-card.selected .corso-card-icon,
+.edizione-card.selected .edizione-icon {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.corso-card-name, .edizione-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #1e293b;
+    line-height: 1.3;
+}
+
+.corso-card-desc, .edizione-dates {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.date-chip {
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 3px 8px;
+    margin-right: 4px;
+    margin-top: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+/* Banner Edizione Attiva */
+.edition-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 18px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12);
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.edition-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.edition-banner-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: #ffffff;
+}
+
+.edition-banner-corso {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+.edition-banner-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.edition-period-chips {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.period-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.btn-change-edition {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    color: #1d4ed8;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-change-edition:hover {
+    background: #f8fafc;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Layout Calendario Grid */
+.calendar-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 1100px) {
+    .calendar-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.calendar-main-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
+.cal-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.cal-toolbar-title {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Sidebar Budget Ore */
+#oreSidebar {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
+.ore-sidebar-header h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.ore-sidebar-header p {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 16px;
+}
+
+.docente-filter-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.docente-filter-card label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.ore-total-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+
+.ore-total-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1d4ed8;
+}
+
+.ore-total-value {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #1e40af;
+}
+
+.uf-budget-card-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.uf-ore-item {
+    margin-bottom: 12px;
+}
+
+.uf-ore-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 4px;
+}
+
+.uf-ore-count {
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.uf-ore-bar {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.uf-ore-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.uf-ore-bar-fill.ok { background: #10b981; }
+.uf-ore-bar-fill.warn { background: #f59e0b; }
+.uf-ore-bar-fill.full { background: #ef4444; }
+
+/* Eventi FullCalendar Personalizzati */
+.fc-custom-card {
+    padding: 4px 6px;
+    font-size: 0.78rem;
+    font-family: 'Inter', sans-serif;
+}
+
+.fc-custom-time {
+    font-weight: 700;
+    font-size: 0.75rem;
+    margin-bottom: 2px;
+}
+
+.fc-custom-title {
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.fc-custom-docente, .fc-custom-note {
+    font-size: 0.72rem;
+    color: #475569;
+    margin-top: 2px;
+}
+
+
 

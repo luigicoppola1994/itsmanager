@@ -234,6 +234,8 @@ function populateEdizioniSelect(idCorso) {
 
 // ── CARICAMENTO REGISTRO PRESENZE PER EDIZIONE ──
 
+let currentEditionDocenti = [];
+
 async function loadPresenzeData(idEdizione) {
     if (!idEdizione) return;
 
@@ -252,7 +254,7 @@ async function loadPresenzeData(idEdizione) {
             <tr>
                 <td colspan="2" class="text-center py-5 text-muted">
                     <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-                    Caricamento registro studenti in corso...
+                    Caricamento registro utenti in corso...
                 </td>
             </tr>
         `;
@@ -280,6 +282,7 @@ async function loadPresenzeData(idEdizione) {
         
         const data = await res.json();
         currentEditionStudents = data.studenti || [];
+        currentEditionDocenti = data.docenti || [];
 
         renderTableEditionView();
     } catch (err) {
@@ -344,7 +347,7 @@ function updateLessonBanner(lezioni, prevista) {
     }
 }
 
-// ── RENDERING TABELLA REGISTRO STUDENTI ──
+// ── RENDERING TABELLA REGISTRO (DOCENTE & STUDENTI) ──
 
 function renderTableEditionView() {
     const tbody = document.getElementById('tbodyTimbrature');
@@ -353,30 +356,32 @@ function renderTableEditionView() {
 
     if (!tbody) return;
 
-    let filtered = currentEditionStudents;
+    let filteredStudents = currentEditionStudents;
+    let filteredDocenti = currentEditionDocenti;
+
     if (searchQuery) {
-        filtered = currentEditionStudents.filter(s => {
+        filteredStudents = currentEditionStudents.filter(s => {
             const fullName = `${s.nome} ${s.cognome} ${s.email || ''} ${s.codice_fiscale || ''}`.toLowerCase();
+            return fullName.includes(searchQuery);
+        });
+        filteredDocenti = currentEditionDocenti.filter(d => {
+            const fullName = `${d.nome} ${d.cognome} ${d.email || ''} ${d.codice_fiscale || ''}`.toLowerCase();
             return fullName.includes(searchQuery);
         });
     }
 
+    const totalCount = filteredStudents.length + filteredDocenti.length;
     if (badgeCount) {
-        badgeCount.textContent = `${filtered.length} student${filtered.length === 1 ? 'e' : 'i'}`;
+        badgeCount.textContent = `${totalCount} utent${totalCount === 1 ? 'e' : 'i'} (${filteredDocenti.length} Docenti, ${filteredStudents.length} Studenti)`;
     }
 
-    if (filtered.length === 0) {
+    if (totalCount === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="2" class="text-center py-5 text-muted">
                     <div class="mb-2"><i class="bi bi-people fs-1 text-secondary"></i></div>
-                    <div class="fw-bold text-dark fs-6 mb-1">Nessuno studente trovato</div>
-                    <div class="small text-muted mb-3">Nessuno studente corrisponde ai criteri di ricerca o è iscritto all'aula.</div>
-                    ${currentEdizioneId ? `
-                        <a href="aule.html?id=${currentEdizioneId}" class="btn btn-primary btn-sm fw-bold">
-                            <i class="bi bi-person-plus-fill me-1"></i>Assegna Studenti all'Edizione
-                        </a>
-                    ` : ''}
+                    <div class="fw-bold text-dark fs-6 mb-1">Nessun utente trovato</div>
+                    <div class="small text-muted mb-3">Nessun docente o studente corrisponde ai criteri di ricerca.</div>
                 </td>
             </tr>
         `;
@@ -384,29 +389,80 @@ function renderTableEditionView() {
     }
 
     let html = '';
-    filtered.forEach(s => {
-        const initials = `${(s.nome || '')[0] || ''}${(s.cognome || '')[0] || ''}`.toUpperCase() || 'ST';
-        const dettaglioUrl = `dettaglio-timbrature.html?id_utente=${s.id_utente}&id_edizione=${currentEdizioneId || ''}`;
 
+    // SEZIONE DOCENTE
+    if (filteredDocenti.length > 0) {
         html += `
-            <tr>
-                <td class="ps-4">
-                    <a href="${dettaglioUrl}" class="d-flex align-items-center gap-3 text-decoration-none text-dark py-1">
-                        <div class="aula-student-avatar">${initials}</div>
-                        <div>
-                            <div class="fw-bold text-dark">${escapeHtml(s.cognome)} ${escapeHtml(s.nome)}</div>
-                            <div class="small text-muted">${escapeHtml(s.email || s.codice_fiscale || 'Studente')}</div>
-                        </div>
-                    </a>
-                </td>
-                <td class="text-end pe-4">
-                    <a href="${dettaglioUrl}" class="btn btn-sm btn-primary fw-bold d-inline-flex align-items-center gap-1">
-                        <i class="bi bi-clock-history"></i> Visualizza Timbrature
-                    </a>
+            <tr class="table-dark text-white fw-bold">
+                <td colspan="2" class="py-2 px-4" style="background: #475569; letter-spacing: 0.5px;">
+                    <i class="bi bi-person-badge-fill me-2 text-warning"></i>DOCENTE / PROFESSORI (${filteredDocenti.length})
                 </td>
             </tr>
         `;
-    });
+        filteredDocenti.forEach(d => {
+            const initials = `${(d.nome || '')[0] || ''}${(d.cognome || '')[0] || ''}`.toUpperCase() || 'DOC';
+            const dettaglioUrl = `dettaglio-timbrature.html?id_utente=${d.id_utente}&id_edizione=${currentEdizioneId || ''}&ruolo=DOCENTE`;
+
+            html += `
+                <tr class="table-warning-subtle">
+                    <td class="ps-4">
+                        <a href="${dettaglioUrl}" class="d-flex align-items-center gap-3 text-decoration-none text-dark py-1">
+                            <div class="aula-student-avatar" style="background:#7c3aed;">${initials}</div>
+                            <div>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                    ${escapeHtml(d.cognome)} ${escapeHtml(d.nome)}
+                                    <span class="badge bg-purple text-white fw-bold" style="background:#7c3aed; font-size:0.7rem;">DOCENTE</span>
+                                </div>
+                                <div class="small text-muted">${escapeHtml(d.email || d.codice_fiscale || 'Docente')}</div>
+                            </div>
+                        </a>
+                    </td>
+                    <td class="text-end pe-4">
+                        <a href="${dettaglioUrl}" class="btn btn-sm btn-outline-primary fw-bold d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-clock-history"></i> Timbrature Docente
+                        </a>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // SEZIONE STUDENTI
+    if (filteredStudents.length > 0) {
+        html += `
+            <tr class="table-secondary text-dark fw-bold">
+                <td colspan="2" class="py-2 px-4" style="background: #e2e8f0; letter-spacing: 0.5px;">
+                    <i class="bi bi-people-fill me-2 text-primary"></i>STUDENTI (${filteredStudents.length})
+                </td>
+            </tr>
+        `;
+        filteredStudents.forEach(s => {
+            const initials = `${(s.nome || '')[0] || ''}${(s.cognome || '')[0] || ''}`.toUpperCase() || 'ST';
+            const dettaglioUrl = `dettaglio-timbrature.html?id_utente=${s.id_utente}&id_edizione=${currentEdizioneId || ''}&ruolo=STUDENTE`;
+
+            html += `
+                <tr>
+                    <td class="ps-4">
+                        <a href="${dettaglioUrl}" class="d-flex align-items-center gap-3 text-decoration-none text-dark py-1">
+                            <div class="aula-student-avatar">${initials}</div>
+                            <div>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                    ${escapeHtml(s.cognome)} ${escapeHtml(s.nome)}
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold" style="font-size:0.7rem;">STUDENTE</span>
+                                </div>
+                                <div class="small text-muted">${escapeHtml(s.email || s.codice_fiscale || 'Studente')}</div>
+                            </div>
+                        </a>
+                    </td>
+                    <td class="text-end pe-4">
+                        <a href="${dettaglioUrl}" class="btn btn-sm btn-primary fw-bold d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-clock-history"></i> Visualizza Timbrature
+                        </a>
+                    </td>
+                </tr>
+            `;
+        });
+    }
 
     tbody.innerHTML = html;
 }
@@ -454,8 +510,8 @@ async function loadAppelloStudentiList() {
         if (!res.ok) throw new Error('Errore caricamento studenti');
         const data = await res.json();
 
-        if (!data.studenti || data.studenti.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-warning"><i class="bi bi-info-circle me-1"></i>Nessuno studente iscritto a questa edizione.</td></tr>`;
+        if ((!data.studenti || data.studenti.length === 0) && (!data.docenti || data.docenti.length === 0)) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-warning"><i class="bi bi-info-circle me-1"></i>Nessun utente iscritto o assegnato a questa edizione.</td></tr>`;
             return;
         }
 
@@ -463,37 +519,82 @@ async function loadAppelloStudentiList() {
         const defaultOut = document.getElementById('appelloOraOutDefault')?.value || '13:00';
 
         let html = '';
-        data.studenti.forEach(s => {
-            const isPresent = s.presente !== false;
-            const oraIn = s.ora_ingresso || (isPresent ? defaultIn : '');
-            const oraOut = s.ora_uscita || (isPresent ? defaultOut : '');
 
-            html += `
-                <tr class="batch-student-row ${isPresent ? '' : 'is-absent'}" id="appelloRow_${s.id_utente}">
-                    <td class="text-center">
-                        <input class="form-check-input student-presence-checkbox" type="checkbox" 
-                               data-id="${s.id_utente}" ${isPresent ? 'checked' : ''} 
-                               onchange="toggleStudentPresenceRow(${s.id_utente})">
-                    </td>
-                    <td>
-                        <div class="fw-bold">${escapeHtml(s.cognome)} ${escapeHtml(s.nome)}</div>
-                        <div class="small text-muted">${escapeHtml(s.email || s.codice_fiscale || '')}</div>
-                    </td>
-                    <td>
-                        <input type="time" class="form-control form-control-sm" 
-                               id="appelloIn_${s.id_utente}" value="${oraIn}" ${!isPresent ? 'disabled' : ''}>
-                    </td>
-                    <td>
-                        <input type="time" class="form-control form-control-sm" 
-                               id="appelloOut_${s.id_utente}" value="${oraOut}" ${!isPresent ? 'disabled' : ''}>
-                    </td>
-                    <td>
-                        <input type="text" class="form-control form-control-sm" 
-                               id="appelloNote_${s.id_utente}" placeholder="Note..." value="${escapeHtml(s.note || '')}">
-                    </td>
-                </tr>
-            `;
-        });
+        if (data.docenti && data.docenti.length > 0) {
+            html += `<tr class="table-dark text-white fw-bold"><td colspan="5" class="py-2 px-3" style="background:#475569;"><i class="bi bi-person-badge-fill me-1 text-warning"></i>DOCENTE / PROFESSORI</td></tr>`;
+            data.docenti.forEach(d => {
+                const isPresent = d.presente !== false;
+                const oraIn = d.ora_ingresso || (isPresent ? defaultIn : '');
+                const oraOut = d.ora_uscita || (isPresent ? defaultOut : '');
+
+                html += `
+                    <tr class="batch-student-row table-warning-subtle ${isPresent ? '' : 'is-absent'}" id="appelloRow_${d.id_utente}">
+                        <td class="text-center">
+                            <input class="form-check-input student-presence-checkbox" type="checkbox" 
+                                   data-id="${d.id_utente}" ${isPresent ? 'checked' : ''} 
+                                   onchange="toggleStudentPresenceRow(${d.id_utente})">
+                        </td>
+                        <td>
+                            <div class="fw-bold d-flex align-items-center gap-2">
+                                ${escapeHtml(d.cognome)} ${escapeHtml(d.nome)}
+                                <span class="badge bg-purple text-white" style="background:#7c3aed; font-size:0.65rem;">DOCENTE</span>
+                            </div>
+                            <div class="small text-muted">${escapeHtml(d.email || d.codice_fiscale || '')}</div>
+                        </td>
+                        <td>
+                            <input type="time" class="form-control form-control-sm" 
+                                   id="appelloIn_${d.id_utente}" value="${oraIn}" ${!isPresent ? 'disabled' : ''}>
+                        </td>
+                        <td>
+                            <input type="time" class="form-control form-control-sm" 
+                                   id="appelloOut_${d.id_utente}" value="${oraOut}" ${!isPresent ? 'disabled' : ''}>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm" 
+                                   id="appelloNote_${d.id_utente}" placeholder="Note..." value="${escapeHtml(d.note || '')}">
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        if (data.studenti && data.studenti.length > 0) {
+            html += `<tr class="table-secondary text-dark fw-bold"><td colspan="5" class="py-2 px-3" style="background:#e2e8f0;"><i class="bi bi-people-fill me-1 text-primary"></i>STUDENTI</td></tr>`;
+            data.studenti.forEach(s => {
+                const isPresent = s.presente !== false;
+                const oraIn = s.ora_ingresso || (isPresent ? defaultIn : '');
+                const oraOut = s.ora_uscita || (isPresent ? defaultOut : '');
+
+                html += `
+                    <tr class="batch-student-row ${isPresent ? '' : 'is-absent'}" id="appelloRow_${s.id_utente}">
+                        <td class="text-center">
+                            <input class="form-check-input student-presence-checkbox" type="checkbox" 
+                                   data-id="${s.id_utente}" ${isPresent ? 'checked' : ''} 
+                                   onchange="toggleStudentPresenceRow(${s.id_utente})">
+                        </td>
+                        <td>
+                            <div class="fw-bold d-flex align-items-center gap-2">
+                                ${escapeHtml(s.cognome)} ${escapeHtml(s.nome)}
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size:0.65rem;">STUDENTE</span>
+                            </div>
+                            <div class="small text-muted">${escapeHtml(s.email || s.codice_fiscale || '')}</div>
+                        </td>
+                        <td>
+                            <input type="time" class="form-control form-control-sm" 
+                                   id="appelloIn_${s.id_utente}" value="${oraIn}" ${!isPresent ? 'disabled' : ''}>
+                        </td>
+                        <td>
+                            <input type="time" class="form-control form-control-sm" 
+                                   id="appelloOut_${s.id_utente}" value="${oraOut}" ${!isPresent ? 'disabled' : ''}>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm" 
+                                   id="appelloNote_${s.id_utente}" placeholder="Note..." value="${escapeHtml(s.note || '')}">
+                        </td>
+                    </tr>
+                `;
+            });
+        }
 
         tbody.innerHTML = html;
     } catch (e) {

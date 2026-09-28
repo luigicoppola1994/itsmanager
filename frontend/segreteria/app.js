@@ -173,8 +173,6 @@ function renderCorsi(list) {
                                     data-teoria="${e.ore_teoria_aula || 0}"
                                     data-stage="${e.ore_stage || 0}"
                                     data-assenza="${e.percentuale_ore_assenza || 20}"
-                                    data-tolling="${e.tolleranza_ingresso_minuti || 15}"
-                                    data-tollusc="${e.tolleranza_uscita_minuti || 15}"
                                     data-idcorso="${e.id_corso}">
                                     <i class="bi bi-pencil-fill"></i>
                                 </button>
