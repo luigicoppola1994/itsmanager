@@ -35,6 +35,10 @@ let currentLezioneInfo = null;
 let isCreatingNewRow = false;
 let editingPresenzaId = null;
 
+// Ruolo utente corrente (letto dal localStorage oppure dal parametro URL 'ruolo')
+// Viene inizialmente letto dal localStorage, poi aggiornato in DOMContentLoaded con il param URL
+let isDocente = (localStorage.getItem('user_role') || '').toLowerCase().trim() === 'docente';
+
 // Utility date e ore
 function getTodayDateStr() {
     const d = new Date();
@@ -113,14 +117,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentEdizioneId = parseInt(urlParams.get('id_edizione')) || null;
     const initialDate = urlParams.get('data') || null;
 
+    // Ruolo: priorità al parametro URL 'ruolo', fallback su localStorage
+    const ruoloUrl = (urlParams.get('ruolo') || '').toLowerCase().trim();
+    if (ruoloUrl) {
+        isDocente = ruoloUrl === 'docente';
+    }
+
     if (!currentStudentId) {
         window.location.href = 'timbrature.html';
         return;
     }
 
     setupEventListeners();
+    applyDocenteMode();
     await loadInitialData(initialDate);
 });
+
+// Nasconde i blocchi KPI presenze/assenze per i docenti e adatta l'intestazione
+function applyDocenteMode() {
+    if (!isDocente) return;
+
+    // Nascondi blocco KPI (presenze/assenze/frequenza/giorni aula)
+    const kpiBlock = document.getElementById('kpiPresenzaBlock');
+    if (kpiBlock) kpiBlock.style.display = 'none';
+
+    // Nascondi blocco info corso (Monte Ore / Max Assenza) - non rilevante per docenti
+    const statsBlock = document.getElementById('courseStatsBlock');
+    if (statsBlock) statsBlock.style.display = 'none';
+
+    // Espandi la colonna anagrafica a tutta la larghezza disponibile
+    const profileCol = document.querySelector('.student-hero-card .col-lg-4');
+    if (profileCol) {
+        profileCol.classList.remove('col-lg-4', 'col-md-12');
+        profileCol.classList.add('col-lg-12');
+    }
+
+    // Aggiorna titolo h1 e sottotitolo
+    const titleEl = document.getElementById('pageTitleText');
+    if (titleEl) titleEl.textContent = 'Dettaglio Timbrature Docente';
+    const subEl = document.getElementById('pageSubtitleText');
+    if (subEl) subEl.textContent = 'Visualizza il calendario attivo del corso e registra le timbrature giornaliere.';
+
+    // Aggiorna breadcrumb top-bar e nc-breadcrumb
+    const topBarBC = document.getElementById('topBarBreadcrumbCurrent');
+    if (topBarBC) topBarBC.textContent = 'Dettaglio Docente';
+    const ncBC = document.getElementById('ncBreadcrumbCurrent');
+    if (ncBC) ncBC.textContent = 'Dettaglio Docente';
+
+    // Cambia il testo del <title> della pagina
+    document.title = 'ITS Manager – Timbrature Docente';
+}
+
 
 function setupEventListeners() {
     // Carosello pulsanti laterali
@@ -191,28 +238,31 @@ async function loadInitialData(initialDate = null) {
             currentStudentPresenzeList = await resP.json();
         }
 
-        // 2. Dati anagrafici studente
-        const resU = await fetchWithAuth(`/utenti/${currentStudentId}`);
+        // 2. Dati anagrafici utente (studente o docente)
+        // L'endpoint corretto è /users/{id_utente} (non /utenti/)
+        const resU = await fetchWithAuth(`/users/${currentStudentId}`);
         if (resU.ok) {
             const u = await resU.json();
             currentStudentData = {
                 id_utente: currentStudentId,
-                nome: u.nome || u.Nome,
-                cognome: u.cognome || u.Cognome,
-                email: u.email || u.Email,
-                codice_fiscale: u.codice_fiscale || u.Codice_Fiscale
+                nome: u.Nome || u.nome,
+                cognome: u.Cognome || u.cognome,
+                email: u.Email || u.email,
+                codice_fiscale: u.Codice_Fiscale || u.codice_fiscale,
+                telefono: u.Telefono || u.telefono
             };
         } else if (currentStudentPresenzeList.length > 0 && currentStudentPresenzeList[0].utente) {
             const u = currentStudentPresenzeList[0].utente;
             currentStudentData = {
                 id_utente: currentStudentId,
-                nome: u.Nome,
-                cognome: u.Cognome,
-                email: u.Email,
-                codice_fiscale: u.Codice_Fiscale
+                nome: u.Nome || u.nome,
+                cognome: u.Cognome || u.cognome,
+                email: u.Email || u.email,
+                codice_fiscale: u.Codice_Fiscale || u.codice_fiscale,
+                telefono: u.Telefono || u.telefono
             };
         } else {
-            currentStudentData = { id_utente: currentStudentId, nome: 'Studente', cognome: `#${currentStudentId}` };
+            currentStudentData = { id_utente: currentStudentId, nome: isDocente ? 'Docente' : 'Studente', cognome: `#${currentStudentId}` };
         }
 
         // 3. Risoluzione Edizione e Corso
@@ -365,11 +415,13 @@ function computeCourseActiveDays() {
         currentCourseDays.push(startStr || getTodayDateStr());
     }
 
-    // Configura i vincoli del datepicker
+    // Configura i vincoli del datepicker (max = min(fine corso, oggi))
     const dateInput = document.getElementById('calDateInput');
     if (dateInput) {
         dateInput.min = currentCourseDays[0];
-        dateInput.max = currentCourseDays[currentCourseDays.length - 1];
+        const lastCourseDay = currentCourseDays[currentCourseDays.length - 1];
+        const todayStr = getTodayDateStr();
+        dateInput.max = lastCourseDay < todayStr ? lastCourseDay : todayStr;
     }
 
     // Mostra il badge di durata
@@ -392,13 +444,22 @@ function updateStudentAndCourseHeader() {
     if (nameEl) nameEl.textContent = `${s.cognome} ${s.nome}`;
 
     const idBadge = document.getElementById('studentIdBadge');
-    if (idBadge) idBadge.textContent = `ID #${s.id_utente}`;
+    if (idBadge) {
+        if (isDocente) {
+            idBadge.textContent = 'DOCENTE';
+            idBadge.className = 'badge bg-success-subtle text-success border border-success-subtle fw-bold';
+        } else {
+            idBadge.textContent = 'STUDENTE';
+            idBadge.className = 'badge bg-primary-subtle text-primary border border-primary-subtle fw-bold';
+        }
+        idBadge.style.display = '';
+    }
 
     const subEl = document.getElementById('studentHeaderSubtitle');
     if (subEl) {
         const parts = [];
         if (s.email) parts.push(`<span><i class="bi bi-envelope me-1"></i>${escapeHtml(s.email)}</span>`);
-        if (s.codice_fiscale) parts.push(`<span><i class="bi bi-person-vcard me-1"></i>CF: <strong>${escapeHtml(s.codice_fiscale)}</strong></span>`);
+        if (s.telefono) parts.push(`<span><i class="bi bi-telephone me-1"></i>${escapeHtml(s.telefono)}</span>`);
         subEl.innerHTML = parts.join('<span class="text-muted mx-1">•</span>');
     }
 
@@ -575,12 +636,18 @@ function renderDaysCarousel() {
         }
 
         const todayMarker = isToday ? `<div class="day-card-today-badge">OGGI</div>` : '';
+        const isFuture = (dateStr > todayStr);
+        const futureClass = isFuture ? 'is-future' : '';
+        const onclickAttr = isFuture ? '' : `onclick="selectStudentCalDate('${dateStr}')"}`;
+        const titleAttr = isFuture
+            ? `title="${formatDateLongItalian(dateStr)} — Non ancora disponibile"`
+            : `title="${formatDateLongItalian(dateStr)}"`;
 
         html += `
-            <div class="day-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}"
+            <div class="day-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''} ${futureClass}"
                  data-date="${dateStr}"
-                 onclick="selectStudentCalDate('${dateStr}')"
-                 title="${formatDateLongItalian(dateStr)}">
+                 ${isFuture ? '' : `onclick="selectStudentCalDate('${dateStr}')"}`}
+                 ${titleAttr}>
                 ${todayMarker}
                 <div class="day-name">${dayNamesShort[d.getDay()]}</div>
                 <div class="day-num">${d.getDate()}</div>
@@ -612,6 +679,13 @@ function centerSelectedCardInCarousel() {
 // Selezione del giorno nel calendario
 window.selectStudentCalDate = async function(dateStr) {
     if (!dateStr) return;
+
+    // Blocca selezione date future
+    const todayStr = getTodayDateStr();
+    if (dateStr > todayStr) {
+        showToast('warning', 'Data Non Disponibile', 'Non è possibile registrare timbrature per date future.');
+        return;
+    }
 
     // Annulla eventuali form di modifica/creazione aperti
     isCreatingNewRow = false;
@@ -904,6 +978,12 @@ window.updateNewRowDuration = function() {
 window.saveNewTimbraturaRow = async function() {
     if (!currentStudentId || !currentSelectedCalDate) return;
 
+    // Blocca timbrature su date future
+    if (currentSelectedCalDate > getTodayDateStr()) {
+        showToast('warning', 'Data Non Disponibile', 'Non è possibile registrare timbrature per date future.');
+        return;
+    }
+
     const oraIn = document.getElementById('newOraIn')?.value || null;
     const oraOut = document.getElementById('newOraOut')?.value || null;
     const note = document.getElementById('newNote')?.value.trim() || null;
@@ -1006,6 +1086,12 @@ window.updateEditRowDuration = function(idPresenza) {
 
 window.saveEditRowInline = async function(idPresenza) {
     if (!idPresenza || !currentSelectedCalDate) return;
+
+    // Blocca timbrature su date future
+    if (currentSelectedCalDate > getTodayDateStr()) {
+        showToast('warning', 'Data Non Disponibile', 'Non è possibile modificare timbrature per date future.');
+        return;
+    }
 
     const oraIn = document.getElementById(`editOraIn-${idPresenza}`)?.value || null;
     const oraOut = document.getElementById(`editOraOut-${idPresenza}`)?.value || null;

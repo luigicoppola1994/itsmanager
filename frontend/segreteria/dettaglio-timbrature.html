@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -287,6 +287,16 @@
         .badge-open { background: #fef9c3; color: #a16207; border: 1px solid #fde68a; }
         .badge-none { background: #f1f5f9; color: #94a3b8; border: 1px dashed #cbd5e1; }
 
+        /* Date future: non selezionabili */
+        .day-card.is-future {
+            opacity: 0.38;
+            cursor: not-allowed;
+            pointer-events: none;
+            background: #f8fafc;
+            border-style: dashed;
+        }
+        .day-card.is-future .day-num { color: #94a3b8; }
+
         /* ── TABELLA TIMBRATURE DEL GIORNO (Minimal) ── */
         .timb-time-chip {
             display: inline-flex;
@@ -376,7 +386,7 @@
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
                     <a href="timbrature.html" class="breadcrumb-section" style="text-decoration:none;">Timbrature</a>
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
-                    <span class="breadcrumb-current">Dettaglio Studente</span>
+                    <span class="breadcrumb-current" id="topBarBreadcrumbCurrent">Dettaglio Studente</span>
                 </nav>
                 <div class="rubick-top-bar-actions">
                     <div class="rubick-icon-badge" title="Notifiche">
@@ -395,7 +405,7 @@
                         Registro Timbrature
                     </a>
                     <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
-                    <span class="nc-breadcrumb-current">Dettaglio Studente</span>
+                    <span class="nc-breadcrumb-current" id="ncBreadcrumbCurrent">Dettaglio Studente</span>
                 </div>
 
                 <div class="nc-header-row">
@@ -436,7 +446,7 @@
                         </div>
 
                         <!-- Info Corso & Edizione (Solo: Nome corso, Edizione, Monte ore, Max assenza) -->
-                        <div class="col-lg-3 col-md-6">
+                        <div class="col-lg-3 col-md-6" id="courseStatsBlock">
                             <div class="course-info-box">
                                 <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
                                     <div class="fw-bold text-dark text-truncate fs-6" id="courseNameTitle" title="Nome Corso">Caricamento corso...</div>
@@ -456,7 +466,7 @@
                         </div>
 
                         <!-- KPI Riepilogo Presenze & Assenze Segreteria -->
-                        <div class="col-lg-5 col-md-12">
+                        <div class="col-lg-5 col-md-12" id="kpiPresenzaBlock">
                             <div class="kpi-mini-grid">
                                 <!-- 1. Ore Presenza -->
                                 <div class="kpi-mini-box">
@@ -595,6 +605,6 @@
     <!-- Bootstrap JS Bundle -->
     <script src="../assets/bootstrap.bundle.min.js"></script>
     <script src="../shared/auth.js?v=2.1"></script>
-    <script src="dettaglio-timbrature.js?v=3.4"></script>
+    <script src="dettaglio-timbrature.js?v=3.9"></script>
 </body>
 </html>
