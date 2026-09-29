@@ -876,8 +876,19 @@ function renderTimbrature() {
     container.innerHTML = html;
     console.log('[STUDENTE] innerHTML impostato');
 
-    // Il contenitore esiste solo dopo il rendering del markup.
-    checkLezioneOggi();
+    // Usa prima il calendario già caricato: evita una card vuota se la verifica
+    // separata della lezione odierna risponde in ritardo.
+    const today = new Date().toISOString().split('T')[0];
+    const lezioneCaricata = studentLezioni.find(lezione => lezione.data === today);
+    if (lezioneCaricata) {
+        renderLezioneOggi({
+            ha_lezione: true,
+            lezione: lezioneCaricata,
+            messaggio: 'Lezione trovata per oggi'
+        });
+    } else {
+        checkLezioneOggi();
+    }
 }
 
 // Funzione per verificare lezione oggi
