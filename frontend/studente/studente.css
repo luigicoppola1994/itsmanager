@@ -349,6 +349,10 @@ body {
     background: linear-gradient(180deg, #ffffff 0%, #f4faff 100%);
 }
 
+.qr-code-panel.is-visible {
+    display: block !important;
+}
+
 .qr-code-panel-header {
     display: flex;
     align-items: center;

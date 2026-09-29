@@ -1049,6 +1049,7 @@ async function generaQRCode() {
         const btnGeneraQR = document.getElementById('btnGeneraQR');
         if (qrContainer && btnGeneraQR) {
             qrContainer.style.display = 'block';
+            qrContainer.classList.add('is-visible');
             btnGeneraQR.style.display = 'none';
 
             // Genera un'immagine QR visibile anche sui browser mobile.
@@ -1059,15 +1060,19 @@ async function generaQRCode() {
             }
 
             try {
-                const qrImage = await QRCode.toDataURL(qrData.qr_code_data, {
-                    width: 320,
-                    margin: 2,
-                    color: {
-                        dark: '#4682B4',
-                        light: '#ffffff'
-                    }
+                const qrImage = await new Promise((resolve, reject) => {
+                    QRCode.toDataURL(qrData.qr_code_data, {
+                        width: 320,
+                        margin: 2,
+                        color: {
+                            dark: '#4682B4',
+                            light: '#ffffff'
+                        }
+                    }, (error, url) => error ? reject(error) : resolve(url));
                 });
                 qrElement.src = qrImage;
+                qrElement.style.display = 'block';
+                qrElement.removeAttribute('hidden');
                 startQrCountdown(qrData.scadenza);
             } catch (error) {
                 console.error('[STUDENTE] Errore rendering QR code:', error);
@@ -1134,6 +1139,7 @@ function annullaQRCode() {
     const btnGeneraQR = document.getElementById('btnGeneraQR');
     if (qrContainer && btnGeneraQR) {
         qrContainer.style.display = 'none';
+        qrContainer.classList.remove('is-visible');
         btnGeneraQR.style.display = 'inline-block';
     }
     window.currentQRData = null;
