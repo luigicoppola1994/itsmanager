@@ -512,7 +512,7 @@ function renderDashboard() {
                     </button>
                     <div id="qrCodeContainer" class="dashboard-qr-panel qr-code-panel" style="display: none;">
                         <span class="qr-code-kicker">Timbratura digitale</span>
-                        <img id="qrCode" class="qr-code-image" alt="QR code per la timbratura">
+                        <div id="qrCode" class="qr-code-image" aria-label="QR code per la timbratura"></div>
                         <div id="qrCountdown" class="qr-countdown" role="status" aria-live="polite">
                             <i class="bi bi-clock me-1"></i>Valido per 5:00
                         </div>
@@ -1003,7 +1003,7 @@ function renderLezioneOggi(data) {
                     <span class="qr-live-dot"><i class="bi bi-broadcast-pin me-1"></i>Attivo</span>
                 </div>
                 <h3>Scansiona questo codice</h3>
-                <img id="qrCode" class="qr-code-image" alt="QR code per la timbratura">
+                <div id="qrCode" class="qr-code-image" aria-label="QR code per la timbratura"></div>
                 <div id="qrCountdown" class="qr-countdown" role="status" aria-live="polite">
                     <i class="bi bi-clock me-1"></i>Valido per 5:00
                 </div>
@@ -1095,17 +1095,15 @@ async function generaQRCode() {
             }
 
             try {
-                const qrImage = await new Promise((resolve, reject) => {
-                    QRCode.toDataURL(qrData.qr_code_data, {
-                        width: 320,
-                        margin: 2,
-                        color: {
-                            dark: '#4682B4',
-                            light: '#ffffff'
-                        }
-                    }, (error, url) => error ? reject(error) : resolve(url));
+                qrElement.innerHTML = '';
+                new QRCode(qrElement, {
+                    text: qrData.qr_code_data,
+                    width: 320,
+                    height: 320,
+                    colorDark: '#4682B4',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
                 });
-                qrElement.src = qrImage;
                 qrElement.style.display = 'block';
                 qrElement.removeAttribute('hidden');
                 startQrCountdown(qrData.scadenza);

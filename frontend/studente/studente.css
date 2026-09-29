@@ -670,6 +670,15 @@ body {
     box-shadow: 0 10px 24px rgba(31, 54, 80, 0.1);
 }
 
+.qr-code-image img,
+.qr-code-image canvas {
+    display: block;
+    width: 100% !important;
+    max-width: 320px;
+    height: auto !important;
+    margin: 0 auto;
+}
+
 .qr-countdown {
     display: inline-flex;
     align-items: center;
