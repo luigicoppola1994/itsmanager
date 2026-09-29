@@ -56,6 +56,10 @@ import auth           # Le funzioni di autenticazione (hash, token JWT)
 # ------------------------------------------------------------------------------
 app = FastAPI(title="ITS Manager API")
 
+@app.get("/")
+def health_check():
+    return {"status": "ok", "service": "ITS Manager API"}
+
 # ------------------------------------------------------------------------------
 # CARICAMENTO COMUNI ITALIANI IN MEMORIA
 # Il file comuni.json viene letto una sola volta all'avvio del server.
@@ -2305,8 +2309,4 @@ def timbra_qr_code(
             messaggio="Timbratura ingresso registrata con successo",
             presenza=nuova_presenza
         )
-    except Exception as e:
-        db.rollback()
-        error_msg = extract_sql_error_message(e)
-        raise HTTPException(status_code=400, detail=error_msg)
 
