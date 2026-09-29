@@ -215,6 +215,44 @@ body {
     background: #146c43;
 }
 
+.today-lesson-qr-area {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    min-width: 220px;
+}
+
+.today-lesson-qr-area .today-lesson-action {
+    width: 100%;
+    border: 0;
+    cursor: pointer;
+}
+
+.dashboard-qr-panel {
+    width: min(300px, 100%);
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.dashboard-qr-panel .qr-code-kicker {
+    margin-bottom: 8px;
+}
+
+.dashboard-qr-panel .qr-code-image {
+    width: min(260px, 100%);
+}
+
+.dashboard-qr-panel .qr-code-actions {
+    flex-direction: column;
+}
+
+.dashboard-qr-panel .qr-code-actions .btn {
+    width: 100%;
+}
+
 .qr-lesson-summary {
     padding: 14px 16px;
     border: 1px solid rgba(70, 130, 180, 0.2);
@@ -1341,6 +1379,15 @@ body {
     .today-lesson-action {
         width: 100%;
         text-align: center;
+    }
+
+    .today-lesson-qr-area {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .dashboard-qr-panel {
+        width: 100%;
     }
 
     .attendance-page-header {

@@ -506,9 +506,26 @@ function renderDashboard() {
                     <h2 id="todayLessonTitle">Hai una lezione prevista oggi</h2>
                     <p>${todayLezioni[0].ora_inizio?.substring(0, 5) || '--:--'} - ${todayLezioni[0].ora_fine?.substring(0, 5) || '--:--'}</p>
                 </div>
-                <a class="today-lesson-action" href="timbrature.html?genera_qr=1">
-                    <i class="bi bi-arrow-right-circle me-1"></i>Genera QR
-                </a>
+                <div class="today-lesson-qr-area">
+                    <button id="btnGeneraQR" class="today-lesson-action" type="button">
+                        <i class="bi bi-qr-code-scan me-1"></i>Genera QR
+                    </button>
+                    <div id="qrCodeContainer" class="dashboard-qr-panel qr-code-panel" style="display: none;">
+                        <span class="qr-code-kicker">Timbratura digitale</span>
+                        <img id="qrCode" class="qr-code-image" alt="QR code per la timbratura">
+                        <div id="qrCountdown" class="qr-countdown" role="status" aria-live="polite">
+                            <i class="bi bi-clock me-1"></i>Valido per 5:00
+                        </div>
+                        <div class="qr-code-actions">
+                            <button id="btnTimbra" class="btn btn-success" type="button">
+                                <i class="bi bi-check-circle me-1"></i>Conferma
+                            </button>
+                            <button id="btnAnnullaQR" class="btn btn-secondary" type="button">
+                                <i class="bi bi-x-circle me-1"></i>Annulla
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </section>
             ` : ''}
 
@@ -526,6 +543,13 @@ function renderDashboard() {
         console.log('[STUDENTE] HTML generato, lunghezza:', htmlContent.length);
         container.innerHTML = htmlContent;
         console.log('[STUDENTE] innerHTML impostato');
+
+        const dashboardQrButton = document.getElementById('btnGeneraQR');
+        if (dashboardQrButton) dashboardQrButton.addEventListener('click', generaQRCode);
+        const dashboardConfirmButton = document.getElementById('btnTimbra');
+        if (dashboardConfirmButton) dashboardConfirmButton.addEventListener('click', confermaTimbratura);
+        const dashboardCancelButton = document.getElementById('btnAnnullaQR');
+        if (dashboardCancelButton) dashboardCancelButton.addEventListener('click', annullaQRCode);
         
         // Inizializza FullCalendar
         initStudentCalendar();
