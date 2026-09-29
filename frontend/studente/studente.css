@@ -250,6 +250,100 @@ body {
     min-height: 42px;
 }
 
+.attendance-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin: 4px 0 22px;
+}
+
+.attendance-page-header .page-header-info h1 {
+    color: #1f3650;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    letter-spacing: -0.02em;
+}
+
+.attendance-page-date {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    padding: 10px 14px;
+    border: 1px solid #dbe7f1;
+    border-radius: 10px;
+    background: #f8fbff;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.attendance-page-date strong {
+    color: #1f3650;
+    font-size: 0.9rem;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.attendance-today-card,
+.attendance-history-card {
+    margin-bottom: 20px;
+    border: 1px solid #e1eaf2;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(31, 54, 80, 0.07);
+    overflow: hidden;
+}
+
+.attendance-today-card .course-card-header-line {
+    background: linear-gradient(110deg, #edf7ff, #f9fcff);
+}
+
+.attendance-today-card .course-card-title i {
+    color: #198754;
+}
+
+.attendance-status-pill,
+.attendance-count {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    color: #39709d;
+    background: #e9f3fb;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.attendance-count {
+    color: #6c757d;
+    background: #f1f4f7;
+}
+
+.attendance-history-card .list-group-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-color: #e5edf4;
+}
+
+.attendance-history-card .list-group-item > .d-flex {
+    width: 100%;
+}
+
+.qr-code-image {
+    display: block;
+    width: min(220px, 100%);
+    height: auto;
+    margin: 0 auto;
+    padding: 10px;
+    border: 1px solid #dbe7f1;
+    border-radius: 10px;
+    background: #fff;
+}
+
 .course-card-header-line {
     display: flex;
     justify-content: space-between;
@@ -937,6 +1031,27 @@ body {
     .today-lesson-action {
         width: 100%;
         text-align: center;
+    }
+
+    .attendance-page-header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .attendance-page-date {
+        align-items: flex-start;
+    }
+
+    .attendance-status-pill,
+    .attendance-count {
+        align-self: flex-start;
+    }
+
+    .attendance-today-card,
+    .attendance-history-card {
+        border-radius: 10px;
     }
 
     .qr-code-panel .btn {

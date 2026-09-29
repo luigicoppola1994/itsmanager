@@ -738,8 +738,8 @@ function renderTimbrature() {
     console.log('[STUDENTE] Date con presenze:', sortedDates);
 
     const html = `
-        <!-- TOP ACTION BAR -->
-        <div class="top-action-bar">
+        <!-- ATTENDANCE PAGE HEADER -->
+        <div class="attendance-page-header">
             <div class="page-header-info">
                 <h1>
                     <i class="bi bi-clock-history text-primary"></i>
@@ -747,15 +747,20 @@ function renderTimbrature() {
                 </h1>
                 <p>Registro delle tue presenze</p>
             </div>
+            <div class="attendance-page-date">
+                <span>Oggi</span>
+                <strong>${formatDateItalian(new Date().toISOString().split('T')[0])}</strong>
+            </div>
         </div>
 
-        <!-- SEZIONE TIMBRATURA GIORNO -->
-        <div class="course-card-unit mb-4">
+        <!-- TODAY ATTENDANCE -->
+        <section class="attendance-today-card">
             <div class="course-card-header-line">
                 <div class="course-card-title">
                     <i class="bi bi-qr-code-scan"></i>
-                    <span>Timbratura del Giorno</span>
+                    <span>Presenza di oggi</span>
                 </div>
+                <span class="attendance-status-pill"><i class="bi bi-shield-check me-1"></i>Accesso sicuro</span>
             </div>
             <div class="course-dropdown-body">
                 <div id="lezioneOggiContainer">
@@ -765,15 +770,16 @@ function renderTimbrature() {
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- TIMBRATURE -->
-        <div class="course-card-unit">
+        <!-- ATTENDANCE HISTORY -->
+        <section class="attendance-history-card">
             <div class="course-card-header-line">
                 <div class="course-card-title">
                     <i class="bi bi-clock-history"></i>
-                    <span>Registro Timbrature</span>
+                    <span>Storico presenze</span>
                 </div>
+                <span class="attendance-count">${sortedDates.length} giorn${sortedDates.length === 1 ? 'o' : 'i'}</span>
             </div>
             <div class="course-dropdown-body">
                 ${sortedDates.length > 0 ? `
@@ -822,7 +828,7 @@ function renderTimbrature() {
                     </div>
                 `}
             </div>
-        </div>
+        </section>
     `;
 
     console.log('[STUDENTE] HTML generato, lunghezza:', html.length);
@@ -912,7 +918,7 @@ function renderLezioneOggi(data) {
                 <div class="card-body">
                         <span class="qr-code-kicker">Timbratura digitale</span>
                         <h5 class="card-title mb-3">QR Code pronto</h5>
-                        <canvas id="qrCode" class="qr-code-canvas mb-3"></canvas>
+                        <img id="qrCode" class="qr-code-image mb-3" alt="QR code per la timbratura">
                         <p class="text-muted small mb-3">Scansiona questo QR code per timbrare l'ingresso</p>
                         <p class="text-warning small mb-3">
                             <i class="bi bi-clock me-1"></i>Valido per 5 minuti
@@ -994,7 +1000,7 @@ async function generaQRCode() {
             qrContainer.style.display = 'block';
             btnGeneraQR.style.display = 'none';
 
-            // Genera QR code visivo
+            // Genera un'immagine QR visibile anche sui browser mobile.
             const qrElement = document.getElementById('qrCode');
             if (!qrElement || typeof QRCode === 'undefined') {
                 showToast('error', 'Errore', 'Libreria QR non disponibile');
@@ -1002,7 +1008,7 @@ async function generaQRCode() {
             }
 
             try {
-                await QRCode.toCanvas(qrElement, qrData.qr_code_data, {
+                const qrImage = await QRCode.toDataURL(qrData.qr_code_data, {
                     width: 200,
                     margin: 2,
                     color: {
@@ -1010,6 +1016,7 @@ async function generaQRCode() {
                         light: '#ffffff'
                     }
                 });
+                qrElement.src = qrImage;
             } catch (error) {
                 console.error('[STUDENTE] Errore rendering QR code:', error);
                 showToast('error', 'Errore', 'Impossibile visualizzare il QR code');
