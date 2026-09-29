@@ -335,13 +335,36 @@ body {
 
 .qr-code-image {
     display: block;
-    width: min(220px, 100%);
+    width: min(340px, 100%);
     height: auto;
     margin: 0 auto;
-    padding: 10px;
-    border: 1px solid #dbe7f1;
-    border-radius: 10px;
+    padding: 14px;
+    border: 1px solid #c9dcea;
+    border-radius: 14px;
     background: #fff;
+    box-shadow: 0 10px 24px rgba(31, 54, 80, 0.1);
+}
+
+.qr-countdown {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 13px;
+    border-radius: 999px;
+    color: #9a6700;
+    background: #fff6d8;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.qr-countdown strong {
+    margin-left: 4px;
+    font-size: 1.1rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.qr-countdown.is-expired {
+    color: #a52834;
+    background: #fce8ea;
 }
 
 .course-card-header-line {
@@ -1057,5 +1080,14 @@ body {
     .qr-code-panel .btn {
         width: 100%;
         margin: 4px 0 !important;
+    }
+
+    .qr-code-image {
+        width: min(300px, 100%);
+        padding: 10px;
+    }
+
+    .qr-countdown {
+        font-size: 0.82rem;
     }
 }

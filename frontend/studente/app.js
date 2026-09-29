@@ -5,6 +5,7 @@ let studentEdizione = null;
 let studentCorso = null;
 let studentPresenze = [];
 let studentLezioni = [];
+let qrExpiryTimer = null;
 
 window.addEventListener('load', async () => {
     const role = localStorage.getItem('user_role');
@@ -920,9 +921,9 @@ function renderLezioneOggi(data) {
                         <h5 class="card-title mb-3">QR Code pronto</h5>
                         <img id="qrCode" class="qr-code-image mb-3" alt="QR code per la timbratura">
                         <p class="text-muted small mb-3">Scansiona questo QR code per timbrare l'ingresso</p>
-                        <p class="text-warning small mb-3">
-                            <i class="bi bi-clock me-1"></i>Valido per 5 minuti
-                        </p>
+                        <div id="qrCountdown" class="qr-countdown mb-3" role="status" aria-live="polite">
+                            <i class="bi bi-clock me-1"></i>Valido per 5:00
+                        </div>
                         <button id="btnTimbra" class="btn btn-success">
                             <i class="bi bi-check-circle me-1"></i>Conferma Timbratura
                         </button>
@@ -1009,7 +1010,7 @@ async function generaQRCode() {
 
             try {
                 const qrImage = await QRCode.toDataURL(qrData.qr_code_data, {
-                    width: 200,
+                    width: 320,
                     margin: 2,
                     color: {
                         dark: '#4682B4',
@@ -1017,6 +1018,7 @@ async function generaQRCode() {
                     }
                 });
                 qrElement.src = qrImage;
+                startQrCountdown(qrData.scadenza);
             } catch (error) {
                 console.error('[STUDENTE] Errore rendering QR code:', error);
                 showToast('error', 'Errore', 'Impossibile visualizzare il QR code');
@@ -1074,6 +1076,10 @@ async function confermaTimbratura() {
 
 // Funzione per annullare QR code
 function annullaQRCode() {
+    if (qrExpiryTimer) {
+        clearInterval(qrExpiryTimer);
+        qrExpiryTimer = null;
+    }
     const qrContainer = document.getElementById('qrCodeContainer');
     const btnGeneraQR = document.getElementById('btnGeneraQR');
     if (qrContainer && btnGeneraQR) {
@@ -1081,6 +1087,32 @@ function annullaQRCode() {
         btnGeneraQR.style.display = 'inline-block';
     }
     window.currentQRData = null;
+}
+
+function startQrCountdown(expiryValue) {
+    const countdown = document.getElementById('qrCountdown');
+    if (!countdown) return;
+
+    if (qrExpiryTimer) clearInterval(qrExpiryTimer);
+    const expiry = new Date(expiryValue).getTime();
+
+    const updateCountdown = () => {
+        const remainingSeconds = Math.max(0, Math.ceil((expiry - Date.now()) / 1000));
+        const minutes = Math.floor(remainingSeconds / 60);
+        const seconds = String(remainingSeconds % 60).padStart(2, '0');
+        countdown.innerHTML = remainingSeconds > 0
+            ? `<i class="bi bi-clock me-1"></i>Scade tra <strong>${minutes}:${seconds}</strong>`
+            : '<i class="bi bi-exclamation-circle me-1"></i>QR scaduto: generane uno nuovo';
+        countdown.classList.toggle('is-expired', remainingSeconds === 0);
+
+        if (remainingSeconds === 0) {
+            clearInterval(qrExpiryTimer);
+            qrExpiryTimer = null;
+        }
+    };
+
+    updateCountdown();
+    qrExpiryTimer = setInterval(updateCountdown, 1000);
 }
 
 // Funzione per timbrare uscita
