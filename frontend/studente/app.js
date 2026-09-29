@@ -733,11 +733,19 @@ function renderTimbrature() {
     });
 
     const sortedDates = Object.keys(presenzeByDate).sort((a, b) => b.localeCompare(a));
+    const totalMinutes = studentPresenze.reduce((total, presenza) => {
+        const ingresso = timeToMinutes(presenza.ora_ingresso);
+        const uscita = timeToMinutes(presenza.ora_uscita);
+        return ingresso !== null && uscita !== null && uscita > ingresso
+            ? total + (uscita - ingresso)
+            : total;
+    }, 0);
     console.log('[STUDENTE] Date con presenze:', sortedDates);
 
     const html = `
-        <!-- ATTENDANCE PAGE HEADER -->
-        <div class="attendance-page-header">
+        <div class="attendance-screen">
+            <!-- ATTENDANCE PAGE HEADER -->
+            <div class="attendance-page-header">
             <div class="page-header-info">
                 <h1>
                     <i class="bi bi-clock-history text-primary"></i>
@@ -749,10 +757,28 @@ function renderTimbrature() {
                 <span>Oggi</span>
                 <strong>${formatDateItalian(new Date().toISOString().split('T')[0])}</strong>
             </div>
-        </div>
+            </div>
 
-        <!-- TODAY ATTENDANCE -->
-        <section class="attendance-today-card">
+            <div class="attendance-metrics" aria-label="Riepilogo presenze">
+                <div class="attendance-metric">
+                    <span class="attendance-metric-icon"><i class="bi bi-calendar-check"></i></span>
+                    <span><strong>${sortedDates.length}</strong><small>giorni registrati</small></span>
+                </div>
+                <div class="attendance-metric">
+                    <span class="attendance-metric-icon"><i class="bi bi-clock-history"></i></span>
+                    <span><strong>${formatMinutesToHours(totalMinutes)}</strong><small>ore completate</small></span>
+                </div>
+                <div class="attendance-metric">
+                    <span class="attendance-metric-icon"><i class="bi bi-fingerprint"></i></span>
+                    <span><strong>${studentPresenze.length}</strong><small>timbrature</small></span>
+                </div>
+            </div>
+
+            <div class="attendance-layout">
+                <div class="attendance-main-column">
+
+                    <!-- TODAY ATTENDANCE -->
+                    <section class="attendance-today-card">
             <div class="course-card-header-line">
                 <div class="course-card-title">
                     <i class="bi bi-qr-code-scan"></i>
@@ -768,10 +794,10 @@ function renderTimbrature() {
                     </div>
                 </div>
             </div>
-        </section>
+                    </section>
 
-        <!-- ATTENDANCE HISTORY -->
-        <section class="attendance-history-card">
+                    <!-- ATTENDANCE HISTORY -->
+                    <section class="attendance-history-card">
             <div class="course-card-header-line">
                 <div class="course-card-title">
                     <i class="bi bi-clock-history"></i>
@@ -826,7 +852,24 @@ function renderTimbrature() {
                     </div>
                 `}
             </div>
-        </section>
+                    </section>
+                </div>
+
+                <aside class="attendance-guide">
+                    <div class="attendance-guide-icon"><i class="bi bi-info-circle"></i></div>
+                    <h2>Come funziona</h2>
+                    <ol>
+                        <li><span>1</span><p>Apri la lezione prevista per oggi.</p></li>
+                        <li><span>2</span><p>Genera il QR code dalla sezione presenza.</p></li>
+                        <li><span>3</span><p>Mostralo alla segreteria prima della scadenza.</p></li>
+                    </ol>
+                    <div class="attendance-guide-note">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Il codice è personale e valido per 5 minuti.</span>
+                    </div>
+                </aside>
+            </div>
+        </div>
     `;
 
     console.log('[STUDENTE] HTML generato, lunghezza:', html.length);
