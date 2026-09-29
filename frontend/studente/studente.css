@@ -718,6 +718,31 @@ body {
     background: #fce8ea;
 }
 
+.qr-registered-state {
+    display: flex;
+    min-height: 170px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #198754;
+    text-align: center;
+}
+
+.qr-registered-state i {
+    font-size: 2.6rem;
+}
+
+.qr-registered-state strong {
+    color: #1f3650;
+    font-size: 1.05rem;
+}
+
+.qr-registered-state span {
+    color: #718293;
+    font-size: 0.82rem;
+}
+
 .course-card-header-line {
     display: flex;
     justify-content: space-between;

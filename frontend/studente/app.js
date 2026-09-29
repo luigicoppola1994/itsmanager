@@ -6,6 +6,7 @@ let studentCorso = null;
 let studentPresenze = [];
 let studentLezioni = [];
 let qrExpiryTimer = null;
+let qrStatusTimer = null;
 
 window.addEventListener('load', async () => {
     const role = localStorage.getItem('user_role');
@@ -1118,6 +1119,7 @@ async function generaQRCode() {
                 qrElement.style.display = 'block';
                 qrElement.removeAttribute('hidden');
                 startQrCountdown(qrData.scadenza);
+                startQrStatusPolling();
             } catch (error) {
                 console.error('[STUDENTE] Errore rendering QR code:', error);
                 showToast('error', 'Errore', 'Impossibile visualizzare il QR code');
@@ -1141,8 +1143,59 @@ async function aggiornaStatoPresenza() {
     await loadStudentData();
 }
 
+function startQrStatusPolling() {
+    if (qrStatusTimer) clearInterval(qrStatusTimer);
+    qrStatusTimer = setInterval(async () => {
+        const userId = localStorage.getItem('user_id');
+        if (!userId) return;
+
+        try {
+            const response = await fetchAutenticata(`${API_URL}/presenze?id_utente=${userId}`);
+            if (!response.ok) return;
+
+            const presenze = await response.json();
+            const today = new Date().toISOString().split('T')[0];
+            const presenzaRegistrata = presenze.find(p => p.data_presenza === today && p.ora_ingresso);
+            if (presenzaRegistrata) {
+                destroyQrAfterAttendance(presenzaRegistrata);
+            }
+        } catch (error) {
+            console.warn('[STUDENTE] Impossibile aggiornare lo stato QR:', error);
+        }
+    }, 2500);
+}
+
+function destroyQrAfterAttendance(presenza) {
+    if (qrStatusTimer) {
+        clearInterval(qrStatusTimer);
+        qrStatusTimer = null;
+    }
+    if (qrExpiryTimer) {
+        clearInterval(qrExpiryTimer);
+        qrExpiryTimer = null;
+    }
+
+    const qrContainer = document.getElementById('qrCodeContainer');
+    if (qrContainer) {
+        qrContainer.classList.add('qr-registered');
+        qrContainer.innerHTML = `
+            <div class="qr-registered-state">
+                <i class="bi bi-check-circle-fill"></i>
+                <strong>Timbratura registrata</strong>
+                <span>Ingresso acquisito alle ${presenza.ora_ingresso?.substring(0, 5) || '--:--'}</span>
+            </div>
+        `;
+    }
+    window.currentQRData = null;
+    showToast('success', 'Timbratura', 'Il QR è stato utilizzato e non è più attivo');
+}
+
 // Funzione per annullare QR code
 function annullaQRCode() {
+    if (qrStatusTimer) {
+        clearInterval(qrStatusTimer);
+        qrStatusTimer = null;
+    }
     if (qrExpiryTimer) {
         clearInterval(qrExpiryTimer);
         qrExpiryTimer = null;
