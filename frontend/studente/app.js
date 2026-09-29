@@ -507,9 +507,26 @@ function renderDashboard() {
                     <p>${todayLezioni[0].ora_inizio?.substring(0, 5) || '--:--'} - ${todayLezioni[0].ora_fine?.substring(0, 5) || '--:--'}</p>
                 </div>
                 <div class="today-lesson-qr-area">
-                    <button id="btnGeneraQR" class="today-lesson-action" type="button">
-                        <i class="bi bi-qr-code-scan me-1"></i>Genera QR
-                    </button>
+                    ${hasTimbratoOggi ? `
+                        <div class="today-lesson-status">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Ingresso registrato alle ${todayPresenza.ora_ingresso.substring(0, 5)}</span>
+                        </div>
+                        ${todayPresenza.ora_uscita ? `
+                            <div class="today-lesson-status is-complete">
+                                <i class="bi bi-check2-all"></i>
+                                <span>Giornata completata</span>
+                            </div>
+                        ` : `
+                            <button id="btnTimbraUscitaDashboard" class="today-lesson-action" type="button">
+                                <i class="bi bi-box-arrow-right me-1"></i>Timbra uscita
+                            </button>
+                        `}
+                    ` : `
+                        <button id="btnGeneraQR" class="today-lesson-action" type="button">
+                            <i class="bi bi-qr-code-scan me-1"></i>Genera QR
+                        </button>
+                    `}
                     <div id="qrCodeContainer" class="dashboard-qr-panel qr-code-panel" style="display: none;">
                         <span class="qr-code-kicker">Timbratura digitale</span>
                         <div id="qrCode" class="qr-code-image" aria-label="QR code per la timbratura"></div>
@@ -546,6 +563,8 @@ function renderDashboard() {
 
         const dashboardQrButton = document.getElementById('btnGeneraQR');
         if (dashboardQrButton) dashboardQrButton.addEventListener('click', generaQRCode);
+        const dashboardExitButton = document.getElementById('btnTimbraUscitaDashboard');
+        if (dashboardExitButton) dashboardExitButton.addEventListener('click', timbraUscita);
         const dashboardConfirmButton = document.getElementById('btnTimbra');
         if (dashboardConfirmButton) dashboardConfirmButton.addEventListener('click', confermaTimbratura);
         const dashboardCancelButton = document.getElementById('btnAnnullaQR');

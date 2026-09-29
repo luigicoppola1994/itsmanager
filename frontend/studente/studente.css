@@ -230,6 +230,23 @@ body {
     cursor: pointer;
 }
 
+.today-lesson-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #198754;
+    background: #e7f7ee;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.today-lesson-status.is-complete {
+    color: #39709d;
+    background: #e9f3fb;
+}
+
 .dashboard-qr-panel {
     width: min(300px, 100%);
     padding: 16px;
