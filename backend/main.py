@@ -99,6 +99,7 @@ app.add_middleware(
         "http://127.0.0.1:5500"
         # ⚠️ In produzione, sostituire con l'URL reale del frontend (es. https://myapp.com)
     ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
