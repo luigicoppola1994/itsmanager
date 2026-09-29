@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // piano-didattico.js — Gestione Piano Didattico e Moduli
 // ============================================================
 
@@ -68,6 +68,13 @@ async function loadPianoDidatticoData() {
                 if (ufMap[m.id_unita_formativa]) {
                     ufMap[m.id_unita_formativa].moduli.push(m);
                 }
+            });
+
+            // Ordina UF alfabeticamente per nome
+            unitaFormativeList.sort((a, b) => (a.Nome || '').localeCompare(b.Nome || '', 'it', { sensitivity: 'base' }));
+            // Ordina i moduli di ogni UF alfabeticamente per nome
+            unitaFormativeList.forEach(uf => {
+                (uf.moduli || []).sort((a, b) => (a.Nome || '').localeCompare(b.Nome || '', 'it', { sensitivity: 'base' }));
             });
 
             renderPianoDidattico(unitaFormativeList);

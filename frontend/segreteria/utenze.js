@@ -79,6 +79,12 @@ async function loadUtenti() {
         const res = await fetchAutenticata(`${API_URL}/users`);
         if (!res.ok) throw new Error('Errore caricamento utenti');
         allUtenti = await res.json();
+        // Ordina utenti per cognome e poi nome in ordine alfabetico
+        allUtenti.sort((a, b) => {
+            const compCognome = (a.Cognome || '').localeCompare(b.Cognome || '', 'it', { sensitivity: 'base' });
+            if (compCognome !== 0) return compCognome;
+            return (a.Nome || '').localeCompare(b.Nome || '', 'it', { sensitivity: 'base' });
+        });
         updateStats();
         renderGrid();
     } catch (e) {
@@ -124,9 +130,10 @@ function renderGrid() {
     const count   = document.getElementById('tableCount');
 
     let filtered = allUtenti.filter(u => {
-        const fullName = `${u.Nome} ${u.Cognome}`.toLowerCase();
+        const fullNameCN = `${u.Cognome} ${u.Nome}`.toLowerCase();
+        const fullNameNC = `${u.Nome} ${u.Cognome}`.toLowerCase();
         const email    = (u.Email || '').toLowerCase();
-        const matchSearch = !search || fullName.includes(search) || email.includes(search);
+        const matchSearch = !search || fullNameCN.includes(search) || fullNameNC.includes(search) || email.includes(search);
 
         let matchFilter = true;
         if (activeFilter !== 'all') {
@@ -153,14 +160,14 @@ function renderGrid() {
     if (tbody) tbody.innerHTML = filtered.map((u, index) => renderUserRow(u, index)).join('');
 }
 
-function getInitials(nome, cognome) {
-    return `${(nome||'').charAt(0)}${(cognome||'').charAt(0)}`.toUpperCase();
+function getInitials(cognome, nome) {
+    return `${(cognome||'').charAt(0)}${(nome||'').charAt(0)}`.toUpperCase();
 }
 
 function renderUserRow(u, index) {
     const ruoloNome  = getRuoloNome(u);
     const style      = getRuoloStyle(ruoloNome);
-    const initials   = getInitials(u.Nome, u.Cognome);
+    const initials   = getInitials(u.Cognome, u.Nome);
 
     let dataNascitaFormatted = '\u2014';
     if (u.Data_Nascita) {
@@ -180,7 +187,7 @@ function renderUserRow(u, index) {
                 <div class="user-name-cell">
                     <div class="user-avatar-inline">${initials}</div>
                     <div>
-                        <div class="name"><a href="nuovo-utente.html?id=${u.id_utente}" class="text-decoration-none text-dark fw-bold">${u.Nome} ${u.Cognome}</a></div>
+                        <div class="name"><a href="nuovo-utente.html?id=${u.id_utente}" class="text-decoration-none text-dark fw-bold">${u.Cognome} ${u.Nome}</a></div>
                         <div class="email">${u.Email || '\u2014'}</div>
                     </div>
                 </div>
@@ -204,7 +211,7 @@ function renderUserRow(u, index) {
                         <i class="bi bi-info-circle-fill"></i>
                     </a>
                     <a href="nuovo-utente.html?id=${u.id_utente}" class="btn-action-icon" title="Modifica Utente"><i class="bi bi-pencil-fill"></i></a>
-                    <button class="btn-action-icon danger" onclick="deleteUtente(${u.id_utente}, '${safeName} ${safeSurname}')" title="Elimina Utente">
+                    <button class="btn-action-icon danger" onclick="deleteUtente(${u.id_utente}, '${safeSurname} ${safeName}')" title="Elimina Utente">
                         <i class="bi bi-trash3-fill"></i>
                     </button>
                 </div>
@@ -212,42 +219,14 @@ function renderUserRow(u, index) {
         </tr>`;
 }
 
-// Apri modal CREA
+// Apri pagina CREA
 function openCreateModal() {
-    editingId = null;
-    document.getElementById('modalTitleText').textContent = 'Aggiungi Utente';
-    document.getElementById('utenteForm').reset();
-    document.getElementById('editUtenteId').value = '';
-    document.getElementById('pwdRequired').style.display = '';
-    document.getElementById('pwdHint').style.display = 'none';
-    document.getElementById('editPassword').required = true;
-
-    const modal = new bootstrap.Modal(document.getElementById('utenteModal'));
-    modal.show();
+    window.location.href = 'nuovo-utente.html';
 }
 
-// Apri modal MODIFICA
+// Apri pagina MODIFICA
 function openEditModal(id) {
-    const u = allUtenti.find(x => x.id_utente === id);
-    if (!u) return;
-
-    editingId = id;
-    document.getElementById('modalTitleText').textContent = 'Modifica Utente';
-    document.getElementById('editUtenteId').value = id;
-    document.getElementById('editNome').value      = u.Nome   || '';
-    document.getElementById('editCognome').value   = u.Cognome || '';
-    document.getElementById('editEmail').value     = u.Email  || '';
-    document.getElementById('editRuolo').value     = u.id_ruolo || '';
-    document.getElementById('editPassword').value  = '';
-    document.getElementById('editCF').value        = u.Codice_Fiscale || '';
-    document.getElementById('editDataNascita').value = u.Data_Nascita || '';
-
-    document.getElementById('pwdRequired').style.display = 'none';
-    document.getElementById('pwdHint').style.display = '';
-    document.getElementById('editPassword').required = false;
-
-    const modal = new bootstrap.Modal(document.getElementById('utenteModal'));
-    modal.show();
+    window.location.href = `nuovo-utente.html?id=${id}`;
 }
 
 // Submit form (CREATE o UPDATE)
@@ -286,6 +265,8 @@ async function handleFormSubmit(e) {
         Data_Nascita: dataN,
         Genere: uCorrente?.Genere ?? null,
         Citta_Nascita: uCorrente?.Citta_Nascita ?? null,
+        Nazionalita: uCorrente?.Nazionalita ?? "Italiana",
+        Provincia_Nascita: uCorrente?.Provincia_Nascita ?? null,
         Indirizzo_Residenza: uCorrente?.Indirizzo_Residenza ?? null,
         Citta_Residenza: uCorrente?.Citta_Residenza ?? null,
         Cap_Residenza: uCorrente?.Cap_Residenza ?? null,
@@ -356,10 +337,60 @@ function togglePasswordVisibility(inputId, btn) {
     }
 }
 
-// Apri modal SCHEDA COMPLETA UTENTE (INFO & EDIT)
 // Apri scheda utente in-page (non popup modal)
 function openUserInfoModal(id) {
     window.location.href = `nuovo-utente.html?id=${id}`;
+}
+
+// Popola il modal Scheda Completa Utente con i dati di un utente specifico
+function populateUserInfoModal(u) {
+    if (!u) return;
+
+    document.getElementById('infoUtenteId').value       = u.id_utente;
+    document.getElementById('infoNome').value           = u.Nome || '';
+    document.getElementById('infoCognome').value        = u.Cognome || '';
+    document.getElementById('infoEmail').value          = u.Email || '';
+    document.getElementById('infoRuolo').value          = u.id_ruolo || '';
+    document.getElementById('infoGenere').value         = u.Genere || '';
+    document.getElementById('infoCF').value             = u.Codice_Fiscale || '';
+    document.getElementById('infoDataNascita').value    = u.Data_Nascita || '';
+    document.getElementById('infoNazionalita').value = u.Nazionalita || 'Italiana';
+    document.getElementById('infoCittaNascita').value   = u.Citta_Nascita || '';
+    document.getElementById('infoProvinciaNascita').value = u.Provincia_Nascita || '';
+    document.getElementById('infoIndirizzo').value      = u.Indirizzo_Residenza || '';
+    document.getElementById('infoCittaResidenza').value = u.Citta_Residenza || '';
+    document.getElementById('infoCap').value            = u.Cap_Residenza || '';
+    document.getElementById('infoProvincia').value      = u.Provincia_Residenza || '';
+    document.getElementById('infoTelefono').value       = u.Telefono || '';
+    document.getElementById('infoPrimoAccesso').checked = !!u.Primo_Accesso;
+    document.getElementById('infoPassword').value       = '';
+
+    // Avatar e nome nella testata modale
+    const initials = `${(u.Nome||'').charAt(0)}${(u.Cognome||'').charAt(0)}`.toUpperCase();
+    const avatarEl = document.getElementById('infoUserAvatar');
+    const fullNameEl = document.getElementById('infoUserFullname');
+    const emailEl = document.getElementById('infoUserEmailText');
+    const idEl = document.getElementById('infoUserIdText');
+    const roleEl = document.getElementById('infoUserRoleBadge');
+    const primoEl = document.getElementById('infoUserPrimoAccessoBadge');
+
+    if (avatarEl) avatarEl.textContent = initials;
+    if (fullNameEl) fullNameEl.textContent = `${u.Nome} ${u.Cognome}`;
+    if (emailEl) emailEl.textContent = u.Email || '—';
+    if (idEl) idEl.textContent = u.id_utente;
+
+    if (roleEl) {
+        const ruoloNome = getRuoloNome(u);
+        const style = getRuoloStyle(ruoloNome);
+        roleEl.className = `user-role-tag ${style.cls}`;
+        roleEl.innerHTML = `<i class="bi ${style.icon}"></i> ${style.label}`;
+    }
+
+    if (primoEl) {
+        primoEl.innerHTML = u.Primo_Accesso
+            ? `<i class="bi bi-shield-exclamation me-1 text-warning"></i>Cambio password richiesto`
+            : `<i class="bi bi-shield-check me-1 text-success"></i>Accesso Normale`;
+    }
 }
 
 // Submit della Scheda Completa Utente
@@ -398,6 +429,7 @@ async function handleUserInfoSubmit(e) {
         Genere: document.getElementById('infoGenere').value || null,
         Codice_Fiscale: document.getElementById('infoCF').value.trim().toUpperCase() || null,
         Data_Nascita: document.getElementById('infoDataNascita').value || null,
+        Nazionalita: document.getElementById('infoNazionalita').value.trim() || 'Italiana',
         Citta_Nascita: document.getElementById('infoCittaNascita').value.trim() || null,
         Provincia_Nascita: document.getElementById('infoProvinciaNascita').value.trim().toUpperCase() || null,
         Indirizzo_Residenza: document.getElementById('infoIndirizzo').value.trim() || null,

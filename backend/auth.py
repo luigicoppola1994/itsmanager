@@ -6,7 +6,10 @@
 # ==============================================================================
 
 from datetime import datetime, timedelta
-import jwt                                    # Libreria PyJWT per creare/verificare token JWT
+try:
+    import jwt                                    # Libreria PyJWT
+except ImportError:
+    from jose import jwt                         # Fallback python-jose
 from fastapi.security import OAuth2PasswordBearer
 import bcrypt
 
@@ -75,6 +78,15 @@ def create_refresh_token(data: dict):
     expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire, "type": "refresh"})  # "type":"refresh" lo distingue dall'access
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+# ------------------------------------------------------------------------------
+# FUNZIONE: decode_token
+# Decodifica e valida un token JWT. Restituisce il payload se valido,
+# oppure solleva un'eccezione se non valido o scaduto.
+# ------------------------------------------------------------------------------
+def decode_token(token: str) -> dict:
+    return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
 
 # ==============================================================================

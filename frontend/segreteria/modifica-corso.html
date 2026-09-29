@@ -1,0 +1,274 @@
+﻿<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITS Manager - Modifica Corso</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="../assets/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- CSS condiviso e segreteria -->
+    <link rel="stylesheet" href="../shared/styles.css?v=2.1">
+    <link rel="stylesheet" href="nuovo-corso.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=4.0">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- SIDEBAR A SINISTRA -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand-block">
+                    <div class="sidebar-logo-container">
+                        <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo" class="sidebar-logo-img">
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <h2 class="sidebar-brand-title">ITS MANAGER</h2>
+                        <span class="sidebar-brand-subtitle">Gestionale Didattico</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-small">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">Segreteria Didattica</div>
+                    <span class="user-role-badge">SEGRETERIA</span>
+                </div>
+            </div>
+
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="dashboard.html" class="nav-item-link active" id="navCorsi" data-label="Corsi">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        <span class="nav-label">Corsi</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" data-label="Piano Didattico">
+                        <i class="bi bi-book-half"></i>
+                        <span class="nav-label">Piano Didattico</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="utenze.html" class="nav-item-link" id="navUtenze" data-label="Utenze">
+                        <i class="bi bi-people-fill"></i>
+                        <span class="nav-label">Utenze</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="aule.html" class="nav-item-link" id="navAule" data-label="Aule">
+                        <i class="bi bi-door-open-fill"></i>
+                        <span class="nav-label">Aule</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="calendario.html" class="nav-item-link" id="navCalendario" data-label="Calendario">
+                        <i class="bi bi-calendar3"></i>
+                        <span class="nav-label">Calendario</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="timbrature.html" class="nav-item-link" id="navTimbrature" data-label="Timbrature">
+                        <i class="bi bi-clock-history"></i>
+                        <span class="nav-label">Timbrature</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Disconnetti</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENUTO PRINCIPALE -->
+        <main class="main-content">
+
+            <!-- RUBICK TOP BAR -->
+            <div class="rubick-top-bar">
+                <nav class="rubick-breadcrumb" aria-label="breadcrumb">
+                    <span class="breadcrumb-root"><i class="bi bi-mortarboard-fill me-1 text-primary"></i>ITS Manager</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-section">Segreteria</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <a href="dashboard.html" class="breadcrumb-section" style="text-decoration:none;">Corsi</a>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-current">Modifica Corso</span>
+                </nav>
+                <div class="rubick-top-bar-actions">
+                    <div class="rubick-icon-badge" title="Notifiche">
+                        <i class="bi bi-bell"></i>
+                        <span class="rubick-badge-dot"></span>
+                    </div>
+                    <div class="rubick-user-avatar" title="Segreteria Didattica">
+                        SD
+                    </div>
+                </div>
+            </div>
+
+            <!-- BREADCRUMB + TITOLO -->
+            <div class="nc-page-header">
+                <div class="nc-breadcrumb">
+                    <a href="dashboard.html" class="nc-breadcrumb-link">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        Corsi
+                    </a>
+                    <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
+                    <span class="nc-breadcrumb-current">Modifica Corso</span>
+                </div>
+
+                <div class="nc-header-row">
+                    <div>
+                        <h1 class="nc-title">
+                            <span class="nc-title-icon"><i class="bi bi-pencil-square"></i></span>
+                            Modifica Anagrafica Corso
+                        </h1>
+                        <p class="nc-subtitle">Aggiorna le informazioni generali e descrittive del percorso formativo a catalogo.</p>
+                    </div>
+                    <a href="dashboard.html" class="btn-back">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>Torna ai corsi</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- FORM CARD + ANTEPRIMA -->
+            <div class="nc-form-layout">
+
+                <!-- COLONNA SINISTRA: form -->
+                <div class="nc-form-card">
+                    <div class="nc-form-card-header">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>Dettagli del Corso</span>
+                    </div>
+
+                    <form id="modificaCorsoForm" novalidate style="padding: 28px;">
+                        <input type="hidden" id="editCorsoId">
+
+                        <div class="nc-section-title">
+                            <span class="nc-step-number">1</span>
+                            Anagrafica Corso
+                        </div>
+
+                        <div class="nc-field-group mb-3">
+                            <label for="editCorsoNome" class="nc-label">Nome del Corso <span class="nc-required">*</span></label>
+                            <div class="nc-input-wrapper">
+                                <i class="bi bi-journal-text nc-input-icon"></i>
+                                <input type="text" id="editCorsoNome" class="nc-input" placeholder="Es. AI Specialist & Cloud Data Engineering" maxlength="200" required>
+                            </div>
+                            <span class="nc-field-error" id="erroreNome"></span>
+                        </div>
+
+                        <div class="nc-field-group mb-4">
+                            <label for="editCorsoDescrizione" class="nc-label">Descrizione del Corso</label>
+                            <div class="nc-textarea-wrapper">
+                                <i class="bi bi-card-text nc-input-icon nc-textarea-icon"></i>
+                                <textarea id="editCorsoDescrizione" class="nc-textarea" rows="4" placeholder="Descrivi il percorso formativo..." maxlength="1000"></textarea>
+                            </div>
+                            <div class="nc-field-hint-row">
+                                <span class="nc-field-hint">Descrizione visibile nella scheda del catalogo corsi.</span>
+                                <span class="nc-char-count" id="charCount">0 / 1000</span>
+                            </div>
+                        </div>
+
+                        <div class="nc-info-box mb-4">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <div>
+                                <strong>Aggiornamento Corso a Catalogo</strong>
+                                <p>Le modifiche applicate qui si riflettono automaticamente sull'anagrafica di tutte le edizioni associate.</p>
+                            </div>
+                        </div>
+
+                        <!-- AZIONI FORM -->
+                        <div class="nc-form-actions mt-4 pt-3 border-top">
+                            <a href="dashboard.html" class="btn-nc-cancel">
+                                <i class="bi bi-x-lg"></i>
+                                Annulla
+                            </a>
+                            <button type="submit" class="btn-nc-submit" id="submitBtn">
+                                <span class="btn-nc-text">
+                                    <i class="bi bi-check-lg"></i>
+                                    Salva Modifiche
+                                </span>
+                                <span class="btn-nc-loading" style="display:none;">
+                                    <span class="nc-spinner"></span>
+                                    Salvataggio...
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- COLONNA DESTRA: anteprima in tempo reale -->
+                <div class="nc-preview-panel">
+                    <div class="nc-preview-header">
+                        <i class="bi bi-eye-fill"></i>
+                        <span>Anteprima Scheda Corso</span>
+                    </div>
+                    <p class="nc-preview-hint">Visualizzazione in tempo reale della card corso nel catalogo</p>
+
+                    <div class="nc-preview-card" id="previewCard">
+                        <div class="nc-preview-card-top">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="preview-badge-status" id="previewStatusBadge">
+                                    <i class="bi bi-mortarboard-fill me-1"></i>Catalogo Corsi
+                                </span>
+                                <span class="preview-badge-edition" id="previewIdBadge">
+                                    ID: —
+                                </span>
+                            </div>
+                            <h3 class="nc-preview-title" id="previewTitle">Nome del corso</h3>
+                        </div>
+                        <div class="nc-preview-card-body">
+                            <p class="nc-preview-desc" id="previewDesc">La descrizione del percorso formativo apparirà qui...</p>
+                            
+                            <div class="preview-dates-box mt-3 mb-0">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-journal-check text-primary fs-5"></i>
+                                    <div>
+                                        <div class="preview-dates-label">Edizioni Collegate</div>
+                                        <div class="preview-dates-val" id="previewEdizioniCount">0 edizioni</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Checklist -->
+                    <div class="nc-progress-box mt-4">
+                        <div class="nc-progress-title">
+                            <i class="bi bi-check2-circle text-primary"></i>
+                            Stato Completamento
+                        </div>
+                        <div class="nc-checklist mt-2">
+                            <div class="nc-check-item" id="checkNome">
+                                <i class="bi bi-circle"></i>
+                                <span>Nome del corso compilato</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST NOTIFICHE -->
+    <div class="toast" id="toast">Operazione completata!</div>
+
+    <script src="../shared/auth.js"></script>
+    <script src="modifica-corso.js?v=1.0"></script>
+</body>
+</html>

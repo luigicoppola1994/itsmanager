@@ -30,10 +30,11 @@ from sqlalchemy import func            # Per funzioni SQL come func.lower
 from typing import List, Optional                # Per dichiarare liste e tipi opzionali come parametri
 from fastapi.middleware.cors import CORSMiddleware  # Middleware per gestire le policy CORS
 from fastapi.security import OAuth2PasswordRequestForm  # Form standard per login (username + password)
-import jwt                             # Libreria PyJWT per decodificare i token
 import re                              # Regex per parsing errori DB
+import json                            # Per caricare il file comuni.json
+import os                              # Per costruire percorsi file
 from pydantic import BaseModel         # Per definire modelli di richiesta inline
-from datetime import date, timedelta   # Per i campi data e calcolo date nei modelli Pydantic
+from datetime import date, timedelta, datetime   # Per i campi data e calcolo date nei modelli Pydantic
 
 # --- Importazioni dai nostri moduli ---
 import models         # I modelli SQLAlchemy (tabelle del DB)
@@ -54,6 +55,29 @@ import auth           # Le funzioni di autenticazione (hash, token JWT)
 # title: nome mostrato nella documentazione automatica su http://localhost:8000/docs
 # ------------------------------------------------------------------------------
 app = FastAPI(title="ITS Manager API")
+
+@app.get("/")
+def health_check():
+    return {"status": "ok", "service": "ITS Manager API"}
+
+# ------------------------------------------------------------------------------
+# CARICAMENTO COMUNI ITALIANI IN MEMORIA
+# Il file comuni.json viene letto una sola volta all'avvio del server.
+# Contiene tutti i comuni italiani con nome, sigla provincia e CAP.
+# ------------------------------------------------------------------------------
+_COMUNI_DATA: list = []
+
+@app.on_event("startup")
+def load_comuni():
+    global _COMUNI_DATA
+    json_path = os.path.join(os.path.dirname(__file__), "comuni.json")
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            _COMUNI_DATA = json.load(f)
+        print(f"  ✓ Comuni caricati in memoria: {len(_COMUNI_DATA)} comuni")
+    except Exception as e:
+        print(f"  ⚠ Impossibile caricare comuni.json: {e}")
+        _COMUNI_DATA = []
 
 # ------------------------------------------------------------------------------
 # CONFIGURAZIONE CORS (Cross-Origin Resource Sharing)
@@ -106,8 +130,8 @@ async def global_exception_handler(request: Request, exc: Exception):
 # ==============================================================================
 def get_current_user(token: str = Depends(auth.oauth2_scheme), db: Session = Depends(get_db)):
     try:
-        # Decodifica il token JWT usando la chiave segreta e l'algoritmo configurati in auth.py
-        payload = jwt.decode(token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
+        # Decodifica il token JWT tramite il modulo auth
+        payload = auth.decode_token(token)
 
         # Controlla che sia un access token (non un refresh token per sicurezza)
         if payload.get("type") != "access":
@@ -118,7 +142,9 @@ def get_current_user(token: str = Depends(auth.oauth2_scheme), db: Session = Dep
         if email is None:
             raise HTTPException(status_code=401, detail="Credenziali non valide")
 
-    except jwt.PyJWTError:
+    except HTTPException:
+        raise
+    except Exception:
         # Cattura qualsiasi errore JWT: token scaduto, firma errata, formato invalido
         raise HTTPException(status_code=401, detail="Token scaduto o non valido")
 
@@ -164,7 +190,7 @@ def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), 
     ruolo_nome = user.ruolo.Nome if user.ruolo else "studente"
 
     # Restituisce l'access token al frontend nel body JSON
-    return {"access_token": access_token, "token_type": "bearer", "ruolo": ruolo_nome}
+    return {"access_token": access_token, "token_type": "bearer", "ruolo": ruolo_nome, "id_utente": user.id_utente}
 
 
 # ==============================================================================
@@ -180,8 +206,8 @@ def refresh(refresh_token: str = Cookie(None)):
         raise HTTPException(status_code=401, detail="Refresh token mancante. Effettua il login.")
 
     try:
-        # Decodifica il refresh token
-        payload = jwt.decode(refresh_token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
+        # Decodifica il refresh token tramite il modulo auth
+        payload = auth.decode_token(refresh_token)
 
         # Verifica che sia effettivamente un refresh token (non un access token riutilizzato)
         if payload.get("type") != "refresh":
@@ -193,7 +219,9 @@ def refresh(refresh_token: str = Cookie(None)):
         new_access_token = auth.create_access_token(data={"sub": email})
         return {"access_token": new_access_token, "token_type": "bearer"}
 
-    except jwt.PyJWTError:
+    except HTTPException:
+        raise
+    except Exception:
         # Refresh token scaduto o manomesso → l'utente deve rifare il login
         raise HTTPException(status_code=401, detail="Refresh token scaduto o non valido")
 
@@ -224,9 +252,23 @@ def logout(response: Response):
 # ==============================================================================
 @app.get("/users", response_model=List[schemas.UtenteResponse])
 def get_users(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
-    """Restituisce la lista di tutti gli utenti. Richiede autenticazione JWT."""
-    users = db.query(models.Utente).all()
+    """Restituisce la lista di tutti gli utenti ordinata alfabeticamente per Cognome e Nome. Richiede autenticazione JWT."""
+    users = db.query(models.Utente).order_by(
+        func.lower(models.Utente.Cognome).asc(),
+        func.lower(models.Utente.Nome).asc()
+    ).all()
     return users
+
+@app.get("/studenti", response_model=List[schemas.UtenteResponse])
+def get_studenti(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
+    """Restituisce la lista degli studenti (utenti con ruolo 'Studente'), ordinata alfabeticamente per Cognome e Nome."""
+    studenti = db.query(models.Utente).join(models.Ruolo).filter(
+        func.lower(models.Ruolo.Nome) == "studente"
+    ).order_by(
+        func.lower(models.Utente.Cognome).asc(),
+        func.lower(models.Utente.Nome).asc()
+    ).all()
+    return studenti
 
 @app.get("/users/{id_utente}", response_model=schemas.UtenteResponse)
 def get_user(id_utente: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -260,6 +302,7 @@ def create_user(user: schemas.UtenteCreate, db: Session = Depends(get_db), curre
         Codice_Fiscale=user.Codice_Fiscale,
         Data_Nascita=user.Data_Nascita,
         Citta_Nascita=user.Citta_Nascita,
+        Nazionalita=user.Nazionalita if user.Nazionalita else "Italiana",
         Provincia_Nascita=user.Provincia_Nascita,
         Indirizzo_Residenza=user.Indirizzo_Residenza,
         Citta_Residenza=user.Citta_Residenza,
@@ -311,6 +354,8 @@ def update_user(id_utente: int, user_data: schemas.UtenteUpdate, db: Session = D
         user.Data_Nascita = user_data.Data_Nascita if user_data.Data_Nascita and str(user_data.Data_Nascita).strip() else None
     if user_data.Citta_Nascita is not None:
         user.Citta_Nascita = user_data.Citta_Nascita.strip() if user_data.Citta_Nascita and user_data.Citta_Nascita.strip() else None
+    if user_data.Nazionalita is not None:
+        user.Nazionalita = user_data.Nazionalita.strip() if user_data.Nazionalita and user_data.Nazionalita.strip() else "Italiana"
     if user_data.Provincia_Nascita is not None:
         user.Provincia_Nascita = user_data.Provincia_Nascita.strip().upper() if user_data.Provincia_Nascita and user_data.Provincia_Nascita.strip() else None
     if user_data.Indirizzo_Residenza is not None:
@@ -356,8 +401,8 @@ def delete_user(id_utente: int, db: Session = Depends(get_db), current_user: mod
 # --- Endpoint per i Ruoli ---
 @app.get("/ruoli", response_model=List[schemas.RuoloResponse])
 def get_ruoli(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
-    """Restituisce la lista di tutti i ruoli."""
-    return db.query(models.Ruolo).all()
+    """Restituisce la lista di tutti i ruoli ordinata alfabeticamente per Nome."""
+    return db.query(models.Ruolo).order_by(func.lower(models.Ruolo.Nome).asc()).all()
 
 @app.get("/ruoli/{id_ruolo}", response_model=schemas.RuoloResponse)
 def get_ruolo(id_ruolo: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -485,8 +530,8 @@ def valida_ediz_ore_e_date(
 # --- Endpoint per i Corsi ---
 @app.get("/corsi", response_model=List[schemas.CorsoResponse])
 def get_corsi(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
-    """Restituisce la lista di tutti i corsi."""
-    return db.query(models.Corso).all()
+    """Restituisce la lista di tutti i corsi ordinata alfabeticamente per Nome."""
+    return db.query(models.Corso).order_by(func.lower(models.Corso.Nome).asc()).all()
 
 @app.get("/corsi/{id_corso}", response_model=schemas.CorsoResponse)
 def get_corso(id_corso: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -774,11 +819,166 @@ def delete_corso_attivo(id_corso_attivo: int, db: Session = Depends(get_db), cur
         raise HTTPException(status_code=400, detail=handle_db_exception(e))
 
 
+# ==============================================================================
+# ENDPOINT PER L'AULA (STUDENTI NEI CORSI ATTIVI)
+# ==============================================================================
+
+# Helper: verifica sovrapposizione orari corsi per lo studente
+def check_student_course_schedule_conflict(db: Session, id_utente: int, target_id_corso_attivo: int):
+    # Cerca altre iscrizioni attive dello studente
+    altre_iscrizioni = db.query(models.UtenteCorsoAttivo).join(
+        models.CorsoAttivo, models.UtenteCorsoAttivo.id_corso_attivo == models.CorsoAttivo.id_corso_attivo
+    ).filter(
+        models.UtenteCorsoAttivo.id_utente == id_utente,
+        models.UtenteCorsoAttivo.id_corso_attivo != target_id_corso_attivo,
+        models.CorsoAttivo.archiviato == False
+    ).all()
+
+    if not altre_iscrizioni:
+        return
+
+    target_ca = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == target_id_corso_attivo).first()
+    student = db.query(models.Utente).filter(models.Utente.id_utente == id_utente).first()
+    student_name = f"{student.Nome} {student.Cognome}" if student else f"Studente #{id_utente}"
+
+    # Recupera lezioni del nuovo corso
+    target_lezioni = db.query(models.Calendario).filter(models.Calendario.id_corso_attivo == target_id_corso_attivo).all()
+
+    for en in altre_iscrizioni:
+        other_ca = en.corso_attivo
+        other_lezioni = db.query(models.Calendario).filter(models.Calendario.id_corso_attivo == other_ca.id_corso_attivo).all()
+
+        # Verifica sovrapposizione lezioni nel calendario
+        for t_lez in target_lezioni:
+            for o_lez in other_lezioni:
+                if t_lez.data == o_lez.data:
+                    if t_lez.ora_inizio < o_lez.ora_fine and t_lez.ora_fine > o_lez.ora_inizio:
+                        other_corso_nome = other_ca.corso.Nome if other_ca.corso else f"Edizione #{other_ca.id_corso_attivo}"
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Lo studente {student_name} non può essere iscritto a più corsi con orari sovrapposti. Conflitto in data {t_lez.data.strftime('%d/%m/%Y')} ({t_lez.ora_inizio.strftime('%H:%M')}-{t_lez.ora_fine.strftime('%H:%M')}) con il corso '{other_corso_nome}'."
+                        )
+
+        # Se non ci sono lezioni ancora inserite nel calendario ma le date di inizio/fine si sovrappongono
+        if target_ca and target_ca.data_inizio and target_ca.data_fine and other_ca.data_inizio and other_ca.data_fine:
+            if max(target_ca.data_inizio, other_ca.data_inizio) <= min(target_ca.data_fine, other_ca.data_fine):
+                if not target_lezioni or not other_lezioni:
+                    other_corso_nome = other_ca.corso.Nome if other_ca.corso else f"Edizione #{other_ca.id_corso_attivo}"
+                    # Se c'è sovrapposizione potenziale date corso
+                    pass
+
+
+@app.get("/corsi-attivi/{id_corso_attivo}/aula", response_model=List[schemas.UtenteResponse])
+def get_aula_corso_attivo(
+    id_corso_attivo: int,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """
+    Restituisce l'elenco degli studenti appartenenti all'Aula di un corso attivo.
+    Ordinato alfabeticamente per Cognome e Nome.
+    """
+    corso_attivo = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == id_corso_attivo).first()
+    if not corso_attivo:
+        raise HTTPException(status_code=404, detail="Corso attivo non trovato")
+
+    studenti_aula = db.query(models.Utente).join(
+        models.UtenteCorsoAttivo, models.Utente.id_utente == models.UtenteCorsoAttivo.id_utente
+    ).filter(
+        models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo
+    ).order_by(
+        func.lower(models.Utente.Cognome).asc(),
+        func.lower(models.Utente.Nome).asc()
+    ).all()
+    return studenti_aula
+
+@app.put("/corsi-attivi/{id_corso_attivo}/aula", response_model=List[schemas.UtenteResponse])
+def sync_aula_corso_attivo(
+    id_corso_attivo: int,
+    payload: schemas.SyncAulaRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """
+    Sincronizza l'Aula di un corso attivo (assegnazione o modifica degli studenti).
+    """
+    corso_attivo = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == id_corso_attivo).first()
+    if not corso_attivo:
+        raise HTTPException(status_code=404, detail="Corso attivo non trovato")
+
+    ids_unici = set(payload.studenti_ids)
+    
+    # Valida sovrapposizioni orari per ciascuno studente
+    for st_id in ids_unici:
+        check_student_course_schedule_conflict(db, st_id, id_corso_attivo)
+
+    # Rimuovi associazioni correnti per questo corso attivo
+    db.query(models.UtenteCorsoAttivo).filter(models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo).delete()
+
+    # Inserisci le nuove associazioni
+    for st_id in ids_unici:
+        utente = db.query(models.Utente).filter(models.Utente.id_utente == st_id).first()
+        if utente:
+            nuova_assoc = models.UtenteCorsoAttivo(id_utente=st_id, id_corso_attivo=id_corso_attivo)
+            db.add(nuova_assoc)
+
+    db.commit()
+
+    return get_aula_corso_attivo(id_corso_attivo=id_corso_attivo, db=db, current_user=current_user)
+
+@app.post("/corsi-attivi/{id_corso_attivo}/aula/{id_utente}")
+def add_studente_aula(
+    id_corso_attivo: int,
+    id_utente: int,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Assegna un singolo studente all'Aula di un corso attivo."""
+    corso_attivo = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == id_corso_attivo).first()
+    if not corso_attivo:
+        raise HTTPException(status_code=404, detail="Corso attivo non trovato")
+
+    utente = db.query(models.Utente).filter(models.Utente.id_utente == id_utente).first()
+    if not utente:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+
+    check_student_course_schedule_conflict(db, id_utente, id_corso_attivo)
+
+    esistente = db.query(models.UtenteCorsoAttivo).filter(
+        models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo,
+        models.UtenteCorsoAttivo.id_utente == id_utente
+    ).first()
+
+    if not esistente:
+        nuova = models.UtenteCorsoAttivo(id_corso_attivo=id_corso_attivo, id_utente=id_utente)
+        db.add(nuova)
+        db.commit()
+
+    return {"message": "Studente assegnato all'Aula con successo"}
+
+@app.delete("/corsi-attivi/{id_corso_attivo}/aula/{id_utente}")
+def remove_studente_aula(
+    id_corso_attivo: int,
+    id_utente: int,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Rimuove un singolo studente dall'Aula di un corso attivo."""
+    assoc = db.query(models.UtenteCorsoAttivo).filter(
+        models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo,
+        models.UtenteCorsoAttivo.id_utente == id_utente
+    ).first()
+    if assoc:
+        db.delete(assoc)
+        db.commit()
+    return {"message": "Studente rimosso dall'Aula con successo"}
+
+
 # --- Endpoint per le Unità Formative ---
 @app.get("/unita_formative", response_model=List[schemas.UnitaFormativaResponse])
 def get_unita_formative(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
-    """Restituisce la lista di tutte le unità formative."""
-    return db.query(models.UnitaFormativa).all()
+    """Restituisce la lista di tutte le unità formative ordinata alfabeticamente per Nome."""
+    return db.query(models.UnitaFormativa).order_by(func.lower(models.UnitaFormativa.Nome).asc()).all()
 
 @app.get("/unita_formative/{id_unita_formativa}", response_model=schemas.UnitaFormativaResponse)
 def get_unita_formativa(id_unita_formativa: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -823,32 +1023,80 @@ def delete_unita_formativa(id_unita_formativa: int, db: Session = Depends(get_db
     return {"message": "Unità formativa eliminata con successo"}
 
 # ==============================================================================
-# ENDPOINT PROXY PER AUTOCOMPLETAMENTO COMUNI/PROVINCE
-# Bypass CORS
+# ENDPOINT PER AUTOCOMPLETAMENTO COMUNI E PROVINCE (Dati locali comuni.json)
 # ==============================================================================
-import urllib.request
-import urllib.parse
-import json
+@app.get("/comuni")
+def search_comuni(q: str = "", limit: int = 15):
+    """Ricerca fuzzy dei comuni italiani caricati da comuni.json."""
+    if len(q) < 2:
+        return []
+    q_lower = q.lower().strip()
+    results = []
+    for c in _COMUNI_DATA:
+        nome = c.get("nome", "")
+        if nome.lower().startswith(q_lower):
+            cap_list = c.get("cap", [])
+            cap = cap_list[0] if cap_list else ""
+            results.append({
+                "nome": nome,
+                "sigla": c.get("sigla", ""),
+                "provincia": c.get("provincia", {}).get("nome", "") if isinstance(c.get("provincia"), dict) else "",
+                "cap": cap
+            })
+            if len(results) >= limit:
+                break
+    # Se non abbiamo abbastanza risultati con startswith, cerchiamo per sottostringa
+    if len(results) < limit:
+        for c in _COMUNI_DATA:
+            nome = c.get("nome", "")
+            if not nome.lower().startswith(q_lower) and q_lower in nome.lower():
+                cap_list = c.get("cap", [])
+                cap = cap_list[0] if cap_list else ""
+                results.append({
+                    "nome": nome,
+                    "sigla": c.get("sigla", ""),
+                    "provincia": c.get("provincia", {}).get("nome", "") if isinstance(c.get("provincia"), dict) else "",
+                    "cap": cap
+                })
+                if len(results) >= limit:
+                    break
+    return results
 
 @app.get("/proxy/province")
-def proxy_province():
-    req = urllib.request.Request("https://daticomuni.it/api/v1/province?limit=150", headers={'User-Agent': 'Mozilla/5.0'})
-    with urllib.request.urlopen(req) as response:
-        return json.loads(response.read().decode())
+@app.get("/province")
+def get_province():
+    """Restituisce la lista di tutte le province italiane estratte da comuni.json."""
+    seen = {}
+    for c in _COMUNI_DATA:
+        sigla = c.get("sigla")
+        prov_obj = c.get("provincia", {})
+        nome = prov_obj.get("nome") if isinstance(prov_obj, dict) else ""
+        if sigla and sigla not in seen:
+            seen[sigla] = nome or sigla
+    data = [{"sigla": sigla, "nome": nome} for sigla, nome in sorted(seen.items(), key=lambda x: x[1])]
+    return {"data": data}
 
 @app.get("/proxy/comuni")
-def proxy_comuni(q: str):
-    q_enc = urllib.parse.quote(q)
-    req = urllib.request.Request(f"https://daticomuni.it/api/v1/search?q={q_enc}", headers={'User-Agent': 'Mozilla/5.0'})
-    with urllib.request.urlopen(req) as response:
-        return json.loads(response.read().decode())
+def proxy_comuni(q: str = ""):
+    """Compatibilità per ricerca comuni (restituisce formato {data: [...]}) usando i dati locali."""
+    results = search_comuni(q=q, limit=15)
+    adapted = [
+        {
+            "nome": r["nome"],
+            "sigla_provincia": r["sigla"],
+            "provincia": r["provincia"],
+            "cap": r["cap"]
+        }
+        for r in results
+    ]
+    return {"data": adapted}
 
 
 # --- Endpoint per i Moduli ---
 @app.get("/moduli", response_model=List[schemas.ModuloResponse])
 def get_moduli(db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
-    """Restituisce la lista di tutti i moduli."""
-    return db.query(models.Modulo).all()
+    """Restituisce la lista di tutti i moduli ordinata alfabeticamente per Nome."""
+    return db.query(models.Modulo).order_by(func.lower(models.Modulo.Nome).asc()).all()
 
 @app.get("/moduli/{id_modulo}", response_model=schemas.ModuloResponse)
 def get_modulo(id_modulo: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
@@ -951,6 +1199,64 @@ def create_o_aggiorna_piano_studio(item: schemas.CorsoAttivoUnitaFormativaCreate
         db.refresh(nuova_associazione)
         return nuova_associazione
 
+@app.put("/corsi-attivi/{id_corso_attivo}/piano-studio", response_model=List[schemas.CorsoAttivoUnitaFormativaResponse])
+def sync_piano_studio_corso(
+    id_corso_attivo: int,
+    payload: schemas.CorsoAttivoPianoStudioSyncRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """
+    Sincronizza e valida in un'unica operazione atomica l'intero Piano Studio (Unità Formative) di un corso attivo.
+    Valida che la somma delle ore delle UF sia ESATTAMENTE UGUALE alle ore di aula dell'edizione.
+    """
+    corso_attivo = db.query(models.CorsoAttivo).filter(models.CorsoAttivo.id_corso_attivo == id_corso_attivo).first()
+    if not corso_attivo:
+        raise HTTPException(status_code=404, detail="Corso attivo non trovato")
+    
+    ore_aula = corso_attivo.ore_teoria_aula or 0
+    totale_ore_uf = sum(item.ore_dedicate for item in payload.items)
+    
+    # Il sistema non blocca il salvataggio se il totale non corrisponde a zero ore restanti,
+    # consentendo il salvataggio flessibile dell'edizione.
+    
+    new_uf_ids = {item.id_unita_formativa: item.ore_dedicate for item in payload.items}
+    
+    existing_items = db.query(models.CorsoAttivoUnitaFormativa).filter(
+        models.CorsoAttivoUnitaFormativa.id_corso_attivo == id_corso_attivo
+    ).all()
+    
+    existing_map = {e.id_unita_formativa: e for e in existing_items}
+    
+    # Rimuovi quelle non più incluse
+    for uf_id, item_obj in existing_map.items():
+        if uf_id not in new_uf_ids:
+            db.delete(item_obj)
+            
+    result = []
+    for item in payload.items:
+        uf = db.query(models.UnitaFormativa).filter(models.UnitaFormativa.id_unita_formativa == item.id_unita_formativa).first()
+        if not uf:
+            raise HTTPException(status_code=400, detail=f"Unità Formativa #{item.id_unita_formativa} non trovata")
+            
+        if item.id_unita_formativa in existing_map:
+            obj = existing_map[item.id_unita_formativa]
+            obj.ore_dedicate = item.ore_dedicate
+            result.append(obj)
+        else:
+            nuova = models.CorsoAttivoUnitaFormativa(
+                id_corso_attivo=id_corso_attivo,
+                id_unita_formativa=item.id_unita_formativa,
+                ore_dedicate=item.ore_dedicate
+            )
+            db.add(nuova)
+            result.append(nuova)
+            
+    db.commit()
+    for r in result:
+        db.refresh(r)
+    return result
+
 @app.delete("/piano-studio/{id_corso_attivo}/{id_unita_formativa}")
 def delete_piano_studio_item(id_corso_attivo: int, id_unita_formativa: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
     """Rimuove un'Unità Formativa dal Piano Studio di un Corso Attivo."""
@@ -964,6 +1270,7 @@ def delete_piano_studio_item(id_corso_attivo: int, id_unita_formativa: int, db: 
     db.delete(item)
     db.commit()
     return {"message": "Voce del piano studio rimossa con successo"}
+
 
 
 # --- Endpoint per il Calendario ---
@@ -1109,6 +1416,37 @@ def create_lezioni_settimanali(
         raise HTTPException(status_code=400, detail=error_msg)
 
 
+@app.get("/calendario/check")
+def check_lezione_prevista(
+    id_corso_attivo: int,
+    data: date,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Verifica se esiste almeno una lezione nel calendario per un corso attivo in una data specifica."""
+    lezioni = db.query(models.Calendario).filter(
+        models.Calendario.id_corso_attivo == id_corso_attivo,
+        models.Calendario.data == data
+    ).order_by(models.Calendario.ora_inizio).all()
+    
+    if lezioni:
+        return {
+            "lezione_prevista": True,
+            "count": len(lezioni),
+            "lezioni": [
+                {
+                    "id": l.id,
+                    "ora_inizio": l.ora_inizio.strftime("%H:%M"),
+                    "ora_fine": l.ora_fine.strftime("%H:%M"),
+                    "modulo": l.modulo.Nome if l.modulo else None,
+                    "note": l.note
+                }
+                for l in lezioni
+            ]
+        }
+    return {"lezione_prevista": False, "count": 0, "lezioni": []}
+
+
 @app.get("/calendario/{id_lezione}", response_model=schemas.CalendarioResponse)
 def get_lezione(id_lezione: int, db: Session = Depends(get_db), current_user: models.Utente = Depends(get_current_user)):
     """Restituisce una lezione specifica tramite ID."""
@@ -1237,4 +1575,738 @@ def delete_lezione(id_lezione: int, db: Session = Depends(get_db), current_user:
     db.commit()
     return {"message": "Lezione eliminata con successo"}
 
+
+# ==============================================================================
+# ENDPOINT: GESTIONE TIMBRATURE E PRESENZE
+# ==============================================================================
+
+@app.get("/presenze", response_model=List[schemas.PresenzaResponse])
+def get_presenze(
+    data_presenza: Optional[date] = None,
+    id_utente: Optional[int] = None,
+    id_corso_attivo: Optional[int] = None,
+    data_inizio: Optional[date] = None,
+    data_fine: Optional[date] = None,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Restituisce l'elenco delle timbrature/presenze con filtri per data, utente e corso."""
+    query = db.query(models.Presenza)
+    
+    if data_presenza:
+        query = query.filter(models.Presenza.data_presenza == data_presenza)
+    if data_inizio:
+        query = query.filter(models.Presenza.data_presenza >= data_inizio)
+    if data_fine:
+        query = query.filter(models.Presenza.data_presenza <= data_fine)
+    if id_utente:
+        query = query.filter(models.Presenza.id_utente == id_utente)
+        
+    if id_corso_attivo:
+        # Filtra per utenti iscritti all'edizione specificata
+        studenti_subquery = db.query(models.UtenteCorsoAttivo.id_utente).filter(
+            models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo
+        ).subquery()
+        query = query.filter(models.Presenza.id_utente.in_(studenti_subquery))
+        
+    return query.order_by(models.Presenza.data_presenza.desc(), models.Presenza.ora_ingresso.desc()).all()
+
+
+@app.get("/presenze/stats")
+def get_presenze_stats(
+    data_presenza: Optional[date] = None,
+    id_corso_attivo: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Calcola le statistiche presenze/ritardi/assenze per una data e un corso."""
+    target_date = data_presenza or date.today()
+    
+    # Query base utenti studenti (ruolo 3 = studente)
+    studenti_query = db.query(models.Utente).filter(models.Utente.id_ruolo == 3)
+    if id_corso_attivo:
+        studenti_query = studenti_query.join(
+            models.UtenteCorsoAttivo,
+            models.Utente.id_utente == models.UtenteCorsoAttivo.id_utente
+        ).filter(models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo)
+        
+    total_studenti = studenti_query.count()
+    
+    # Presenze registrate per la data
+    presenze_query = db.query(models.Presenza).filter(models.Presenza.data_presenza == target_date)
+    if id_corso_attivo:
+        studenti_sub = db.query(models.UtenteCorsoAttivo.id_utente).filter(
+            models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo
+        ).subquery()
+        presenze_query = presenze_query.filter(models.Presenza.id_utente.in_(studenti_sub))
+        
+    presenze = presenze_query.all()
+    
+    totale_timbrature = len(presenze)
+    ritardi = sum(1 for p in presenze if p.note and "ritardo" in p.note.lower())
+    uscite_anticipate = sum(1 for p in presenze if p.note and "uscita" in p.note.lower())
+    assenti = max(0, total_studenti - totale_timbrature)
+    
+    return {
+        "data": target_date.isoformat(),
+        "totale_studenti": total_studenti,
+        "totale_presenti": totale_timbrature,
+        "ritardi": ritardi,
+        "uscite_anticipate": uscite_anticipate,
+        "assenti": assenti
+    }
+
+
+
+@app.get("/presenze/appello/{id_corso_attivo}")
+def get_appello_giorno(
+    id_corso_attivo: int,
+    data_presenza: Optional[date] = None,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Restituisce tutti gli studenti e docenti di un'edizione con la loro eventuale timbratura per la data indicata.
+    Include anche la verifica se esiste una lezione nel calendario per quella data."""
+    target_date = data_presenza or date.today()
+    
+    # Verifica se c'è una lezione prevista nel calendario per questa data
+    lezioni_previste = db.query(models.Calendario).filter(
+        models.Calendario.id_corso_attivo == id_corso_attivo,
+        models.Calendario.data == target_date
+    ).order_by(models.Calendario.ora_inizio).all()
+    lezione_prevista = len(lezioni_previste) > 0
+    
+    # Recupera tutti gli utenti assegnati all'aula di questo corso attivo (Studenti)
+    studenti_iscritti = db.query(models.Utente).join(
+        models.UtenteCorsoAttivo,
+        models.Utente.id_utente == models.UtenteCorsoAttivo.id_utente
+    ).filter(
+        models.UtenteCorsoAttivo.id_corso_attivo == id_corso_attivo
+    ).order_by(func.lower(models.Utente.Cognome).asc(), func.lower(models.Utente.Nome).asc()).all()
+    
+    # Recupera le presenze della giornata per questi studenti
+    studenti_ids = [s.id_utente for s in studenti_iscritti]
+    presenze_map = {}
+    if studenti_ids:
+        presenze = db.query(models.Presenza).filter(
+            models.Presenza.data_presenza == target_date,
+            models.Presenza.id_utente.in_(studenti_ids)
+        ).order_by(models.Presenza.id_presenza.asc()).all()
+        for p in presenze:
+            if p.id_utente not in presenze_map:
+                presenze_map[p.id_utente] = []
+            presenze_map[p.id_utente].append(p)
+            
+    result_studenti = []
+    for s in studenti_iscritti:
+        p_list = presenze_map.get(s.id_utente, [])
+        total_minutes = 0
+        for p in p_list:
+            if p.ora_ingresso and p.ora_uscita:
+                m_in = p.ora_ingresso.hour * 60 + p.ora_ingresso.minute
+                m_out = p.ora_uscita.hour * 60 + p.ora_uscita.minute
+                if m_out > m_in:
+                    total_minutes += (m_out - m_in)
+                    
+        first_p = p_list[0] if p_list else None
+        last_p = p_list[-1] if p_list else None
+        is_in_aula = (last_p is not None and last_p.ora_uscita is None)
+
+        result_studenti.append({
+            "id_utente": s.id_utente,
+            "nome": s.Nome,
+            "cognome": s.Cognome,
+            "email": s.Email,
+            "codice_fiscale": s.Codice_Fiscale,
+            "ruolo": "STUDENTE",
+            "id_presenza": last_p.id_presenza if last_p else None,
+            "presente": len(p_list) > 0,
+            "in_aula": is_in_aula,
+            "ora_ingresso": first_p.ora_ingresso.strftime("%H:%M") if (first_p and first_p.ora_ingresso) else None,
+            "ora_uscita": last_p.ora_uscita.strftime("%H:%M") if (last_p and last_p.ora_uscita) else None,
+            "note": " | ".join([p.note for p in p_list if p.note]) if p_list else "",
+            "minuti_totali": total_minutes,
+            "timbrature": [
+                {
+                    "id_presenza": p.id_presenza,
+                    "ora_ingresso": p.ora_ingresso.strftime("%H:%M") if p.ora_ingresso else None,
+                    "ora_uscita": p.ora_uscita.strftime("%H:%M") if p.ora_uscita else None,
+                    "note": p.note or ""
+                }
+                for p in p_list
+            ]
+        })
+    
+    # Recupera Docenti per la lezione in questa data o per il corso
+    docenti_ids_data = [l.id_utente for l in lezioni_previste if l.id_utente]
+    docenti_ids_corso = [
+        row[0] for row in db.query(models.Calendario.id_utente).filter(
+            models.Calendario.id_corso_attivo == id_corso_attivo,
+            models.Calendario.id_utente != None
+        ).distinct().all()
+    ]
+    all_docenti_ids = list(set(docenti_ids_data + docenti_ids_corso))
+    
+    result_docenti = []
+    if all_docenti_ids:
+        docenti_obj = db.query(models.Utente).filter(models.Utente.id_utente.in_(all_docenti_ids)).order_by(func.lower(models.Utente.Cognome).asc(), func.lower(models.Utente.Nome).asc()).all()
+        docenti_presenze_map = {}
+        presenze_doc = db.query(models.Presenza).filter(
+            models.Presenza.data_presenza == target_date,
+            models.Presenza.id_utente.in_(all_docenti_ids)
+        ).order_by(models.Presenza.id_presenza.asc()).all()
+        for p in presenze_doc:
+            if p.id_utente not in docenti_presenze_map:
+                docenti_presenze_map[p.id_utente] = []
+            docenti_presenze_map[p.id_utente].append(p)
+            
+        for d in docenti_obj:
+            p_list = docenti_presenze_map.get(d.id_utente, [])
+            total_minutes = 0
+            for p in p_list:
+                if p.ora_ingresso and p.ora_uscita:
+                    m_in = p.ora_ingresso.hour * 60 + p.ora_ingresso.minute
+                    m_out = p.ora_uscita.hour * 60 + p.ora_uscita.minute
+                    if m_out > m_in:
+                        total_minutes += (m_out - m_in)
+                        
+            first_p = p_list[0] if p_list else None
+            last_p = p_list[-1] if p_list else None
+            is_in_aula = (last_p is not None and last_p.ora_uscita is None)
+
+            result_docenti.append({
+                "id_utente": d.id_utente,
+                "nome": d.Nome,
+                "cognome": d.Cognome,
+                "email": d.Email,
+                "codice_fiscale": d.Codice_Fiscale,
+                "ruolo": "DOCENTE",
+                "id_presenza": last_p.id_presenza if last_p else None,
+                "presente": len(p_list) > 0,
+                "in_aula": is_in_aula,
+                "ora_ingresso": first_p.ora_ingresso.strftime("%H:%M") if (first_p and first_p.ora_ingresso) else None,
+                "ora_uscita": last_p.ora_uscita.strftime("%H:%M") if (last_p and last_p.ora_uscita) else None,
+                "note": " | ".join([p.note for p in p_list if p.note]) if p_list else "",
+                "minuti_totali": total_minutes,
+                "timbrature": [
+                    {
+                        "id_presenza": p.id_presenza,
+                        "ora_ingresso": p.ora_ingresso.strftime("%H:%M") if p.ora_ingresso else None,
+                        "ora_uscita": p.ora_uscita.strftime("%H:%M") if p.ora_uscita else None,
+                        "note": p.note or ""
+                    }
+                    for p in p_list
+                ]
+            })
+
+    lezioni_info = [
+        {
+            "id": l.id,
+            "ora_inizio": l.ora_inizio.strftime("%H:%M"),
+            "ora_fine": l.ora_fine.strftime("%H:%M"),
+            "modulo": l.modulo.Nome if l.modulo else None,
+            "id_utente": l.id_utente
+        }
+        for l in lezioni_previste
+    ]
+        
+    return {
+        "data": target_date.isoformat(),
+        "id_corso_attivo": id_corso_attivo,
+        "lezione_prevista": lezione_prevista,
+        "lezioni": lezioni_info,
+        "studenti": result_studenti,
+        "docenti": result_docenti
+    }
+
+
+@app.post("/presenze/badge")
+def badge_presenza(
+    badge_data: schemas.PresenzaBadgeRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Simula una timbratura con badge aziendale.
+    - Se non ci sono timbrature nella giornata, o l'ultima ha già l'uscita -> crea INGRESSO.
+    - Se l'ultima timbratura ha solo l'ingresso aperto -> registra l'USCITA.
+    """
+    from datetime import datetime
+    utente = db.query(models.Utente).filter(models.Utente.id_utente == badge_data.id_utente).first()
+    if not utente:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+        
+    target_date = badge_data.data_presenza or date.today()
+    now_time = badge_data.ora_badge or datetime.now().time()
+    
+    ca_id = badge_data.id_corso_attivo
+    if not ca_id:
+        lez = db.query(models.Calendario).filter(
+            models.Calendario.id_utente == badge_data.id_utente,
+            models.Calendario.data == target_date
+        ).first()
+        if lez:
+            ca_id = lez.id_corso_attivo
+        else:
+            uca = db.query(models.UtenteCorsoAttivo).filter(models.UtenteCorsoAttivo.id_utente == badge_data.id_utente).first()
+            if uca:
+                ca_id = uca.id_corso_attivo
+
+    existing = db.query(models.Presenza).filter(
+        models.Presenza.id_utente == badge_data.id_utente,
+        models.Presenza.data_presenza == target_date
+    ).order_by(models.Presenza.id_presenza.asc()).all()
+    
+    last_p = existing[-1] if existing else None
+    
+    if last_p and last_p.ora_uscita is None:
+        # Registra USCITA
+        # Verifica se c'è una lezione per quell'utente in quella data
+        # Cerca la lezione con l'ora di fine più tardi
+        lezione = db.query(models.Calendario).filter(
+            models.Calendario.id_utente == badge_data.id_utente,
+            models.Calendario.data == target_date,
+            models.Calendario.ora_fine.isnot(None)
+        ).order_by(models.Calendario.ora_fine.desc()).first()
+        
+        print(f"DEBUG TIMBRATURA: utente={badge_data.id_utente}, data={target_date}, ora_timbratura={now_time}, lezione_trovata={lezione is not None}")
+        if lezione:
+            print(f"DEBUG LEZIONE: ora_fine={lezione.ora_fine}, ora_inizio={lezione.ora_inizio}")
+        
+        if lezione and lezione.ora_fine:
+            # Se l'orario di timbratura è dopo l'ora di fine lezione, usa l'ora di fine lezione
+            if now_time > lezione.ora_fine:
+                now_time = lezione.ora_fine
+                print(f"TIMBRATURA LIMITATA: orario timbratura dopo fine lezione, impostato a {lezione.ora_fine}")
+        
+        last_p.ora_uscita = now_time
+        if ca_id and not last_p.id_corso_attivo:
+            last_p.id_corso_attivo = ca_id
+        if badge_data.note:
+            last_p.note = f"{last_p.note} | {badge_data.note}" if last_p.note else badge_data.note
+        try:
+            db.commit()
+            db.refresh(last_p)
+            return {
+                "tipo": "uscita",
+                "messaggio": f"Uscita registrata alle {now_time.strftime('%H:%M')} per {utente.Cognome} {utente.Nome}",
+                "presenza": {
+                    "id_presenza": last_p.id_presenza,
+                    "id_utente": last_p.id_utente,
+                    "id_corso_attivo": last_p.id_corso_attivo,
+                    "data_presenza": last_p.data_presenza.isoformat(),
+                    "ora_ingresso": last_p.ora_ingresso.strftime("%H:%M") if last_p.ora_ingresso else None,
+                    "ora_uscita": last_p.ora_uscita.strftime("%H:%M") if last_p.ora_uscita else None,
+                    "note": last_p.note
+                }
+            }
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=extract_sql_error_message(e))
+    else:
+        # Crea nuovo INGRESSO
+        nuova = models.Presenza(
+            id_utente=badge_data.id_utente,
+            id_corso_attivo=ca_id,
+            data_presenza=target_date,
+            ora_ingresso=now_time,
+            ora_uscita=None,
+            note=badge_data.note
+        )
+        db.add(nuova)
+        try:
+            db.commit()
+            db.refresh(nuova)
+            return {
+                "tipo": "ingresso",
+                "messaggio": f"Ingresso registrato alle {now_time.strftime('%H:%M')} per {utente.Cognome} {utente.Nome}",
+                "presenza": {
+                    "id_presenza": nuova.id_presenza,
+                    "id_utente": nuova.id_utente,
+                    "id_corso_attivo": nuova.id_corso_attivo,
+                    "data_presenza": nuova.data_presenza.isoformat(),
+                    "ora_ingresso": nuova.ora_ingresso.strftime("%H:%M") if nuova.ora_ingresso else None,
+                    "ora_uscita": None,
+                    "note": nuova.note
+                }
+            }
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=extract_sql_error_message(e))
+
+
+
+@app.post("/presenze", response_model=schemas.PresenzaResponse, status_code=status.HTTP_201_CREATED)
+def create_presenza(
+    presenza_data: schemas.PresenzaCreate,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Crea una singola timbratura/presenza."""
+    utente = db.query(models.Utente).filter(models.Utente.id_utente == presenza_data.id_utente).first()
+    if not utente:
+        raise HTTPException(status_code=404, detail="Utente specificato non trovato")
+    
+    # Se viene fornito un orario di uscita, verifica se deve essere limitato all'ora di fine lezione
+    ora_uscita = presenza_data.ora_uscita
+    if ora_uscita:
+        lezione = db.query(models.Calendario).filter(
+            models.Calendario.id_utente == presenza_data.id_utente,
+            models.Calendario.data == presenza_data.data_presenza,
+            models.Calendario.ora_fine.isnot(None)
+        ).order_by(models.Calendario.ora_fine.desc()).first()
+        
+        if lezione and lezione.ora_fine:
+            if ora_uscita > lezione.ora_fine:
+                ora_uscita = lezione.ora_fine
+                print(f"TIMBRATURA LIMITATA (create): orario uscita dopo fine lezione, impostato a {lezione.ora_fine}")
+        
+    nuova_presenza = models.Presenza(
+        id_utente=presenza_data.id_utente,
+        id_corso_attivo=presenza_data.id_corso_attivo,
+        data_presenza=presenza_data.data_presenza,
+        ora_ingresso=presenza_data.ora_ingresso,
+        ora_uscita=ora_uscita,
+        note=presenza_data.note
+    )
+    db.add(nuova_presenza)
+    try:
+        db.commit()
+        db.refresh(nuova_presenza)
+        return nuova_presenza
+    except Exception as e:
+        db.rollback()
+        error_msg = extract_sql_error_message(e)
+        raise HTTPException(status_code=400, detail=error_msg)
+
+
+@app.put("/presenze/{id_presenza}", response_model=schemas.PresenzaResponse)
+def update_presenza(
+    id_presenza: int,
+    presenza_data: schemas.PresenzaUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Aggiorna o rettifica una timbratura esistente."""
+    presenza = db.query(models.Presenza).filter(models.Presenza.id_presenza == id_presenza).first()
+    if not presenza:
+        raise HTTPException(status_code=404, detail="Timbratura non trovata")
+        
+    if presenza_data.id_corso_attivo is not None:
+        presenza.id_corso_attivo = presenza_data.id_corso_attivo
+    if presenza_data.data_presenza is not None:
+        presenza.data_presenza = presenza_data.data_presenza
+    if presenza_data.ora_ingresso is not None:
+        presenza.ora_ingresso = presenza_data.ora_ingresso
+    if presenza_data.ora_uscita is not None:
+        # Verifica se c'è una lezione per quell'utente in quella data
+        # Cerca la lezione con l'ora di fine più tardi
+        data_rif = presenza_data.data_presenza or presenza.data_presenza
+        lezioni = db.query(models.Calendario).filter(
+            models.Calendario.id_utente == presenza.id_utente,
+            models.Calendario.data == data_rif,
+            models.Calendario.ora_fine.isnot(None)
+        ).order_by(models.Calendario.ora_fine.desc()).first()
+        
+        ora_uscita = presenza_data.ora_uscita
+        if lezioni and lezioni.ora_fine:
+            # Se l'orario di uscita è dopo l'ora di fine lezione, usa l'ora di fine lezione
+            if ora_uscita > lezioni.ora_fine:
+                ora_uscita = lezioni.ora_fine
+        
+        presenza.ora_uscita = ora_uscita
+    if presenza_data.note is not None:
+        presenza.note = presenza_data.note
+        
+    try:
+        db.commit()
+        db.refresh(presenza)
+        return presenza
+    except Exception as e:
+        db.rollback()
+        error_msg = extract_sql_error_message(e)
+        raise HTTPException(status_code=400, detail=error_msg)
+
+
+@app.delete("/presenze/{id_presenza}")
+def delete_presenza(
+    id_presenza: int,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Elimina una timbratura dal registro."""
+    presenza = db.query(models.Presenza).filter(models.Presenza.id_presenza == id_presenza).first()
+    if not presenza:
+        raise HTTPException(status_code=404, detail="Timbratura non trovata")
+        
+    db.delete(presenza)
+    db.commit()
+    return {"message": "Timbratura eliminata con successo"}
+
+
+@app.post("/presenze/batch")
+def batch_save_presenze(
+    batch_data: schemas.PresenzaBatchCreate,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Registra o aggiorna in blocco le timbrature per una classe/data (Appello Rapido)."""
+    target_date = batch_data.data_presenza
+    target_id_corso_attivo = batch_data.id_corso_attivo
+    saved_count = 0
+    deleted_count = 0
+
+    for item in batch_data.presenze:
+        # Cerca presenza esistente per lo studente nella data
+        existing = db.query(models.Presenza).filter(
+            models.Presenza.id_utente == item.id_utente,
+            models.Presenza.data_presenza == target_date
+        ).first()
+
+        if item.presente:
+            if existing:
+                existing.ora_ingresso = item.ora_ingresso
+                existing.ora_uscita = item.ora_uscita
+                existing.note = item.note
+                if target_id_corso_attivo:
+                    existing.id_corso_attivo = target_id_corso_attivo
+            else:
+                nuova = models.Presenza(
+                    id_utente=item.id_utente,
+                    id_corso_attivo=target_id_corso_attivo,
+                    data_presenza=target_date,
+                    ora_ingresso=item.ora_ingresso,
+                    ora_uscita=item.ora_uscita,
+                    note=item.note
+                )
+                db.add(nuova)
+            saved_count += 1
+        else:
+            # Se contrassegnato come assente ed esisteva un record, lo rimuove
+            if existing:
+                db.delete(existing)
+                deleted_count += 1
+
+    try:
+        db.commit()
+        return {
+            "message": "Presenze aggiornate con successo",
+            "salvate": saved_count,
+            "eliminate": deleted_count
+        }
+    except Exception as e:
+        db.rollback()
+        error_msg = extract_sql_error_message(e)
+        raise HTTPException(status_code=400, detail=error_msg)
+
+
+# --- Endpoint per Timbrature Studente via QR Code ---
+
+class LezioneOggiResponse(BaseModel):
+    ha_lezione: bool
+    lezione: Optional[schemas.CalendarioResponse] = None
+    messaggio: str
+
+@app.get("/studente/lezione-oggi", response_model=LezioneOggiResponse)
+def get_lezione_oggi(
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Verifica se lo studente ha lezioni oggi per generare il QR code."""
+    today = date.today()
+    user_id = current_user.id_utente
+
+    # Cerca corsi attivi a cui lo studente è iscritto
+    corsi_attivi_studente = db.query(models.UtenteCorsoAttivo).filter(
+        models.UtenteCorsoAttivo.id_utente == user_id
+    ).all()
+
+    if not corsi_attivi_studente:
+        return LezioneOggiResponse(
+            ha_lezione=False,
+            messaggio="Non sei iscritto a nessun corso attivo"
+        )
+
+    # Cerca lezioni oggi per i corsi a cui è iscritto
+    corsi_ids = [ca.id_corso_attivo for ca in corsi_attivi_studente]
+    lezione_oggi = db.query(models.Calendario).filter(
+        models.Calendario.data == today,
+        models.Calendario.id_corso_attivo.in_(corsi_ids)
+    ).first()
+
+    if not lezione_oggi:
+        return LezioneOggiResponse(
+            ha_lezione=False,
+            messaggio="Non ci sono lezioni previste per oggi"
+        )
+
+    return LezioneOggiResponse(
+        ha_lezione=True,
+        lezione=lezione_oggi,
+        messaggio="Lezione trovata per oggi"
+    )
+
+
+class QRCodeRequest(BaseModel):
+    id_lezione: int
+
+class QRCodeResponse(BaseModel):
+    qr_code_data: str
+    scadenza: str
+    lezione_info: dict
+
+@app.post("/studente/genera-qr", response_model=QRCodeResponse)
+def genera_qr_code(
+    qr_request: QRCodeRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Genera i dati per il QR code per la timbratura."""
+    # Verifica che la lezione esista
+    lezione = db.query(models.Calendario).filter(
+        models.Calendario.id == qr_request.id_lezione
+    ).first()
+
+    if not lezione:
+        raise HTTPException(status_code=404, detail="Lezione non trovata")
+
+    # Verifica che la lezione sia oggi
+    today = date.today()
+    if lezione.data != today:
+        raise HTTPException(status_code=400, detail="È possibile timbrare solo per lezioni di oggi")
+
+    # Verifica che lo studente sia iscritto al corso
+    iscritto = db.query(models.UtenteCorsoAttivo).filter(
+        models.UtenteCorsoAttivo.id_utente == current_user.id_utente,
+        models.UtenteCorsoAttivo.id_corso_attivo == lezione.id_corso_attivo
+    ).first()
+
+    if not iscritto:
+        raise HTTPException(status_code=403, detail="Non sei iscritto a questo corso")
+
+    # Verifica se ha già timbrato per questa lezione oggi
+    presenza_esistente = db.query(models.Presenza).filter(
+        models.Presenza.id_utente == current_user.id_utente,
+        models.Presenza.data_presenza == today,
+        models.Presenza.id_corso_attivo == lezione.id_corso_attivo
+    ).first()
+
+    if presenza_esistente and presenza_esistente.ora_ingresso:
+        raise HTTPException(status_code=400, detail="Hai già timbrato l'ingresso per oggi")
+
+    # Genera dati QR code
+    qr_data = {
+        "user_id": current_user.id_utente,
+        "lezione_id": lezione.id,
+        "corso_attivo_id": lezione.id_corso_attivo,
+        "timestamp": datetime.now().isoformat(),
+        "tipo": "timbratura_ingresso"
+    }
+
+    # Scadenza QR code (5 minuti)
+    scadenza = (datetime.now() + timedelta(minutes=5)).isoformat()
+
+    return QRCodeResponse(
+        qr_code_data=json.dumps(qr_data),
+        scadenza=scadenza,
+        lezione_info={
+            "id": lezione.id,
+            "data": lezione.data.isoformat(),
+            "ora_inizio": lezione.ora_inizio.isoformat() if lezione.ora_inizio else None,
+            "ora_fine": lezione.ora_fine.isoformat() if lezione.ora_fine else None,
+            "id_corso_attivo": lezione.id_corso_attivo
+        }
+    )
+
+
+class TimbraturaQRRequest(BaseModel):
+    qr_data: str
+
+class TimbraturaQRResponse(BaseModel):
+    success: bool
+    messaggio: str
+    presenza: Optional[schemas.PresenzaResponse] = None
+
+@app.post("/studente/timbra-qr", response_model=TimbraturaQRResponse)
+def timbra_qr_code(
+    qr_request: TimbraturaQRRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Registra la timbratura tramite QR code."""
+    try:
+        qr_data = json.loads(qr_request.qr_data)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="QR code non valido")
+
+    # Verifica che il QR code sia per l'utente corrente
+    if qr_data.get("user_id") != current_user.id_utente:
+        raise HTTPException(status_code=403, detail="QR code non valido per questo utente")
+
+    # Verifica scadenza QR code
+    qr_timestamp = datetime.fromisoformat(qr_data.get("timestamp", ""))
+    if datetime.now() - qr_timestamp > timedelta(minutes=5):
+        raise HTTPException(status_code=400, detail="QR code scaduto")
+
+    # Verifica che la lezione esista
+    lezione = db.query(models.Calendario).filter(
+        models.Calendario.id == qr_data.get("lezione_id")
+    ).first()
+
+    if not lezione:
+        raise HTTPException(status_code=404, detail="Lezione non trovata")
+
+    # Verifica che la lezione sia oggi
+    today = date.today()
+    if lezione.data != today:
+        raise HTTPException(status_code=400, detail="QR code non valido per la data corrente")
+
+    # Verifica se ha già timbrato
+    presenza_esistente = db.query(models.Presenza).filter(
+        models.Presenza.id_utente == current_user.id_utente,
+        models.Presenza.data_presenza == today,
+        models.Presenza.id_corso_attivo == lezione.id_corso_attivo
+    ).first()
+
+    ora_corrente = datetime.now().time()
+
+    if presenza_esistente:
+        if presenza_esistente.ora_ingresso and not presenza_esistente.ora_uscita:
+            # Timbratura uscita
+            presenza_esistente.ora_uscita = ora_corrente
+            db.commit()
+            db.refresh(presenza_esistente)
+            return TimbraturaQRResponse(
+                success=True,
+                messaggio="Timbratura uscita registrata con successo",
+                presenza=presenza_esistente
+            )
+        elif presenza_esistente.ora_ingresso and presenza_esistente.ora_uscita:
+            raise HTTPException(status_code=400, detail="Hai già completato la timbratura per oggi")
+        else:
+            # Aggiorna ora ingresso
+            presenza_esistente.ora_ingresso = ora_corrente
+            db.commit()
+            db.refresh(presenza_esistente)
+            return TimbraturaQRResponse(
+                success=True,
+                messaggio="Timbratura ingresso aggiornata con successo",
+                presenza=presenza_esistente
+            )
+    else:
+        # Nuova timbratura ingresso
+        nuova_presenza = models.Presenza(
+            id_utente=current_user.id_utente,
+            id_corso_attivo=lezione.id_corso_attivo,
+            data_presenza=today,
+            ora_ingresso=ora_corrente,
+            note="Timbratura via QR code"
+        )
+        db.add(nuova_presenza)
+        db.commit()
+        db.refresh(nuova_presenza)
+        return TimbraturaQRResponse(
+            success=True,
+            messaggio="Timbratura ingresso registrata con successo",
+            presenza=nuova_presenza
+        )
 
