@@ -186,10 +186,13 @@ class Presenza(Base):
     __tablename__ = "presenze"
     id_presenza = Column("id_presenza", Integer, primary_key=True, index=True, autoincrement=True)
     id_utente = Column("id_utente", Integer, ForeignKey("utenti.id_utente"), nullable=False)
+    id_corso_attivo = Column("id_corso_attivo", Integer, ForeignKey("corsi_attivi.id_corso_attivo"), nullable=True)
     data_presenza = Column("data_presenza", Date, nullable=False)
     ora_ingresso = Column("ora_ingresso", Time, nullable=True)
     ora_uscita = Column("ora_uscita", Time, nullable=True)
     note = Column("note", Text, nullable=True)
 
     utente = relationship("Utente", backref="presenze")
+    corso_attivo = relationship("CorsoAttivo", backref="presenze")
+
 

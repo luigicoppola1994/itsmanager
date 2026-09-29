@@ -8,7 +8,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="../assets/bootstrap.min.css" rel="stylesheet">
@@ -16,8 +16,8 @@
 
     <!-- CSS condiviso e segreteria -->
     <link rel="stylesheet" href="../shared/styles.css?v=2.1">
-    <link rel="stylesheet" href="segreteria.css?v=3.0">
     <link rel="stylesheet" href="nuovo-corso.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=4.0">
 </head>
 <body>
 
@@ -48,37 +48,37 @@
 
             <ul class="sidebar-nav">
                 <li>
-                    <a href="dashboard.html" class="nav-item-link active" id="navCorsi" title="Corsi">
+                    <a href="dashboard.html" class="nav-item-link active" id="navCorsi" data-label="Corsi">
                         <i class="bi bi-journal-bookmark-fill"></i>
                         <span class="nav-label">Corsi</span>
                     </a>
                 </li>
                 <li>
-                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" title="Piano Didattico">
+                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" data-label="Piano Didattico">
                         <i class="bi bi-book-half"></i>
                         <span class="nav-label">Piano Didattico</span>
                     </a>
                 </li>
                 <li>
-                    <a href="utenze.html" class="nav-item-link" id="navUtenze" title="Utenze">
+                    <a href="utenze.html" class="nav-item-link" id="navUtenze" data-label="Utenze">
                         <i class="bi bi-people-fill"></i>
                         <span class="nav-label">Utenze</span>
                     </a>
                 </li>
                 <li>
-                    <a href="aule.html" class="nav-item-link" id="navAule" title="Aule">
+                    <a href="aule.html" class="nav-item-link" id="navAule" data-label="Aule">
                         <i class="bi bi-door-open-fill"></i>
                         <span class="nav-label">Aule</span>
                     </a>
                 </li>
                 <li>
-                    <a href="calendario.html" class="nav-item-link" id="navCalendario" title="Calendario">
+                    <a href="calendario.html" class="nav-item-link" id="navCalendario" data-label="Calendario">
                         <i class="bi bi-calendar3"></i>
                         <span class="nav-label">Calendario</span>
                     </a>
                 </li>
                 <li>
-                    <a href="timbrature.html" class="nav-item-link" id="navTimbrature" title="Timbrature">
+                    <a href="timbrature.html" class="nav-item-link" id="navTimbrature" data-label="Timbrature">
                         <i class="bi bi-clock-history"></i>
                         <span class="nav-label">Timbrature</span>
                     </a>
@@ -135,7 +135,7 @@
                             <span class="nc-title-icon"><i class="bi bi-calendar2-range"></i></span>
                             <span id="pageTitleText">Modifica Edizione Corso</span>
                         </h1>
-                        <p class="nc-subtitle" id="pageSubtitleText">Modifica date, monte ore, percentuali di tolleranza e bilancio del Piano di Studio.</p>
+                        <p class="nc-subtitle" id="pageSubtitleText">Modifica date, monte ore, percentuale di assenza e bilancio del Piano di Studio.</p>
                     </div>
                     <a href="dashboard.html" class="btn-back">
                         <i class="bi bi-arrow-left"></i>
@@ -219,7 +219,7 @@
                         </div>
 
                         <div class="row g-3 mb-4">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="nc-field-group">
                                     <label for="editEdizionePercAssenza" class="nc-label">Max Assenza (%)</label>
                                     <div class="input-group">
@@ -227,26 +227,6 @@
                                         <span class="input-group-text bg-light">%</span>
                                     </div>
                                     <span class="nc-field-hint">Limite legale (max 30%)</span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="nc-field-group">
-                                    <label for="editEdizioneTollIngresso" class="nc-label">Toll. Ingresso</label>
-                                    <div class="input-group">
-                                        <input type="number" id="editEdizioneTollIngresso" class="form-control nc-input py-2" min="0" max="30" value="15" required>
-                                        <span class="input-group-text bg-light">min</span>
-                                    </div>
-                                    <span class="nc-field-hint">Ritardo massimo ammesso</span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="nc-field-group">
-                                    <label for="editEdizioneTollUscita" class="nc-label">Toll. Uscita</label>
-                                    <div class="input-group">
-                                        <input type="number" id="editEdizioneTollUscita" class="form-control nc-input py-2" min="0" max="45" value="15" required>
-                                        <span class="input-group-text bg-light">min</span>
-                                    </div>
-                                    <span class="nc-field-hint">Uscita anticipata ammessa</span>
                                 </div>
                             </div>
                         </div>

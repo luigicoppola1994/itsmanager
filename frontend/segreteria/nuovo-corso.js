@@ -34,8 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const oreTeoria = document.getElementById('oreTeoria');
     const oreStage = document.getElementById('oreStage');
     const percAssenza = document.getElementById('percAssenza');
-    const tollIngresso = document.getElementById('tollIngresso');
-    const tollUscita = document.getElementById('tollUscita');
     
     const submitBtn = document.getElementById('submitBtn');
     
@@ -50,8 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewOreAula = document.getElementById('previewOreAula');
     const previewOreStage = document.getElementById('previewOreStage');
     const previewAssenza = document.getElementById('previewAssenza');
-    const previewTollIngresso = document.getElementById('previewTollIngresso');
-    const previewTollUscita = document.getElementById('previewTollUscita');
     const previewProgressPercent = document.getElementById('previewProgressPercent');
     const previewProgressBar = document.getElementById('previewProgressBar');
     
@@ -473,12 +469,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const assenza = percAssenza ? percAssenza.value : 20;
         if (previewAssenza) previewAssenza.textContent = assenza ? `${assenza}%` : '20%';
 
-        // Tolleranze
-        const tollIng = tollIngresso ? tollIngresso.value || 15 : 15;
-        const tollUsc = tollUscita ? tollUscita.value || 15 : 15;
-        if (previewTollIngresso) previewTollIngresso.innerHTML = `<i class="bi bi-box-arrow-in-right text-primary me-1"></i>Toll. Entrata: <strong>${tollIng} min</strong>`;
-        if (previewTollUscita) previewTollUscita.innerHTML = `<i class="bi bi-box-arrow-right text-primary me-1"></i>Toll. Uscita: <strong>${tollUsc} min</strong>`;
-
         // Checklist & Calcolo Percentuale di Completamento
         let completedSteps = 0;
         let totalSteps = creaEdizioneAttiva ? 3 : 1;
@@ -524,7 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Aggiungi listener per l'input in tempo reale su tutti i campi
-    const inputsToWatch = [nomeInput, descInput, corsoEsistenteSelect, etichettaInput, dataInizio, dataFine, oreTeoria, oreStage, percAssenza, tollIngresso, tollUscita];
+    const inputsToWatch = [nomeInput, descInput, corsoEsistenteSelect, etichettaInput, dataInizio, dataFine, oreTeoria, oreStage, percAssenza];
     inputsToWatch.forEach(input => {
         if (input) {
             ['input', 'keyup', 'change'].forEach(evt => input.addEventListener(evt, updatePreview));
@@ -609,24 +599,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 percAssenza.classList.remove('is-invalid');
             }
 
-            const tollIngVal = parseInt(tollIngresso.value);
-            if (isNaN(tollIngVal) || tollIngVal < 0 || tollIngVal > 30) {
-                showToastCustom('La tolleranza in ingresso deve essere compresa tra 0 e 30 minuti.', 'error');
-                tollIngresso.classList.add('is-invalid');
-                isValid = false;
-            } else {
-                tollIngresso.classList.remove('is-invalid');
-            }
-
-            const tollUscVal = parseInt(tollUscita.value);
-            if (isNaN(tollUscVal) || tollUscVal < 0 || tollUscVal > 45) {
-                showToastCustom('La tolleranza in uscita deve essere compresa tra 0 e 45 minuti.', 'error');
-                tollUscita.classList.add('is-invalid');
-                isValid = false;
-            } else {
-                tollUscita.classList.remove('is-invalid');
-            }
-
             // Informativo sul bilancio ore UF (non bloccante per il salvataggio)
             const checkedUfs = Array.from(document.querySelectorAll('.chk-uf-piano:checked'));
             let sumUfOre = 0;
@@ -686,9 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     durata_ore: parseInt(durataOre.value),
                     ore_stage: parseInt(oreStage.value) || 0,
                     ore_teoria_aula: parseInt(oreTeoria.value) || 0,
-                    percentuale_ore_assenza: parseFloat(percAssenza.value) || 0,
-                    tolleranza_ingresso_minuti: parseInt(tollIngresso.value) || 0,
-                    tolleranza_uscita_minuti: parseInt(tollUscita.value) || 0
+                    percentuale_ore_assenza: parseFloat(percAssenza.value) || 0
                 };
 
                 const response = await fetchAutenticata(`${API_URL}/corsi/nuovo`, {
@@ -725,8 +695,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     ore_stage: parseInt(oreStage.value) || 0,
                     ore_teoria_aula: parseInt(oreTeoria.value) || 0,
                     percentuale_ore_assenza: parseFloat(percAssenza.value) || 0,
-                    tolleranza_ingresso_minuti: parseInt(tollIngresso.value) || 0,
-                    tolleranza_uscita_minuti: parseInt(tollUscita.value) || 0,
                     archiviato: false
                 };
 

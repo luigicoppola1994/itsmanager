@@ -3,132 +3,335 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITS Manager - Dettaglio Timbrature Studente</title>
+    <title>ITS Manager – Timbrature Studente</title>
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts (Roboto per coerenza con tutto il gestionale) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="../assets/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- CSS condiviso e segreteria (Stile Corsi / Gestione Aula) -->
+    <!-- CSS condiviso, segreteria e nuovo-corso per identità visiva coerente -->
     <link rel="stylesheet" href="../shared/styles.css?v=2.1">
-    <link rel="stylesheet" href="segreteria.css?v=3.0">
     <link rel="stylesheet" href="nuovo-corso.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=4.0">
 
     <style>
-        /* ── ZUCCHETTI STYLE WEEKLY DAY GRID ── */
-        .zucchetti-week-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
+        /* ── STUDENT HERO CARD (Minimal & Clean) ── */
+        .student-hero-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px 24px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+            margin-bottom: 20px;
+        }
+        .student-avatar-lg {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-color, #4682B4) 0%, #356794 100%);
+            color: #ffffff;
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(70, 130, 180, 0.2);
+        }
+        .student-name-title {
+            font-size: 1.22rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+            line-height: 1.2;
+        }
+        .student-meta-row {
+            font-size: 0.83rem;
+            color: #64748b;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
             gap: 12px;
         }
-
-        @media (max-width: 992px) {
-            .zucchetti-week-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
+        .course-info-box {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
-
-        @media (max-width: 576px) {
-            .zucchetti-week-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .kpi-mini-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            height: 100%;
         }
-
-        .zucchetti-day-card {
-            background: #ffffff;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 12px 8px;
+        .kpi-mini-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 8px 6px;
             text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            user-select: none;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            min-height: 100px;
+            justify-content: center;
+            transition: all 0.2s ease;
         }
-
-        .zucchetti-day-card:hover {
-            border-color: #3a6f9f;
+        .kpi-mini-box:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(58, 111, 159, 0.15);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+        }
+        .kpi-icon-wrap {
+            font-size: 1rem;
+            line-height: 1;
+            opacity: 0.85;
+        }
+        .kpi-mini-num {
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.15;
+        }
+        .kpi-mini-lbl {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-top: 3px;
+            letter-spacing: 0.2px;
+        }
+        .kpi-sub-text {
+            font-size: 0.62rem;
+            color: #94a3b8;
+            margin-top: 2px;
+            font-weight: 500;
         }
 
-        .zucchetti-day-card.is-selected {
-            border-color: #3a6f9f !important;
-            background-color: #eaf2f8 !important;
-            box-shadow: 0 0 0 3px rgba(58, 111, 159, 0.25) !important;
+        /* ── SEZIONE CARD NEUTRA (Minimal & Clean) ── */
+        .dt-section-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+            overflow: visible;
+        }
+        .dt-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 12px 20px;
+            background: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+            border-radius: 10px 10px 0 0;
+        }
+        .dt-section-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .dt-section-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #1e293b;
+            letter-spacing: -0.2px;
         }
 
-        .zucchetti-day-card.is-today {
-            border-color: #93c5fd;
+        /* ── CAROSELLO: overflow-x scroll forzato via JS sui pulsanti freccia ── */
+        .carousel-outer {
+            padding: 16px 18px 18px;
+            overflow: hidden;   /* contiene le card all'interno del box */
         }
+        .days-carousel-wrapper {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            width: 100%;
+            min-width: 0;
+            user-select: none;
+        }
+        .carousel-arrow-btn {
+            width: 40px;
+            min-height: 90px;
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+            flex-shrink: 0;
+        }
+        .carousel-arrow-btn:hover:not(:disabled) {
+            background: var(--primary-color, #4682B4);
+            color: #ffffff;
+            border-color: var(--primary-color, #4682B4);
+            box-shadow: 0 4px 12px rgba(70, 130, 180, 0.22);
+        }
+        .carousel-arrow-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: #f8fafc;
+        }
+        .days-carousel-track {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 8px;
+            /* overflow-x: scroll forza lo scroll nativo dove possibile,
+               ma la navigazione principale avviene via JS scrollBy */
+            overflow-x: scroll;
+            overflow-y: visible;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            padding: 4px 2px 12px;
+            flex: 1 1 0%;
+            min-width: 0;
+            width: 0;          /* trucco: forza il flex item a ridursi correttamente */
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+        .days-carousel-track::-webkit-scrollbar { height: 5px; }
+        .days-carousel-track::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .days-carousel-track::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        .zucchetti-day-name {
-            font-size: 0.78rem;
+        /* ── CARD DEL SINGOLO GIORNO ── */
+        .day-card {
+            flex: 0 0 108px;
+            min-width: 108px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 9px 6px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .day-card:hover {
+            border-color: var(--primary-color, #4682B4);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(70, 130, 180, 0.15);
+        }
+        .day-card.is-selected {
+            border-color: var(--primary-color, #4682B4) !important;
+            background: #eff6ff !important;
+            box-shadow: 0 0 0 2px var(--primary-color, #4682B4), 0 4px 12px rgba(70, 130, 180, 0.15) !important;
+        }
+        .day-card.is-today {
+            border-top: 3px solid var(--primary-color, #4682B4);
+        }
+        .day-card-today-badge {
+            font-size: 0.6rem;
             font-weight: 800;
+            color: var(--primary-color, #4682B4);
+            letter-spacing: 0.5px;
+            line-height: 1;
+            margin-bottom: 2px;
+        }
+        .day-name {
+            font-size: 0.72rem;
+            font-weight: 700;
             color: #64748b;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-
-        .zucchetti-day-num {
+        .day-num {
             font-size: 1.45rem;
-            font-weight: 800;
+            font-weight: 700;
             color: #1e293b;
             line-height: 1.1;
             margin: 2px 0;
         }
-
-        .zucchetti-day-month {
-            font-size: 0.7rem;
-            font-weight: 700;
+        .day-card.is-selected .day-num {
+            color: var(--primary-color, #4682B4);
+        }
+        .day-month {
+            font-size: 0.66rem;
+            font-weight: 600;
             color: #94a3b8;
             text-transform: uppercase;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
-
-        .zucchetti-day-badge {
-            font-size: 0.72rem;
+        .day-badge {
+            font-size: 0.68rem;
             font-weight: 700;
-            padding: 3px 6px;
+            padding: 2px 4px;
             border-radius: 6px;
             width: 100%;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            display: block;
         }
+        .badge-ok   { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .badge-open { background: #fef9c3; color: #a16207; border: 1px solid #fde68a; }
+        .badge-none { background: #f1f5f9; color: #94a3b8; border: 1px dashed #cbd5e1; }
 
-        .zucchetti-badge-present { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-        .zucchetti-badge-late { background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
-        .zucchetti-badge-none { background-color: #f1f5f9; color: #94a3b8; border: 1px dashed #cbd5e1; }
+        /* Date future: non selezionabili */
+        .day-card.is-future {
+            opacity: 0.38;
+            cursor: not-allowed;
+            pointer-events: none;
+            background: #f8fafc;
+            border-style: dashed;
+        }
+        .day-card.is-future .day-num { color: #94a3b8; }
 
-        .student-header-avatar {
-            width: 52px;
-            height: 52px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #3a6f9f 0%, #2563eb 100%);
-            color: white;
-            font-weight: 800;
-            font-size: 1.3rem;
-            display: flex;
+        /* ── TABELLA TIMBRATURE DEL GIORNO (Minimal) ── */
+        .timb-time-chip {
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            gap: 6px;
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            letter-spacing: 0.2px;
+        }
+        .chip-in  { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
+        .chip-out { background: #f0f7ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+        .chip-missing { background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; }
+
+        /* Righe interattive nella tabella */
+        .row-inline-create {
+            background-color: #f8fafc !important;
+            border-left: 3px solid var(--primary-color, #4682B4) !important;
+        }
+        .row-inline-edit {
+            background-color: #fffdf5 !important;
+            border-left: 3px solid #f59e0b !important;
+        }
+        .row-inline-create td, .row-inline-edit td {
+            background-color: inherit !important;
         }
     </style>
 </head>
 <body>
 
     <div class="app-wrapper">
-        <!-- SIDEBAR A SINISTRA -->
+
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-brand-block">
@@ -142,6 +345,7 @@
                 </div>
             </div>
 
+            <!-- PROFILO UTENTE -->
             <div class="sidebar-user">
                 <div class="user-avatar-small">
                     <i class="bi bi-person-badge-fill"></i>
@@ -152,43 +356,14 @@
                 </div>
             </div>
 
+            <!-- MENU NAVIGAZIONE -->
             <ul class="sidebar-nav">
-                <li>
-                    <a href="dashboard.html" class="nav-item-link" id="navCorsi" title="Corsi">
-                        <i class="bi bi-journal-bookmark-fill"></i>
-                        <span class="nav-label">Corsi</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" title="Piano Didattico">
-                        <i class="bi bi-book-half"></i>
-                        <span class="nav-label">Piano Didattico</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="utenze.html" class="nav-item-link" id="navUtenze" title="Utenze">
-                        <i class="bi bi-people-fill"></i>
-                        <span class="nav-label">Utenze</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="aule.html" class="nav-item-link" id="navAule" title="Aule">
-                        <i class="bi bi-door-open-fill"></i>
-                        <span class="nav-label">Aule</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="calendario.html" class="nav-item-link" id="navCalendario" title="Calendario">
-                        <i class="bi bi-calendar3"></i>
-                        <span class="nav-label">Calendario</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="timbrature.html" class="nav-item-link active" id="navTimbrature" title="Timbrature">
-                        <i class="bi bi-clock-history"></i>
-                        <span class="nav-label">Timbrature</span>
-                    </a>
-                </li>
+                <li><a href="dashboard.html" class="nav-item-link" id="navCorsi" data-label="Corsi"><i class="bi bi-journal-bookmark-fill"></i><span class="nav-label">Corsi</span></a></li>
+                <li><a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" data-label="Piano Didattico"><i class="bi bi-book-half"></i><span class="nav-label">Piano Didattico</span></a></li>
+                <li><a href="utenze.html" class="nav-item-link" id="navUtenze" data-label="Utenze"><i class="bi bi-people-fill"></i><span class="nav-label">Utenze</span></a></li>
+                <li><a href="aule.html" class="nav-item-link" id="navAule" data-label="Aule"><i class="bi bi-door-open-fill"></i><span class="nav-label">Aule</span></a></li>
+                <li><a href="calendario.html" class="nav-item-link" id="navCalendario" data-label="Calendario"><i class="bi bi-calendar3"></i><span class="nav-label">Calendario</span></a></li>
+                <li><a href="timbrature.html" class="nav-item-link active" id="navTimbrature" data-label="Timbrature"><i class="bi bi-clock-history"></i><span class="nav-label">Timbrature</span></a></li>
             </ul>
 
             <div class="sidebar-footer">
@@ -211,269 +386,225 @@
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
                     <a href="timbrature.html" class="breadcrumb-section" style="text-decoration:none;">Timbrature</a>
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
-                    <span class="breadcrumb-current" id="headerBreadcrumbCurrent">Dettaglio Timbrature Studente</span>
+                    <span class="breadcrumb-current" id="topBarBreadcrumbCurrent">Dettaglio Studente</span>
                 </nav>
                 <div class="rubick-top-bar-actions">
                     <div class="rubick-icon-badge" title="Notifiche">
                         <i class="bi bi-bell"></i>
                         <span class="rubick-badge-dot"></span>
                     </div>
-                    <div class="rubick-user-avatar" title="Segreteria Didattica">
-                        SD
-                    </div>
+                    <div class="rubick-user-avatar" title="Segreteria Didattica">SD</div>
                 </div>
             </div>
 
-            <!-- PAGE HEADER IN STILE CORSI -->
+            <!-- PAGE HEADER -->
             <div class="nc-page-header">
                 <div class="nc-breadcrumb">
-                    <a href="timbrature.html" class="nc-breadcrumb-link">
+                    <a href="timbrature.html" class="nc-breadcrumb-link" id="btnBackBreadcrumb">
                         <i class="bi bi-clock-history"></i>
                         Registro Timbrature
                     </a>
                     <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
-                    <span class="nc-breadcrumb-current" id="pageBreadcrumbText">Gestione Presenze Studente</span>
+                    <span class="nc-breadcrumb-current" id="ncBreadcrumbCurrent">Dettaglio Studente</span>
                 </div>
 
                 <div class="nc-header-row">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="student-header-avatar" id="studentHeaderAvatar">ST</div>
-                        <div>
-                            <h1 class="nc-title mb-1">
-                                <span id="studentHeaderFullName">Cognome Nome</span>
-                            </h1>
-                            <p class="nc-subtitle mb-0" id="studentHeaderSubtitle">Gestione timbrature e registro presenze per studente</p>
-                        </div>
+                    <div>
+                        <h1 class="nc-title">
+                            <span class="nc-title-icon"><i class="bi bi-person-lines-fill"></i></span>
+                            <span id="pageTitleText">Dettaglio Timbrature Studente</span>
+                        </h1>
+                        <p class="nc-subtitle" id="pageSubtitleText">Visualizza il calendario attivo del corso e gestisci le presenze giornaliere direttamente nella tabella.</p>
                     </div>
-                    <a href="timbrature.html" class="btn-back">
+                    <a href="timbrature.html" class="btn-back" id="btnBackTop">
                         <i class="bi bi-arrow-left"></i>
                         <span>Torna al registro</span>
                     </a>
                 </div>
             </div>
 
-            <!-- LAYOUT A SCHEDE / CARDS -->
-            <div class="nc-form-layout">
+            <!-- LAYOUT CONTENUTI -->
+            <div style="padding: 0 0 40px 0;">
 
-                <!-- COLONNA PRINCIPALE: CALENDARIO SETTIMANALE + REGISTRO DEL GIORNO -->
-                <div class="nc-form-card" style="flex: 1 1 700px;">
-                    <div class="nc-form-card-header">
-                        <i class="bi bi-calendar3-week"></i>
-                        <span>Navigazione Calendario & Timbrature Settimanali (Stile Zucchetti)</span>
-                    </div>
-
-                    <div style="padding: 24px;">
-
-                        <!-- BARRA STRUMENTI SETTIMANA -->
-                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 p-3 bg-light rounded-3 border">
-                            <div class="d-flex align-items-center gap-2">
-                                <button class="btn btn-sm btn-outline-secondary fw-bold" id="btnPrevWeek" title="Settimana precedente">
-                                    <i class="bi bi-chevron-left me-1"></i>Sett. Prec.
-                                </button>
-                                <button class="btn btn-sm btn-primary fw-bold px-3" id="btnTodayWeek">
-                                    Questa Settimana
-                                </button>
-                                <button class="btn btn-sm btn-outline-secondary fw-bold" id="btnNextWeek" title="Settimana successiva">
-                                    Sett. Succ.<i class="bi bi-chevron-right ms-1"></i>
-                                </button>
-                            </div>
-                            <div class="fw-bold text-dark fs-6 d-flex align-items-center gap-2">
-                                <i class="bi bi-calendar-range text-primary"></i>
-                                <span id="weekRangeLabel">Settimana ...</span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="small text-muted d-none d-md-inline"><i class="bi bi-calendar-event me-1"></i>Seleziona Data:</span>
-                                <input type="date" class="form-control form-control-sm fw-bold text-primary" id="calDateInput" style="max-width: 155px;">
-                            </div>
-                        </div>
-
-                        <!-- 7 QUADRATI DEI GIORNI DELLA SETTIMANA (ZUCCHETTI GRID) -->
-                        <div class="zucchetti-week-grid mb-4" id="weekGrid">
-                            <!-- Popolato dinamicamente da JS -->
-                        </div>
-
-                        <!-- SCHEDA TIMBRATURE DEL GIORNO SELEZIONATO -->
-                        <div class="border rounded-3 p-4 bg-white shadow-sm mb-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 pb-3 border-bottom">
-                                <div class="d-flex align-items-center gap-3">
-                                    <h5 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
-                                        <i class="bi bi-clock-fill text-primary"></i>
-                                        <span id="selectedDateLabel">Timbrature del Giorno: —</span>
-                                    </h5>
-                                    <div id="dayLessonBadge"></div>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="resetForm()">
-                                    <i class="bi bi-plus-lg me-1"></i>Nuova Timbratura
-                                </button>
-                            </div>
-
-                            <!-- ELENCO TIMBRATURE DEL GIORNO -->
-                            <div class="mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="fw-bold small text-muted text-uppercase" style="letter-spacing: 0.5px;">
-                                        <i class="bi bi-list-nested me-1"></i>Elenco Timbrature del Giorno
-                                    </span>
-                                    <span class="fw-bold text-primary small" id="dayTotalHours">Ore Totali Giornata: 0h 00m</span>
-                                </div>
-                                <div class="table-responsive border rounded mb-3">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th class="ps-3" style="width: 40px;">#</th>
-                                                <th>Tipologia</th>
-                                                <th>Ora Ingresso</th>
-                                                <th>Ora Uscita</th>
-                                                <th>Note / Giustificativo</th>
-                                                <th class="text-end pe-3">Azioni</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="tbodyDayIntervalli">
-                                            <tr>
-                                                <td colspan="6" class="text-center py-4 text-muted">
-                                                    Nessuna timbratura registrata per questo giorno.
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <!-- MODULO INSERIMENTO / MODIFICA TIMBRATURA GIORNO -->
-                            <div class="p-3 bg-light rounded-3 border">
-                                <div class="fw-bold small text-dark mb-2 d-flex align-items-center gap-1">
-                                    <i class="bi bi-pencil-square text-primary"></i>
-                                    <span id="formSubtitle">Inserisci Timbratura Giorno</span>
-                                </div>
-                                <form id="formStudentCalDay">
-                                    <input type="hidden" id="studentCalPresenzaId" value="">
-                                    <div class="row g-3 align-items-end">
-                                        <div class="col-md-3">
-                                            <label class="form-label fw-bold small text-muted mb-1">Tipologia *</label>
-                                            <select class="form-select form-select-sm fw-bold text-dark" id="studentCalTipo" onchange="onTipoChange()">
-                                                <option value="ingresso">Solo Ingresso</option>
-                                                <option value="uscita">Solo Uscita</option>
-                                                <option value="completa">Ingresso e Uscita</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2" id="wrapOraIn">
-                                            <label class="form-label fw-bold small text-muted mb-1">Ora Ingresso</label>
-                                            <div class="input-group input-group-sm">
-                                                <span class="input-group-text bg-white"><i class="bi bi-box-arrow-in-right text-success"></i></span>
-                                                <input type="time" class="form-control" id="studentCalOraIn">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-2" id="wrapOraOut">
-                                            <label class="form-label fw-bold small text-muted mb-1">Ora Uscita</label>
-                                            <div class="input-group input-group-sm">
-                                                <span class="input-group-text bg-white"><i class="bi bi-box-arrow-right text-danger"></i></span>
-                                                <input type="time" class="form-control" id="studentCalOraOut">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label fw-bold small text-muted mb-1">Note / Giustificativo</label>
-                                            <input type="text" class="form-control form-control-sm" id="studentCalNote" placeholder="Es. Permesso ore 10-12, Ritardo...">
-                                        </div>
-                                        <div class="col-md-2 d-flex gap-2">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm w-100 fw-bold" onclick="resetForm()">
-                                                Nuovo
-                                            </button>
-                                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold" id="btnStudentCalSave">
-                                                Salva
-                                            </button>
-                                        </div>
+                <!-- 1. CARD PROFILO STUDENTE & RIEPILOGO DATI (MINIMAL & ELEGANTE) -->
+                <div class="student-hero-card">
+                    <div class="row align-items-stretch g-3">
+                        <!-- Profilo Studente -->
+                        <div class="col-lg-4 col-md-12 d-flex align-items-center">
+                            <div class="d-flex align-items-center gap-3 w-100">
+                                <div class="student-avatar-lg" id="studentHeaderAvatar">ST</div>
+                                <div style="min-width:0; flex:1;">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                        <h2 class="student-name-title text-truncate" id="studentHeaderFullName">Caricamento...</h2>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold" id="studentIdBadge" style="display:none;"></span>
                                     </div>
-                                </form>
+                                    <div class="student-meta-row" id="studentHeaderSubtitle">
+                                        <span><i class="bi bi-envelope me-1"></i>...</span>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
 
+                        <!-- Info Corso & Edizione (Solo: Nome corso, Edizione, Monte ore, Max assenza) -->
+                        <div class="col-lg-3 col-md-6" id="courseStatsBlock">
+                            <div class="course-info-box">
+                                <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                                    <div class="fw-bold text-dark text-truncate fs-6" id="courseNameTitle" title="Nome Corso">Caricamento corso...</div>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold" id="courseEdizioneBadge">—</span>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between pt-2 mt-1 border-top" style="font-size: 0.82rem;">
+                                    <div>
+                                        <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px;">Monte Ore</span>
+                                        <strong class="text-dark fs-6" id="courseMonteOre">—</strong>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px;">Max Assenza</span>
+                                        <strong class="text-danger fs-6" id="courseMaxAssenzePerc">—</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI Riepilogo Presenze & Assenze Segreteria -->
+                        <div class="col-lg-5 col-md-12" id="kpiPresenzaBlock">
+                            <div class="kpi-mini-grid">
+                                <!-- 1. Ore Presenza -->
+                                <div class="kpi-mini-box">
+                                    <div class="kpi-icon-wrap text-primary mb-1"><i class="bi bi-clock-history"></i></div>
+                                    <div class="kpi-mini-num text-primary" id="previewTotalHoursRegistered">0h 00m</div>
+                                    <div class="kpi-mini-lbl">Ore Presenza</div>
+                                    <div class="kpi-sub-text text-truncate" id="previewPresenzaSub">su monte ore</div>
+                                </div>
+
+                                <!-- 2. Ore Assenza & Limite -->
+                                <div class="kpi-mini-box">
+                                    <div class="kpi-icon-wrap text-danger mb-1"><i class="bi bi-exclamation-triangle"></i></div>
+                                    <div class="kpi-mini-num text-danger" id="previewOreAssenza">0h 00m</div>
+                                    <div class="kpi-mini-lbl">Ore Assenza</div>
+                                    <div class="kpi-sub-text text-truncate" id="previewAssenzaSub">su max —</div>
+                                </div>
+
+                                <!-- 3. Percentuale Frequenza & Stato -->
+                                <div class="kpi-mini-box">
+                                    <div class="kpi-icon-wrap text-success mb-1" id="previewFrequenzaIcon"><i class="bi bi-percent"></i></div>
+                                    <div class="kpi-mini-num text-success" id="previewFrequenzaPerc">100%</div>
+                                    <div class="kpi-mini-lbl">Frequenza</div>
+                                    <div class="kpi-sub-text text-truncate" id="previewFrequenzaStato">In regola</div>
+                                </div>
+
+                                <!-- 4. Giorni In Aula / Timbrature -->
+                                <div class="kpi-mini-box">
+                                    <div class="kpi-icon-wrap text-secondary mb-1"><i class="bi bi-calendar-check"></i></div>
+                                    <div class="kpi-mini-num text-dark" id="previewTotalDaysCount">0</div>
+                                    <div class="kpi-mini-lbl">Giorni Aula</div>
+                                    <div class="kpi-sub-text text-truncate" id="previewTotalTimbratureCountSub">0 timbrature</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- COLONNA DESTRA: ANTEPRIMA & SCHEDA INFORMATIVA STUDENTE (STILE CORSI) -->
-                <div class="nc-preview-panel" style="flex: 0 0 340px;">
-                    <div class="nc-preview-header">
-                        <i class="bi bi-person-badge-fill"></i>
-                        <span>Profilo & Riepilogo Studente</span>
-                    </div>
-                    <p class="nc-preview-hint">Informazioni anagrafiche e corso frequentato</p>
-
-                    <div class="nc-preview-card mb-4">
-                        <div class="nc-preview-card-top">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="preview-badge-status" id="previewEdizioneTag">
-                                    Edizione Corso
-                                </span>
-                                <span class="preview-badge-edition" id="previewStudentIdTag">
-                                    ID Studente
-                                </span>
-                            </div>
-                            <h3 class="nc-preview-title" id="previewStudentFullName">Nome Cognome</h3>
+                <!-- 2. CARD CAROSELLO GIORNI DEL CORSO -->
+                <div class="dt-section-card mb-4">
+                    <div class="dt-section-header">
+                        <div class="dt-section-header-left">
+                            <i class="bi bi-calendar-range text-primary"></i>
+                            <span class="dt-section-title">Calendario Corso &mdash; Selezione Giorno</span>
+                            <span class="badge bg-white text-secondary border" id="courseDurationDaysBadge">0 giorni</span>
                         </div>
-                        <div class="nc-preview-card-body">
-                            <!-- Info Email / CF -->
-                            <div class="preview-dates-box mb-3">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="bi bi-envelope-at text-primary fs-5"></i>
-                                    <div>
-                                        <div class="preview-dates-label">Contatti & Anagrafica</div>
-                                        <div class="preview-dates-val" id="previewStudentEmail">Email studente</div>
-                                        <div class="small text-muted" id="previewStudentCF">Codice Fiscale</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Metriche Presenza -->
-                            <div class="nc-metrics-grid mb-3">
-                                <div class="nc-metric-card primary">
-                                    <div class="metric-icon"><i class="bi bi-clock-history"></i></div>
-                                    <div class="metric-val" id="previewTotalHoursRegistered">0h 00m</div>
-                                    <div class="metric-lbl">Ore Totali Registrate</div>
-                                </div>
-                                <div class="nc-metric-card">
-                                    <div class="metric-icon"><i class="bi bi-card-checklist"></i></div>
-                                    <div class="metric-val" id="previewTotalTimbratureCount">0</div>
-                                    <div class="metric-lbl">Timbrature Totali</div>
-                                </div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <button type="button" class="btn btn-sm btn-outline-primary fw-bold" id="btnTodayCourse" title="Vai a oggi se compreso nel corso">
+                                <i class="bi bi-calendar-day me-1"></i>Oggi
+                            </button>
+                            <div class="d-flex align-items-center gap-1">
+                                <label for="calDateInput" class="small text-muted mb-0 me-1">Data:</label>
+                                <input type="date" class="form-control form-control-sm fw-bold text-primary" id="calDateInput" style="max-width:140px;">
                             </div>
                         </div>
                     </div>
 
-                    <!-- GUIDA E REGOLE GESTIONE -->
-                    <div class="nc-progress-box">
-                        <div class="nc-progress-title">
-                            <i class="bi bi-shield-check text-primary"></i>
-                            Regole Registro Timbrature
+                    <div class="carousel-outer">
+                        <!-- CAROSELLO ORIZZONTALE CON PULSANTI LATERALI -->
+                        <div class="days-carousel-wrapper">
+                            <button type="button" class="carousel-arrow-btn prev" id="btnPrevDayCard" aria-label="Giorno precedente" title="Scorri indietro">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+
+                            <div class="days-carousel-track" id="daysCarouselTrack">
+                                <div class="text-center text-muted py-4 w-100">
+                                    <span class="spinner-border spinner-border-sm me-2 text-primary"></span>
+                                    Caricamento giorni del corso...
+                                </div>
+                            </div>
+
+                            <button type="button" class="carousel-arrow-btn next" id="btnNextDayCard" aria-label="Giorno successivo" title="Scorri avanti">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
                         </div>
-                        <div class="nc-checklist mt-2">
-                            <div class="nc-check-item done">
-                                <i class="bi bi-check-circle-fill"></i>
-                                <span>Prima timbratura del giorno: Solo Ingresso</span>
-                            </div>
-                            <div class="nc-check-item done">
-                                <i class="bi bi-check-circle-fill"></i>
-                                <span>Completamento timbratura: Inserisci Uscita</span>
-                            </div>
-                            <div class="nc-check-item done">
-                                <i class="bi bi-check-circle-fill"></i>
-                                <span>Sovrapposizione orari bloccata</span>
-                            </div>
-                            <div class="nc-check-item done">
-                                <i class="bi bi-check-circle-fill"></i>
-                                <span>Max ore lezione del giorno rispettate</span>
+                    </div>
+                </div>
+
+                <!-- 3. CARD TABELLA TIMBRATURE DEL GIORNO -->
+                <div class="dt-section-card">
+                    <div class="dt-section-header">
+                        <div class="dt-section-header-left">
+                            <i class="bi bi-clock-history text-primary fs-5"></i>
+                            <div>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="dt-section-title" id="selectedDateTitle">Seleziona un giorno dal calendario</span>
+                                    <span class="badge bg-white text-secondary border fw-normal" id="selectedDateSubtitle"></span>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold" id="dayTotalHours">0h 00m totali</span>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Tasto Nuova timbratura in alto a destra, sopra la colonna AZIONI -->
+                        <div class="d-flex align-items-center justify-content-end" style="min-width: 190px;">
+                            <button type="button" class="btn btn-sm btn-primary fw-semibold d-inline-flex align-items-center gap-1 shadow-sm px-3 py-1p5" id="btnOpenNewRow" onclick="openNewTimbraturaRow()">
+                                <i class="bi bi-plus-lg"></i> Nuova timbratura
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Alert / info lezione programmata per il giorno -->
+                    <div id="dayLessonAlert" class="px-4 pt-3" style="display:none;"></div>
+
+                    <!-- TABELLA DELLE TIMBRATURE -->
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="tableTimbratureGiorno" style="font-size: 0.9rem;">
+                            <thead style="background:#f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                <tr>
+                                    <th class="text-center text-muted fw-semibold" style="width:56px; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; padding:12px 14px;">#</th>
+                                    <th class="text-muted fw-semibold" style="width:160px; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; padding:12px 14px;">Ingresso</th>
+                                    <th class="text-muted fw-semibold" style="width:160px; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; padding:12px 14px;">Uscita</th>
+                                    <th class="text-muted fw-semibold" style="width:120px; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; padding:12px 14px;">Durata</th>
+                                    <th class="text-muted fw-semibold" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; padding:12px 14px;">Note</th>
+                                    <th class="text-muted fw-semibold text-end pe-4" style="width:190px; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; padding:12px 14px;">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="timbTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-5">
+                                        <i class="bi bi-calendar2-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                        Seleziona un giorno dal calendario in alto.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
             </div>
+
         </main>
     </div>
 
-    <!-- TOAST CONTAINER -->
+    <!-- TOAST NOTIFICHE -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer" style="z-index:9999;"></div>
 
+    <!-- Bootstrap JS Bundle -->
     <script src="../assets/bootstrap.bundle.min.js"></script>
     <script src="../shared/auth.js?v=2.1"></script>
-    <script src="dettaglio-timbrature.js?v=1.0"></script>
+    <script src="dettaglio-timbrature.js?v=3.9"></script>
 </body>
 </html>

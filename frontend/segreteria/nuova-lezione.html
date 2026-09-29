@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITS Manager - Segreteria | Programma Lezione</title>
+    <meta name="description" content="Aggiungi o modifica una lezione nel calendario didattico.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="../assets/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../shared/styles.css?v=2.1">
+    <link rel="stylesheet" href="nuovo-corso.css?v=2.1">
+    <link rel="stylesheet" href="segreteria.css?v=4.0">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand-block">
+                    <div class="sidebar-logo-container">
+                        <img src="../assets/img/itssmartlogo.png" alt="ITS Smart Logo" class="sidebar-logo-img">
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <h2 class="sidebar-brand-title">ITS MANAGER</h2>
+                        <span class="sidebar-brand-subtitle">Gestionale Didattico</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-small">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">Segreteria Didattica</div>
+                    <span class="user-role-badge">SEGRETERIA</span>
+                </div>
+            </div>
+
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="dashboard.html" class="nav-item-link" id="navCorsi" data-label="Corsi">
+                        <i class="bi bi-journal-bookmark-fill"></i><span class="nav-label">Corsi</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="piano-didattico.html" class="nav-item-link" id="navPianoDidattico" data-label="Piano Didattico">
+                        <i class="bi bi-book-half"></i><span class="nav-label">Piano Didattico</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="utenze.html" class="nav-item-link" id="navUtenze" data-label="Utenze">
+                        <i class="bi bi-people-fill"></i><span class="nav-label">Utenze</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="aule.html" class="nav-item-link" id="navAule" data-label="Aule">
+                        <i class="bi bi-door-open-fill"></i><span class="nav-label">Aule</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="calendario.html" class="nav-item-link active" id="navCalendario" data-label="Calendario">
+                        <i class="bi bi-calendar3"></i><span class="nav-label">Calendario</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="timbrature.html" class="nav-item-link" id="navTimbrature" data-label="Timbrature">
+                        <i class="bi bi-clock-history"></i><span class="nav-label">Timbrature</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Disconnetti</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <!-- TOP BAR -->
+            <div class="rubick-top-bar">
+                <nav class="rubick-breadcrumb" aria-label="breadcrumb">
+                    <span class="breadcrumb-root"><i class="bi bi-mortarboard-fill me-1 text-primary"></i>ITS Manager</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-section">Segreteria</span>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <a href="calendario.html" class="breadcrumb-section" style="color:inherit;text-decoration:none;">Calendario</a>
+                    <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-current" id="breadcrumbLabel">Programma Lezione</span>
+                </nav>
+                <div class="rubick-top-bar-actions">
+                    <div class="rubick-icon-badge" title="Notifiche">
+                        <i class="bi bi-bell"></i>
+                        <span class="rubick-badge-dot"></span>
+                    </div>
+                    <div class="rubick-user-avatar" title="Segreteria Didattica">SD</div>
+                </div>
+            </div>
+
+            <!-- PAGE HEADER -->
+            <div class="nc-page-header">
+                <div class="nc-breadcrumb">
+                    <a href="calendario.html" class="nc-breadcrumb-link">
+                        <i class="bi bi-calendar3"></i>
+                        Calendario
+                    </a>
+                    <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
+                    <span class="nc-breadcrumb-current" id="pageHeaderBreadcrumb">Programma Lezione</span>
+                </div>
+                <div class="nc-header-row">
+                    <div>
+                        <h1 class="nc-title">
+                            <span class="nc-title-icon"><i class="bi bi-calendar-plus-fill"></i></span>
+                            <span id="pageTitleText">Programma Lezione</span>
+                        </h1>
+                        <p class="nc-subtitle" id="pageSubtitleText">Aggiungi una nuova lezione al calendario o modifica una esistente.</p>
+                    </div>
+                    <a href="calendario.html" class="btn-back" id="btnBackToCalendario">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>Torna al Calendario</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- CONTEXT STRIP -->
+            <div id="contextStrip" class="d-flex align-items-center gap-3 mb-4 p-3 rounded-3 border"
+                 style="background:#f8fafc; border-color:#e2e8f0!important;">
+                <i class="bi bi-bookmark-fill text-primary fs-5"></i>
+                <div>
+                    <div class="small fw-semibold text-secondary" id="contextEdizioneName">Caricamento edizione...</div>
+                    <div class="small text-muted" id="contextDateRange"></div>
+                </div>
+                <a href="calendario.html" class="btn btn-sm btn-outline-secondary ms-auto">
+                    <i class="bi bi-arrow-left me-1"></i>Cambia edizione
+                </a>
+            </div>
+
+            <!-- FORM LAYOUT -->
+            <div class="nc-form-layout">
+
+                <!-- LEFT: Form -->
+                <div class="nc-form-card">
+                    <div class="nc-form-card-header">
+                        <i class="bi bi-calendar-event-fill"></i>
+                        <span id="formCardTitle">Dettagli Lezione</span>
+                    </div>
+
+                    <form id="lezioneForm" novalidate style="padding: 28px;">
+                        <input type="hidden" id="lezioneId">
+                        <input type="hidden" id="hiddenCorsoAttivoId">
+
+                        <!-- ALERT ERRORE -->
+                        <div class="alert alert-danger d-flex align-items-start gap-2 mb-4" id="alertError"
+                             style="display:none!important; border-radius:10px; border-left: 4px solid #dc2626;">
+                            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" style="font-size:1.1rem;"></i>
+                            <div id="alertErrorText" class="small fw-semibold" style="line-height:1.4;"></div>
+                        </div>
+
+                        <!-- Sezione 1: Modulo & Docente -->
+                        <div class="nc-section-title">
+                            <span class="nc-step-number">1</span>
+                            Modulo Didattico e Docente
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="nc-field-group">
+                                    <label for="selectModulo" class="nc-label">Modulo Didattico <span class="nc-required">*</span></label>
+                                    <div class="nc-input-wrapper">
+                                        <i class="bi bi-book-fill nc-input-icon"></i>
+                                        <select id="selectModulo" class="nc-input" required>
+                                            <option value="">-- Caricamento moduli... --</option>
+                                        </select>
+                                    </div>
+                                    <div id="budgetInfoBox" style="display:none;" class="mt-2">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <small class="text-muted" id="budgetLabel">Budget UF</small>
+                                            <small class="fw-bold" id="budgetValue" style="color:#2563eb;">—</small>
+                                        </div>
+                                        <div class="progress" style="height:6px; border-radius:999px;">
+                                            <div id="budgetBar" class="progress-bar bg-success" style="width:0%;border-radius:999px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="nc-field-group">
+                                    <label for="selectDocente" class="nc-label">Docente <span class="nc-required">*</span></label>
+                                    <div class="nc-input-wrapper">
+                                        <i class="bi bi-person-badge-fill nc-input-icon"></i>
+                                        <select id="selectDocente" class="nc-input" required>
+                                            <option value="">-- Caricamento docenti... --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sezione 2: Data & Orario -->
+                        <div class="nc-section-title">
+                            <span class="nc-step-number">2</span>
+                            Data e Orario
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="nc-field-group">
+                                    <label for="inputData" class="nc-label">Data Lezione <span class="nc-required">*</span></label>
+                                    <input type="date" id="inputData" class="nc-input" required>
+                                    <span class="nc-field-hint" id="dataHint">Deve rientrare nel periodo dell'edizione.</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="nc-field-group">
+                                    <label for="inputOraInizio" class="nc-label">Ora Inizio <span class="nc-required">*</span></label>
+                                    <input type="time" id="inputOraInizio" class="nc-input" value="09:00" step="900" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="nc-field-group">
+                                    <label for="inputOraFine" class="nc-label">Ora Fine <span class="nc-required">*</span></label>
+                                    <input type="time" id="inputOraFine" class="nc-input" value="13:00" step="900" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Durata calcolata -->
+                        <div id="durataInfo" class="alert alert-light border py-2 px-3 mb-4 d-flex align-items-center gap-2"
+                             style="display:none!important; border-radius:10px;">
+                            <i class="bi bi-clock text-primary"></i>
+                            <span class="small fw-semibold" id="durataText">Durata: —</span>
+                        </div>
+
+                        <!-- Sezione 3: Note -->
+                        <div class="nc-section-title">
+                            <span class="nc-step-number">3</span>
+                            Aula / Note (Opzionale)
+                        </div>
+
+                        <div class="nc-field-group mb-4">
+                            <label for="inputNote" class="nc-label">Aula o Note</label>
+                            <div class="nc-input-wrapper">
+                                <i class="bi bi-geo-alt-fill nc-input-icon"></i>
+                                <input type="text" id="inputNote" class="nc-input" placeholder="Es. Aula 3 - Laboratorio Informatica">
+                            </div>
+                        </div>
+
+                        <!-- AZIONI -->
+                        <div class="nc-form-actions mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-outline-danger btn-sm me-auto" id="btnDelete" style="display:none;">
+                                <i class="bi bi-trash3-fill me-1"></i> Elimina Lezione
+                            </button>
+                            <a href="calendario.html" class="btn-nc-cancel">
+                                <i class="bi bi-x-lg"></i>
+                                Annulla
+                            </a>
+                            <button type="submit" class="btn-nc-submit" id="submitBtn">
+                                <span class="btn-nc-text">
+                                    <i class="bi bi-check-lg"></i>
+                                    Salva Lezione
+                                </span>
+                                <span class="btn-nc-loading" style="display:none;">
+                                    <span class="nc-spinner"></span>
+                                    Salvataggio...
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- RIGHT: Preview -->
+                <div class="nc-preview-panel">
+                    <div class="nc-preview-header">
+                        <i class="bi bi-eye-fill"></i>
+                        <span>Anteprima Lezione</span>
+                    </div>
+                    <p class="nc-preview-hint">Riepilogo della lezione che verrà salvata</p>
+
+                    <div class="nc-preview-card" id="previewCard">
+                        <div class="nc-preview-card-top">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="preview-badge-status" id="previewCorsoNome">Corso</span>
+                                <span class="preview-badge-edition" id="previewEdizioneBadge">Edizione</span>
+                            </div>
+                            <h3 class="nc-preview-title" id="previewModuloNome">—</h3>
+                        </div>
+                        <div class="nc-preview-card-body">
+                            <div class="preview-dates-box mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-calendar-event text-primary fs-5"></i>
+                                    <div>
+                                        <div class="preview-dates-label">Data e Orario</div>
+                                        <div class="preview-dates-val" id="previewDataOrario">Da definire</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="preview-parameters-pill mb-2">
+                                <div class="param-chip" id="previewDocente">
+                                    <i class="bi bi-person-fill text-primary me-1"></i>Docente: <strong id="valDocente">—</strong>
+                                </div>
+                            </div>
+                            <div class="preview-parameters-pill">
+                                <div class="param-chip" id="previewDurata">
+                                    <i class="bi bi-clock text-primary me-1"></i>Durata: <strong id="valDurata">—</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Checklist -->
+                    <div class="nc-progress-box mt-4">
+                        <div class="nc-progress-title">
+                            <i class="bi bi-check2-circle text-primary"></i>
+                            Stato Compilazione
+                        </div>
+                        <div class="nc-checklist mt-2">
+                            <div class="nc-check-item" id="checkModulo">
+                                <i class="bi bi-circle"></i>
+                                <span>Modulo selezionato</span>
+                            </div>
+                            <div class="nc-check-item" id="checkDocente">
+                                <i class="bi bi-circle"></i>
+                                <span>Docente assegnato</span>
+                            </div>
+                            <div class="nc-check-item" id="checkData">
+                                <i class="bi bi-circle"></i>
+                                <span>Data e orario validi</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- JS -->
+    <script src="../assets/bootstrap.bundle.min.js"></script>
+    <script src="../shared/auth.js"></script>
+    <script src="nuova-lezione.js?v=1.0"></script>
+</body>
+</html>

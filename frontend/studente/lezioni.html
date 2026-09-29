@@ -1,25 +1,17 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITS Manager - Studente | Dashboard</title>
-    <!-- Google Fonts -->
+    <title>ITS Manager - Studente | Lezioni</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap 5 CSS & Icons -->
     <link href="../assets/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/bootstrap-icons.css" rel="stylesheet">
-
-    <!-- FullCalendar CSS -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/it.global.min.js"></script>
-
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="../shared/styles.css?v=2.1">
     <link rel="stylesheet" href="../segreteria/segreteria.css?v=4.0">
+    <link rel="stylesheet" href="studente.css?v=1.0">
 </head>
 <body>
     <div class="app-wrapper">
@@ -49,12 +41,12 @@
 
             <ul class="sidebar-nav">
                 <li>
-                    <a href="dashboard.html" class="nav-item-link active" id="navDashboard" data-label="Dashboard">
+                    <a href="dashboard.html" class="nav-item-link" id="navDashboard" data-label="Dashboard">
                         <i class="bi bi-speedometer2"></i><span class="nav-label">Dashboard</span>
                     </a>
                 </li>
                 <li>
-                    <a href="lezioni.html" class="nav-item-link" id="navLezioni" data-label="Lezioni">
+                    <a href="lezioni.html" class="nav-item-link active" id="navLezioni" data-label="Lezioni">
                         <i class="bi bi-calendar3"></i><span class="nav-label">Lezioni</span>
                     </a>
                 </li>
@@ -82,7 +74,7 @@
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
                     <span class="breadcrumb-section">Studente</span>
                     <i class="bi bi-chevron-right breadcrumb-separator"></i>
-                    <span class="breadcrumb-current">Dashboard</span>
+                    <span class="breadcrumb-current">Lezioni</span>
                 </nav>
                 <div class="rubick-top-bar-actions">
                     <div class="rubick-icon-badge" title="Notifiche">
@@ -96,15 +88,20 @@
             <!-- PAGE HEADER -->
             <div class="nc-page-header">
                 <div class="nc-breadcrumb">
-                    <span class="nc-breadcrumb-current">Dashboard Studente</span>
+                    <a href="dashboard.html" class="nc-breadcrumb-link">
+                        <i class="bi bi-speedometer2"></i>
+                        Dashboard
+                    </a>
+                    <i class="bi bi-chevron-right nc-breadcrumb-sep"></i>
+                    <span class="nc-breadcrumb-current">Lezioni</span>
                 </div>
                 <div class="nc-header-row">
                     <div>
                         <h1 class="nc-title">
-                            <span class="nc-title-icon"><i class="bi bi-speedometer2"></i></span>
-                            <span>Dashboard</span>
+                            <span class="nc-title-icon"><i class="bi bi-calendar3"></i></span>
+                            <span>Lezioni</span>
                         </h1>
-                        <p class="nc-subtitle">Benvenuto nell'area studenti di ITS Manager</p>
+                        <p class="nc-subtitle">Visualizza il calendario delle tue lezioni</p>
                     </div>
                 </div>
             </div>
@@ -112,17 +109,17 @@
             <!-- CONTENT -->
             <div class="text-center py-5">
                 <div class="spinner-border text-primary mb-3" role="status"></div>
-                <p class="text-muted fw-semibold">Caricamento dashboard in corso...</p>
+                <p class="text-muted fw-semibold">Caricamento lezioni in corso...</p>
             </div>
         </main>
 
         <!-- MOBILE BOTTOM BAR -->
         <div class="mobile-bottom-bar">
-            <a href="dashboard.html" class="mobile-nav-item active">
+            <a href="dashboard.html" class="mobile-nav-item">
                 <i class="bi bi-speedometer2"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="lezioni.html" class="mobile-nav-item">
+            <a href="lezioni.html" class="mobile-nav-item active">
                 <i class="bi bi-calendar3"></i>
                 <span>Lezioni</span>
             </a>
@@ -142,6 +139,6 @@
 
     <script src="../assets/bootstrap.bundle.min.js"></script>
     <script src="../shared/auth.js"></script>
-    <script src="app.js?v=12.0"></script>
+    <script src="app.js"></script>
 </body>
 </html>

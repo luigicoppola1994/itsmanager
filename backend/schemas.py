@@ -297,6 +297,7 @@ class SyncAulaRequest(BaseModel):
 # --- Schemi per la tabella Presenze (Timbrature) ---
 class PresenzaBase(BaseModel):
     id_utente: int
+    id_corso_attivo: Optional[int] = None
     data_presenza: date
     ora_ingresso: Optional[time] = None
     ora_uscita: Optional[time] = None
@@ -306,6 +307,7 @@ class PresenzaCreate(PresenzaBase):
     pass
 
 class PresenzaUpdate(BaseModel):
+    id_corso_attivo: Optional[int] = None
     data_presenza: Optional[date] = None
     ora_ingresso: Optional[time] = None
     ora_uscita: Optional[time] = None
@@ -332,9 +334,11 @@ class PresenzaBatchCreate(BaseModel):
 
 class PresenzaBadgeRequest(BaseModel):
     id_utente: int
+    id_corso_attivo: Optional[int] = None
     data_presenza: Optional[date] = None
     ora_badge: Optional[time] = None
     note: Optional[str] = None
+
 
 
 

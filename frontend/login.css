@@ -1,12 +1,18 @@
 /* login.css */
+:root {
+    --primary-color: #4682B4;
+    --primary-hover: #3a6f9f;
+    --primary-light: #dbeafe;
+}
+
 body.login-body {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     overflow: hidden;
 }
 
 /* LEFT SIDE - BLUE GRADIENT */
 .login-left {
-    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #38bdf8 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 50%, #6ba4d8 100%);
     position: relative;
     overflow: hidden;
 }
@@ -43,7 +49,7 @@ body.login-body {
 }
 
 .text-primary-dark {
-    color: #1e3a8a !important;
+    color: var(--primary-color) !important;
 }
 
 .custom-input {
@@ -56,19 +62,19 @@ body.login-body {
 }
 
 .custom-input:focus {
-    border-color: #38bdf8;
-    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(70, 130, 180, 0.15);
     outline: none;
 }
 
 .custom-btn {
-    background: #2563eb;
+    background: var(--primary-color);
     border: none;
     transition: all 0.3s ease;
 }
 
 .custom-btn:hover {
-    background: #1d4ed8;
+    background: var(--primary-hover);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4) !important;
+    box-shadow: 0 6px 20px rgba(70, 130, 180, 0.4) !important;
 }
