@@ -1935,6 +1935,57 @@ def badge_presenza(
             raise HTTPException(status_code=400, detail=extract_sql_error_message(e))
 
 
+class PresenzaQRRequest(BaseModel):
+    qr_data: str
+
+
+@app.post("/presenze/qr")
+def registra_presenza_qr(
+    qr_request: PresenzaQRRequest,
+    db: Session = Depends(get_db)
+):
+    """Valida il QR dello studente e applica la logica di timbratura badge."""
+    try:
+        qr_data = json.loads(qr_request.qr_data)
+        user_id = int(qr_data.get("user_id"))
+        lezione_id = int(qr_data.get("lezione_id"))
+        corso_attivo_id = int(qr_data.get("corso_attivo_id"))
+        timestamp = datetime.fromisoformat(qr_data.get("timestamp", ""))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        raise HTTPException(status_code=400, detail="QR code non valido")
+
+    if qr_data.get("tipo") != "timbratura_ingresso":
+        raise HTTPException(status_code=400, detail="Tipo di QR code non valido")
+
+    qr_age = (datetime.now() - timestamp).total_seconds()
+    if qr_age < 0 or qr_age > 300:
+        raise HTTPException(status_code=400, detail="QR code scaduto")
+
+    today = date.today()
+    lezione = db.query(models.Calendario).filter(
+        models.Calendario.id == lezione_id,
+        models.Calendario.data == today,
+        models.Calendario.id_corso_attivo == corso_attivo_id
+    ).first()
+    if not lezione:
+        raise HTTPException(status_code=400, detail="Il QR non corrisponde a una lezione di oggi")
+
+    iscritto = db.query(models.UtenteCorsoAttivo).filter(
+        models.UtenteCorsoAttivo.id_utente == user_id,
+        models.UtenteCorsoAttivo.id_corso_attivo == corso_attivo_id
+    ).first()
+    if not iscritto:
+        raise HTTPException(status_code=403, detail="Lo studente non è iscritto a questa edizione")
+
+    badge_data = schemas.PresenzaBadgeRequest(
+        id_utente=user_id,
+        id_corso_attivo=corso_attivo_id,
+        data_presenza=today,
+        note="Timbratura tramite QR Scanner"
+    )
+    return badge_presenza(badge_data, db, None)
+
+
 
 @app.post("/presenze", response_model=schemas.PresenzaResponse, status_code=status.HTTP_201_CREATED)
 def create_presenza(

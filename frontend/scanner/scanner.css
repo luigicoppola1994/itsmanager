@@ -1,0 +1,257 @@
+:root {
+    --scanner-ink: #19344d;
+    --scanner-muted: #6f8190;
+    --scanner-blue: #3d78a8;
+    --scanner-green: #198754;
+    --scanner-red: #b42332;
+    --scanner-border: #dce8f1;
+    --scanner-bg: #f3f7fa;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    color: var(--scanner-ink);
+    background: radial-gradient(circle at top right, #e9f5fb 0, transparent 35%), var(--scanner-bg);
+    font-family: 'Inter', sans-serif;
+}
+
+button, textarea { font: inherit; }
+
+.scanner-shell {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    padding: 30px 22px 48px;
+}
+
+.scanner-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.scanner-kicker, .section-kicker {
+    color: var(--scanner-green);
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.scanner-header h1 {
+    margin: 8px 0 6px;
+    font-size: clamp(1.7rem, 4vw, 2.4rem);
+    font-weight: 800;
+    letter-spacing: -.03em;
+}
+
+.scanner-header p {
+    margin: 0;
+    color: var(--scanner-muted);
+}
+
+.scanner-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--scanner-muted);
+    font-size: .85rem;
+    text-transform: capitalize;
+}
+
+.icon-button {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 1px solid var(--scanner-border);
+    border-radius: 50%;
+    color: var(--scanner-blue);
+    background: #fff;
+    cursor: pointer;
+}
+
+.scanner-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+    gap: 18px;
+}
+
+.scanner-card, .manual-card {
+    border: 1px solid var(--scanner-border);
+    border-radius: 16px;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 14px 35px rgba(25,52,77,.08);
+}
+
+.scanner-card { padding: 22px; }
+
+.scanner-card-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.scanner-card h2 {
+    margin: 5px 0 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.scanner-heading-icon {
+    color: var(--scanner-green);
+    font-size: 1.35rem;
+}
+
+.status-pill {
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-pill.is-idle { color: var(--scanner-muted); background: #eef3f6; }
+.status-pill.is-loading { color: #956c00; background: #fff4cd; }
+.status-pill.is-active { color: var(--scanner-green); background: #e5f6ed; }
+.status-pill.is-error { color: var(--scanner-red); background: #fde9ec; }
+
+.qr-reader {
+    min-height: 320px;
+    overflow: hidden;
+    border: 1px dashed #b8ccda;
+    border-radius: 12px;
+    background: #f8fbfd;
+}
+
+.qr-reader video {
+    border-radius: 10px;
+}
+
+.scanner-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.scanner-actions .btn { min-height: 44px; }
+
+.scanner-hint {
+    margin: 14px 0 0;
+    color: var(--scanner-muted);
+    font-size: .78rem;
+}
+
+.result-panel {
+    display: flex;
+    min-height: 170px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.result-panel span { color: var(--scanner-muted); font-size: .85rem; }
+.result-icon { margin-bottom: 4px; font-size: 2rem; }
+.result-empty { color: var(--scanner-blue); background: #f2f8fc; }
+.result-success { color: var(--scanner-green); background: #eaf8f0; }
+.result-error { color: var(--scanner-red); background: #fff0f1; }
+
+.scan-log-heading {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 22px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--scanner-border);
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.text-button {
+    padding: 0;
+    border: 0;
+    color: var(--scanner-blue);
+    background: transparent;
+    cursor: pointer;
+    font-size: .75rem;
+    text-transform: none;
+}
+
+.scan-log { max-height: 190px; overflow: auto; }
+.scan-log-empty { color: var(--scanner-muted); font-size: .82rem; }
+
+.scan-log-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 3px 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #edf2f5;
+    font-size: .78rem;
+}
+
+.scan-log-item span { color: var(--scanner-muted); }
+.scan-log-item time { grid-column: 2; grid-row: 1 / span 2; color: var(--scanner-muted); font-size: .7rem; }
+.scan-log-item.success strong { color: var(--scanner-green); }
+.scan-log-item.error strong { color: var(--scanner-red); }
+
+.manual-card {
+    margin-top: 18px;
+    padding: 16px 20px;
+}
+
+.manual-card summary {
+    color: var(--scanner-ink);
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.manual-content {
+    display: grid;
+    gap: 10px;
+    max-width: 680px;
+    padding-top: 16px;
+}
+
+.manual-content label { color: var(--scanner-muted); font-size: .8rem; }
+.manual-content textarea { resize: vertical; border: 1px solid var(--scanner-border); border-radius: 9px; padding: 10px; }
+
+.scanner-toast {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    max-width: 360px;
+    padding: 13px 16px;
+    border-radius: 10px;
+    color: #fff;
+    background: var(--scanner-ink);
+    box-shadow: 0 10px 25px rgba(0,0,0,.16);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px);
+    transition: .2s ease;
+}
+
+.scanner-toast.show { opacity: 1; transform: translateY(0); }
+.scanner-toast.is-error { background: var(--scanner-red); }
+
+@media (max-width: 760px) {
+    .scanner-shell { padding: 20px 12px 32px; }
+    .scanner-header { flex-direction: column; }
+    .scanner-user { align-self: flex-end; }
+    .scanner-grid { grid-template-columns: 1fr; }
+    .scanner-card { padding: 16px; }
+    .qr-reader { min-height: 280px; }
+    .scanner-actions { flex-direction: column; }
+    .scanner-actions .btn { width: 100%; }
+}

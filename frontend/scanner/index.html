@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITS Manager - Scanner QR</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="../assets/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/bootstrap-icons.css" rel="stylesheet">
+    <link href="scanner.css?v=1.0" rel="stylesheet">
+</head>
+<body>
+    <main class="scanner-shell">
+        <header class="scanner-header">
+            <div>
+                <span class="scanner-kicker"><i class="bi bi-qr-code-scan me-1"></i>ITS Manager</span>
+                <h1>Scanner presenze</h1>
+                <p>Scansiona il QR dello studente per registrare ingresso o uscita.</p>
+            </div>
+            <div class="scanner-user">
+                <span><i class="bi bi-unlock me-1"></i>Accesso pubblico</span>
+            </div>
+        </header>
+
+        <section class="scanner-grid">
+            <div class="scanner-card scanner-camera-card">
+                <div class="scanner-card-heading">
+                    <div>
+                        <span class="section-kicker">Lettura dal vivo</span>
+                        <h2>Inquadra il QR code</h2>
+                    </div>
+                    <span id="cameraStatus" class="status-pill is-idle"><i class="bi bi-camera me-1"></i>Pronto</span>
+                </div>
+                <div id="reader" class="qr-reader"></div>
+                <div class="scanner-actions">
+                    <button id="startScannerBtn" class="btn btn-primary" type="button">
+                        <i class="bi bi-camera-video me-1"></i>Avvia fotocamera
+                    </button>
+                    <button id="stopScannerBtn" class="btn btn-outline-secondary" type="button" disabled>
+                        <i class="bi bi-stop-circle me-1"></i>Ferma
+                    </button>
+                </div>
+                <p class="scanner-hint"><i class="bi bi-lock me-1"></i>La fotocamera resta attiva solo durante la scansione.</p>
+            </div>
+
+            <div class="scanner-card scanner-result-card">
+                <div class="scanner-card-heading">
+                    <div>
+                        <span class="section-kicker">Esito operazione</span>
+                        <h2>Ultima timbratura</h2>
+                    </div>
+                    <i class="bi bi-shield-check scanner-heading-icon"></i>
+                </div>
+                <div id="resultPanel" class="result-panel result-empty">
+                    <i class="bi bi-upc-scan result-icon"></i>
+                    <strong>In attesa di una scansione</strong>
+                    <span>Il risultato della timbratura apparirà qui.</span>
+                </div>
+                <div class="scan-log-heading">
+                    <span>Attività recenti</span>
+                    <button id="clearLogBtn" class="text-button" type="button">Pulisci</button>
+                </div>
+                <div id="scanLog" class="scan-log" aria-live="polite">
+                    <p class="scan-log-empty">Nessuna attività registrata.</p>
+                </div>
+            </div>
+        </section>
+
+        <details class="manual-card">
+            <summary><i class="bi bi-keyboard me-2"></i>Inserimento manuale di emergenza</summary>
+            <div class="manual-content">
+                <label for="manualQrData">Testo contenuto nel QR</label>
+                <textarea id="manualQrData" rows="4" placeholder='Incolla qui il contenuto JSON del QR'></textarea>
+                <button id="manualScanBtn" class="btn btn-outline-primary" type="button">
+                    <i class="bi bi-check2-circle me-1"></i>Registra timbratura
+                </button>
+            </div>
+        </details>
+    </main>
+
+    <div id="toast" class="scanner-toast" role="status" aria-live="polite"></div>
+
+    <script src="https://unpkg.com/html5-qrcode" defer></script>
+    <script src="app.js?v=1.0" defer></script>
+</body>
+</html>

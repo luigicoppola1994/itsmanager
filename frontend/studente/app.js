@@ -518,9 +518,10 @@ function renderDashboard() {
                                 <span>Giornata completata</span>
                             </div>
                         ` : `
-                            <button id="btnTimbraUscitaDashboard" class="today-lesson-action" type="button">
-                                <i class="bi bi-box-arrow-right me-1"></i>Timbra uscita
-                            </button>
+                            <div class="today-lesson-status">
+                                <i class="bi bi-hourglass-split"></i>
+                                <span>In attesa della scansione di uscita</span>
+                            </div>
                         `}
                     ` : `
                         <button id="btnGeneraQR" class="today-lesson-action" type="button">
@@ -534,8 +535,8 @@ function renderDashboard() {
                             <i class="bi bi-clock me-1"></i>Valido per 5:00
                         </div>
                         <div class="qr-code-actions">
-                            <button id="btnTimbra" class="btn btn-success" type="button">
-                                <i class="bi bi-check-circle me-1"></i>Conferma
+                            <button id="btnAggiornaPresenza" class="btn btn-success" type="button">
+                                <i class="bi bi-arrow-repeat me-1"></i>Aggiorna stato
                             </button>
                             <button id="btnAnnullaQR" class="btn btn-secondary" type="button">
                                 <i class="bi bi-x-circle me-1"></i>Annulla
@@ -563,10 +564,8 @@ function renderDashboard() {
 
         const dashboardQrButton = document.getElementById('btnGeneraQR');
         if (dashboardQrButton) dashboardQrButton.addEventListener('click', generaQRCode);
-        const dashboardExitButton = document.getElementById('btnTimbraUscitaDashboard');
-        if (dashboardExitButton) dashboardExitButton.addEventListener('click', timbraUscita);
-        const dashboardConfirmButton = document.getElementById('btnTimbra');
-        if (dashboardConfirmButton) dashboardConfirmButton.addEventListener('click', confermaTimbratura);
+        const dashboardRefreshButton = document.getElementById('btnAggiornaPresenza');
+        if (dashboardRefreshButton) dashboardRefreshButton.addEventListener('click', aggiornaStatoPresenza);
         const dashboardCancelButton = document.getElementById('btnAnnullaQR');
         if (dashboardCancelButton) dashboardCancelButton.addEventListener('click', annullaQRCode);
         
@@ -989,10 +988,8 @@ function renderLezioneOggi(data) {
             timbraturaStatus = `
                 <div class="alert alert-warning mb-3">
                     <i class="bi bi-clock-fill me-2"></i>
-                    Hai timbrato l'ingresso alle ${presenzaOggi.ora_ingresso?.substring(0, 5)}
-                    <button id="btnTimbraUscita" class="btn btn-sm btn-primary mt-2">
-                        <i class="bi bi-box-arrow-right me-1"></i>Timbra Uscita
-                    </button>
+                    Ingresso registrato alle ${presenzaOggi.ora_ingresso?.substring(0, 5)}.
+                    Attendi la scansione dell'app SCANNER per l'uscita.
                 </div>
             `;
         }
@@ -1028,8 +1025,8 @@ function renderLezioneOggi(data) {
                 </div>
                 <p class="qr-code-instruction">Il codice cambia dopo la scadenza.</p>
                 <div class="qr-code-actions">
-                    <button id="btnTimbra" class="btn btn-success">
-                        <i class="bi bi-check-circle me-1"></i>Conferma
+                    <button id="btnAggiornaPresenza" class="btn btn-success">
+                        <i class="bi bi-arrow-repeat me-1"></i>Aggiorna stato
                     </button>
                     <button id="btnAnnullaQR" class="btn btn-secondary">
                         <i class="bi bi-x-circle me-1"></i>Annulla
@@ -1045,14 +1042,9 @@ function renderLezioneOggi(data) {
         btnGeneraQR.addEventListener('click', generaQRCode);
     }
 
-    const btnTimbraUscita = document.getElementById('btnTimbraUscita');
-    if (btnTimbraUscita) {
-        btnTimbraUscita.addEventListener('click', timbraUscita);
-    }
-
-    const btnTimbra = document.getElementById('btnTimbra');
-    if (btnTimbra) {
-        btnTimbra.addEventListener('click', confermaTimbratura);
+    const btnAggiornaPresenza = document.getElementById('btnAggiornaPresenza');
+    if (btnAggiornaPresenza) {
+        btnAggiornaPresenza.addEventListener('click', aggiornaStatoPresenza);
     }
 
     const btnAnnullaQR = document.getElementById('btnAnnullaQR');
@@ -1143,42 +1135,10 @@ async function generaQRCode() {
     }
 }
 
-// Funzione per confermare timbratura
-async function confermaTimbratura() {
-    console.log('[STUDENTE] Conferma timbratura');
-    if (!window.currentQRData) {
-        showToast('error', 'Errore', 'Nessun QR code disponibile');
-        return;
-    }
-
-    try {
-        const response = await fetchAutenticata(`${API_URL}/studente/timbra-qr`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ qr_data: window.currentQRData.qr_code_data })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            showToast('error', 'Errore', errorData.detail || 'Impossibile timbrare');
-            return;
-        }
-
-        const result = await response.json();
-        console.log('[STUDENTE] Timbratura registrata:', result);
-
-        // Nascondi QR code
-        annullaQRCode();
-
-        // Ricarica dati e aggiorna UI
-        await loadStudentData();
-        checkLezioneOggi();
-
-        showToast('success', 'Timbratura', result.messaggio);
-    } catch (error) {
-        console.error('[STUDENTE] Errore conferma timbratura:', error);
-        showToast('error', 'Errore', 'Impossibile confermare timbratura');
-    }
+// L'app SCANNER registra la timbratura; qui aggiorniamo solo i dati mostrati.
+async function aggiornaStatoPresenza() {
+    annullaQRCode();
+    await loadStudentData();
 }
 
 // Funzione per annullare QR code
@@ -1221,46 +1181,6 @@ function startQrCountdown(expiryValue) {
 
     updateCountdown();
     qrExpiryTimer = setInterval(updateCountdown, 1000);
-}
-
-// Funzione per timbrare uscita
-async function timbraUscita() {
-    console.log('[STUDENTE] Timbratura uscita');
-    try {
-        const today = new Date().toISOString().split('T')[0];
-        const presenzaOggi = studentPresenze.find(p => p.data_presenza === today);
-
-        if (!presenzaOggi) {
-            showToast('error', 'Errore', 'Nessuna timbratura di ingresso trovata');
-            return;
-        }
-
-        // Aggiorna presenza con ora uscita
-        const updateData = {
-            ora_uscita: new Date().toTimeString().substring(0, 8)
-        };
-
-        const response = await fetchAutenticata(`${API_URL}/presenze/${presenzaOggi.id_presenza}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updateData)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            showToast('error', 'Errore', errorData.detail || 'Impossibile timbrare uscita');
-            return;
-        }
-
-        // Ricarica dati e aggiorna UI
-        await loadStudentData();
-        checkLezioneOggi();
-
-        showToast('success', 'Timbratura', 'Uscita registrata con successo');
-    } catch (error) {
-        console.error('[STUDENTE] Errore timbratura uscita:', error);
-        showToast('error', 'Errore', 'Impossibile timbrare uscita');
-    }
 }
 
 // Utility functions
