@@ -902,37 +902,44 @@ function renderLezioneOggi(data) {
     }
 
     container.innerHTML = `
-            <div class="qr-lesson-summary mb-3">
-            <i class="bi bi-calendar-check me-2"></i>
-            <strong>Lezione oggi:</strong> ${formatDateItalian(lezione.data)}
-            <br>
-            <small>Orario: ${lezione.ora_inizio?.substring(0, 5)} - ${lezione.ora_fine?.substring(0, 5)}</small>
-        </div>
-        ${timbraturaStatus}
-        ${!presenzaOggi || !presenzaOggi.ora_ingresso ? `
-            <div class="text-center">
-                <button id="btnGeneraQR" class="btn btn-primary btn-lg">
-                    <i class="bi bi-qr-code-scan me-2"></i>Genera QR Code per Timbrare
-                </button>
+        <section class="qr-attendance-shell">
+            <div class="qr-attendance-info">
+                <span class="qr-attendance-kicker"><i class="bi bi-calendar-check me-1"></i>Lezione confermata</span>
+                <h2>Presenza di oggi</h2>
+                <p class="qr-attendance-date">${formatDateItalian(lezione.data)}</p>
+                <div class="qr-attendance-time">
+                    <i class="bi bi-clock"></i>
+                    <span>${lezione.ora_inizio?.substring(0, 5)} - ${lezione.ora_fine?.substring(0, 5)}</span>
+                </div>
+                <p class="qr-attendance-help">Genera il tuo QR e mostralo alla segreteria per registrare l'ingresso.</p>
+                ${timbraturaStatus}
+                ${!presenzaOggi || !presenzaOggi.ora_ingresso ? `
+                    <button id="btnGeneraQR" class="qr-generate-button">
+                        <i class="bi bi-qr-code-scan me-2"></i>Genera QR Code
+                    </button>
+                ` : ''}
             </div>
-            <div id="qrCodeContainer" class="qr-code-panel text-center mt-4" style="display: none;">
-                <div class="card-body">
-                        <span class="qr-code-kicker">Timbratura digitale</span>
-                        <h5 class="card-title mb-3">QR Code pronto</h5>
-                        <img id="qrCode" class="qr-code-image mb-3" alt="QR code per la timbratura">
-                        <p class="text-muted small mb-3">Scansiona questo QR code per timbrare l'ingresso</p>
-                        <div id="qrCountdown" class="qr-countdown mb-3" role="status" aria-live="polite">
-                            <i class="bi bi-clock me-1"></i>Valido per 5:00
-                        </div>
-                        <button id="btnTimbra" class="btn btn-success">
-                            <i class="bi bi-check-circle me-1"></i>Conferma Timbratura
-                        </button>
-                        <button id="btnAnnullaQR" class="btn btn-secondary ms-2">
-                            <i class="bi bi-x-circle me-1"></i>Annulla
-                        </button>
+            <div id="qrCodeContainer" class="qr-code-panel" style="display: none;">
+                <div class="qr-code-panel-header">
+                    <span class="qr-code-kicker">Timbratura digitale</span>
+                    <span class="qr-live-dot"><i class="bi bi-broadcast-pin me-1"></i>Attivo</span>
+                </div>
+                <h3>Scansiona questo codice</h3>
+                <img id="qrCode" class="qr-code-image" alt="QR code per la timbratura">
+                <div id="qrCountdown" class="qr-countdown" role="status" aria-live="polite">
+                    <i class="bi bi-clock me-1"></i>Valido per 5:00
+                </div>
+                <p class="qr-code-instruction">Il codice cambia dopo la scadenza.</p>
+                <div class="qr-code-actions">
+                    <button id="btnTimbra" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i>Conferma
+                    </button>
+                    <button id="btnAnnullaQR" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i>Annulla
+                    </button>
                 </div>
             </div>
-        ` : ''}
+        </section>
     `;
 
     // Aggiungi event listeners
