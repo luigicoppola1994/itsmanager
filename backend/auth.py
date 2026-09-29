@@ -6,6 +6,7 @@
 # ==============================================================================
 
 from datetime import datetime, timedelta
+import os
 try:
     import jwt                                    # Libreria PyJWT
 except ImportError:
@@ -19,7 +20,7 @@ import bcrypt
 # e non scritti direttamente nel codice (es. tramite python-dotenv o os.environ)
 # ------------------------------------------------------------------------------
 
-SECRET_KEY = "la_tua_chiave_segreta_molto_sicura"  # ⚠️ CAMBIARE in produzione!
+SECRET_KEY = os.getenv("SECRET_KEY", "la_tua_chiave_segreta_molto_sicura")
 ALGORITHM = "HS256"                                  # Algoritmo di firma del token JWT
 ACCESS_TOKEN_EXPIRE_MINUTES = 30                     # L'access token scade dopo 30 minuti
 REFRESH_TOKEN_EXPIRE_DAYS = 7                        # Il refresh token dura 7 giorni
