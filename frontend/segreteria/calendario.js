@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadModuli()
     ]);
 
+    // Renderizza corsi dopo che entrambi i dati sono caricati
+    renderCorsiGrid();
+
     // Listeners selezione edizione
     document.getElementById('btnGoToCalendar')?.addEventListener('click', enterCalendarView);
     document.getElementById('btnChangeEdizione')?.addEventListener('click', exitCalendarView);
@@ -73,7 +76,6 @@ async function loadCorsiMaster() {
         const res = await fetchAutenticata(`${API_URL}/corsi`);
         if (!res.ok) throw new Error();
         corsiMasterList = await res.json();
-        renderCorsiGrid();
     } catch (e) {
         document.getElementById('corsiGrid').innerHTML = '<p class="text-danger small">Errore caricamento corsi.</p>';
     }

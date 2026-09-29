@@ -1,0 +1,645 @@
+/* Studente Dashboard CSS */
+
+:root {
+    --primary-color: #4682B4;
+    --primary-hover: #3a6f9f;
+    --app-bg: #f4f5f7;
+    --card-bg: #ffffff;
+    --text-main: #212529;
+    --text-muted: #6c757d;
+}
+
+body {
+    background-color: var(--app-bg);
+    color: var(--text-main);
+}
+
+/* Rubick Top Bar */
+.rubick-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: #fff;
+    border-bottom: 1px solid #e9ecef;
+    margin: 0 -24px 24px -24px;
+}
+
+.rubick-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.breadcrumb-root {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.breadcrumb-section {
+    color: var(--text-muted);
+}
+
+.breadcrumb-current {
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.breadcrumb-separator {
+    font-size: 0.75rem;
+}
+
+.rubick-top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.rubick-icon-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    position: relative;
+    cursor: pointer;
+}
+
+.rubick-badge-dot {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background: #dc3545;
+    border-radius: 50%;
+    border: 2px solid #fff;
+}
+
+.rubick-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4682B4, #3a6f9f);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+/* Top Action Bar */
+.top-action-bar {
+    margin-bottom: 24px;
+}
+
+.page-header-info h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: var(--text-main);
+}
+
+.page-header-info p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* Course Card Unit */
+.course-card-unit {
+    background: var(--card-bg);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.course-card-header-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e9ecef;
+    background: #fafbfc;
+}
+
+.course-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.course-card-title i {
+    color: var(--primary-color);
+}
+
+.course-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.course-dropdown-body {
+    padding: 20px;
+}
+
+.course-dropdown-body p {
+    margin: 0 0 12px 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.course-dropdown-body p:last-child {
+    margin-bottom: 0;
+}
+
+.course-dropdown-body strong {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+/* Courses List Container */
+.courses-list-container {
+    margin-bottom: 24px;
+}
+
+/* List Group */
+.list-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.list-group-item {
+    padding: 12px 16px;
+    border: 1px solid #e9ecef;
+    border-top: none;
+    background: #fff;
+    transition: background 0.15s;
+}
+
+.list-group-item:first-child {
+    border-top: 1px solid #e9ecef;
+    border-radius: 8px 8px 0 0;
+}
+
+.list-group-item:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+.list-group-item:hover {
+    background: #f8f9fa;
+}
+
+.list-group-item h6 {
+    margin: 0 0 4px 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.list-group-item small {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+/* Badge */
+.badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.bg-success {
+    background-color: #198754 !important;
+}
+
+.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+.bg-warning {
+    background-color: #ffc107 !important;
+}
+
+.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.text-success {
+    color: #198754 !important;
+}
+
+.text-info {
+    color: #17a2b8 !important;
+}
+
+.text-warning {
+    color: #ffc107 !important;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Display utilities */
+.display-6 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.fw-bold {
+    font-weight: 700 !important;
+}
+
+/* Margin utilities */
+.mt-4 {
+    margin-top: 1.5rem !important;
+}
+
+.mb-0 {
+    margin-bottom: 0 !important;
+}
+
+.mb-1 {
+    margin-bottom: 0.25rem !important;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem !important;
+}
+
+.mb-3 {
+    margin-bottom: 1rem !important;
+}
+
+.me-1 {
+    margin-right: 0.25rem !important;
+}
+
+.me-2 {
+    margin-right: 0.5rem !important;
+}
+
+.ms-2 {
+    margin-left: 0.5rem !important;
+}
+
+/* Padding utilities */
+.py-4 {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+}
+
+.py-5 {
+    padding-top: 3rem !important;
+    padding-bottom: 3rem !important;
+}
+
+/* Flex utilities */
+.d-flex {
+    display: flex !important;
+}
+
+.justify-content-between {
+    justify-content: space-between !important;
+}
+
+.align-items-center {
+    align-items: center !important;
+}
+
+/* Text utilities */
+.text-center {
+    text-align: center !important;
+}
+
+.text-small {
+    font-size: 0.875rem;
+}
+
+/* Row/Col utilities (Bootstrap-like) */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -12px;
+    margin-left: -12px;
+}
+
+.col-md-3 {
+    flex: 0 0 calc(25% - 24px);
+    max-width: calc(25% - 24px);
+    padding: 0 12px;
+}
+
+.col-md-6 {
+    flex: 0 0 calc(50% - 24px);
+    max-width: calc(50% - 24px);
+    padding: 0 12px;
+}
+
+.g-4 > * {
+    padding: 16px;
+}
+
+/* Icon utilities */
+.bi {
+    display: inline-block;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    vertical-align: -0.125em;
+}
+
+/* Mobile Bottom Bar */
+.mobile-bottom-bar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e9ecef;
+    padding: 8px 0;
+    z-index: 9999;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+
+.mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #6c757d;
+    font-size: 0.7rem;
+    padding: 6px 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.mobile-nav-item i {
+    font-size: 1.1rem;
+    margin-bottom: 3px;
+}
+
+.mobile-nav-item.active {
+    color: #4682B4;
+}
+
+.mobile-nav-item:hover {
+    color: #4682B4;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    /* Nascondi sidebar completamente */
+    aside.sidebar {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
+
+    /* Rimuovi margin dal main content */
+    main.main-content {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Mostra bottom bar */
+    .mobile-bottom-bar {
+        display: flex !important;
+    }
+
+    /* Aggiungi padding al bottom per la bottom bar */
+    .main-content {
+        padding-bottom: 70px !important;
+    }
+
+    /* Top bar responsive */
+    .rubick-top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+
+    .rubick-top-bar-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* Header responsive */
+    .nc-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px 20px;
+        gap: 16px;
+    }
+
+    .nc-title {
+        font-size: 1.25rem !important;
+    }
+
+    .nc-subtitle {
+        font-size: 0.85rem !important;
+    }
+
+    /* Course card responsive */
+    .course-card-unit {
+        padding: 16px 20px;
+        margin-bottom: 16px;
+    }
+
+    .course-card-header-line {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .course-card-title {
+        font-size: 1rem;
+    }
+
+    /* List group responsive */
+    .list-group-item {
+        padding: 12px 14px;
+    }
+
+    .list-group-item h6 {
+        font-size: 0.85rem;
+    }
+
+    .list-group-item small {
+        font-size: 0.75rem;
+    }
+
+    /* Typography adjustments */
+    h1, .h1 {
+        font-size: 1.5rem;
+    }
+
+    h2, .h2 {
+        font-size: 1.25rem;
+    }
+
+    h3, .h3 {
+        font-size: 1.1rem;
+    }
+
+    /* Badge adjustments */
+    .badge {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+    }
+
+    /* Button adjustments */
+    .btn {
+        font-size: 0.85rem;
+        padding: 8px 12px;
+    }
+
+    /* Form responsive */
+    .form-control,
+    .form-select {
+        font-size: 16px; /* Prevents zoom on iOS */
+        min-height: 44px;
+    }
+
+    /* Toast responsive */
+    .toast {
+        left: 12px;
+        right: 12px;
+        bottom: 80px; /* Above bottom bar */
+        transform: translateY(150%);
+    }
+
+    .toast.show {
+        transform: translateY(0);
+    }
+
+    /* Grid responsive */
+    .row {
+        margin-right: -8px;
+        margin-left: -8px;
+    }
+
+    .col-md-3,
+    .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        padding: 0 8px;
+    }
+
+    /* Icon utilities responsive */
+    .bi {
+        font-size: 1rem;
+    }
+}
+
+/* Small devices (phones, 576px and down) */
+@media (max-width: 576px) {
+    body {
+        font-size: 14px;
+    }
+
+    .rubick-top-bar {
+        padding: 10px 12px;
+    }
+
+    .rubick-breadcrumb {
+        font-size: 0.8rem;
+    }
+
+    .rubick-icon-badge,
+    .rubick-user-avatar {
+        width: 36px;
+        height: 36px;
+    }
+
+    .nc-page-header {
+        padding: 14px 16px;
+    }
+
+    .course-card-unit {
+        padding: 14px 16px;
+    }
+
+    /* Mobile bottom bar adjustments */
+    .mobile-bottom-bar {
+        padding: 6px 0;
+    }
+
+    .mobile-nav-item {
+        font-size: 0.65rem;
+        padding: 4px 0;
+    }
+
+    .mobile-nav-item i {
+        font-size: 1rem;
+    }
+
+    /* Prevent horizontal scroll */
+    body,
+    .app-wrapper,
+    .main-content {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    * {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+/* Touch optimization */
+@media (max-width: 768px) {
+    /* Larger touch targets */
+    .btn,
+    .mobile-nav-item,
+    .rubick-icon-badge,
+    .rubick-user-avatar {
+        min-height: 44px; /* iOS touch target size */
+    }
+
+    /* Make inputs larger for touch */
+    .form-control,
+    .form-select {
+        min-height: 44px;
+    }
+}

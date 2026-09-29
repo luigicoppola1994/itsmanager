@@ -34,7 +34,7 @@ import re                              # Regex per parsing errori DB
 import json                            # Per caricare il file comuni.json
 import os                              # Per costruire percorsi file
 from pydantic import BaseModel         # Per definire modelli di richiesta inline
-from datetime import date, timedelta   # Per i campi data e calcolo date nei modelli Pydantic
+from datetime import date, timedelta, datetime   # Per i campi data e calcolo date nei modelli Pydantic
 
 # --- Importazioni dai nostri moduli ---
 import models         # I modelli SQLAlchemy (tabelle del DB)
@@ -1856,6 +1856,24 @@ def badge_presenza(
     
     if last_p and last_p.ora_uscita is None:
         # Registra USCITA
+        # Verifica se c'è una lezione per quell'utente in quella data
+        # Cerca la lezione con l'ora di fine più tardi
+        lezione = db.query(models.Calendario).filter(
+            models.Calendario.id_utente == badge_data.id_utente,
+            models.Calendario.data == target_date,
+            models.Calendario.ora_fine.isnot(None)
+        ).order_by(models.Calendario.ora_fine.desc()).first()
+        
+        print(f"DEBUG TIMBRATURA: utente={badge_data.id_utente}, data={target_date}, ora_timbratura={now_time}, lezione_trovata={lezione is not None}")
+        if lezione:
+            print(f"DEBUG LEZIONE: ora_fine={lezione.ora_fine}, ora_inizio={lezione.ora_inizio}")
+        
+        if lezione and lezione.ora_fine:
+            # Se l'orario di timbratura è dopo l'ora di fine lezione, usa l'ora di fine lezione
+            if now_time > lezione.ora_fine:
+                now_time = lezione.ora_fine
+                print(f"TIMBRATURA LIMITATA: orario timbratura dopo fine lezione, impostato a {lezione.ora_fine}")
+        
         last_p.ora_uscita = now_time
         if ca_id and not last_p.id_corso_attivo:
             last_p.id_corso_attivo = ca_id
@@ -1923,13 +1941,27 @@ def create_presenza(
     utente = db.query(models.Utente).filter(models.Utente.id_utente == presenza_data.id_utente).first()
     if not utente:
         raise HTTPException(status_code=404, detail="Utente specificato non trovato")
+    
+    # Se viene fornito un orario di uscita, verifica se deve essere limitato all'ora di fine lezione
+    ora_uscita = presenza_data.ora_uscita
+    if ora_uscita:
+        lezione = db.query(models.Calendario).filter(
+            models.Calendario.id_utente == presenza_data.id_utente,
+            models.Calendario.data == presenza_data.data_presenza,
+            models.Calendario.ora_fine.isnot(None)
+        ).order_by(models.Calendario.ora_fine.desc()).first()
+        
+        if lezione and lezione.ora_fine:
+            if ora_uscita > lezione.ora_fine:
+                ora_uscita = lezione.ora_fine
+                print(f"TIMBRATURA LIMITATA (create): orario uscita dopo fine lezione, impostato a {lezione.ora_fine}")
         
     nuova_presenza = models.Presenza(
         id_utente=presenza_data.id_utente,
         id_corso_attivo=presenza_data.id_corso_attivo,
         data_presenza=presenza_data.data_presenza,
         ora_ingresso=presenza_data.ora_ingresso,
-        ora_uscita=presenza_data.ora_uscita,
+        ora_uscita=ora_uscita,
         note=presenza_data.note
     )
     db.add(nuova_presenza)
@@ -1962,7 +1994,22 @@ def update_presenza(
     if presenza_data.ora_ingresso is not None:
         presenza.ora_ingresso = presenza_data.ora_ingresso
     if presenza_data.ora_uscita is not None:
-        presenza.ora_uscita = presenza_data.ora_uscita
+        # Verifica se c'è una lezione per quell'utente in quella data
+        # Cerca la lezione con l'ora di fine più tardi
+        data_rif = presenza_data.data_presenza or presenza.data_presenza
+        lezioni = db.query(models.Calendario).filter(
+            models.Calendario.id_utente == presenza.id_utente,
+            models.Calendario.data == data_rif,
+            models.Calendario.ora_fine.isnot(None)
+        ).order_by(models.Calendario.ora_fine.desc()).first()
+        
+        ora_uscita = presenza_data.ora_uscita
+        if lezioni and lezioni.ora_fine:
+            # Se l'orario di uscita è dopo l'ora di fine lezione, usa l'ora di fine lezione
+            if ora_uscita > lezioni.ora_fine:
+                ora_uscita = lezioni.ora_fine
+        
+        presenza.ora_uscita = ora_uscita
     if presenza_data.note is not None:
         presenza.note = presenza_data.note
         
@@ -2003,14 +2050,14 @@ def batch_save_presenze(
     target_id_corso_attivo = batch_data.id_corso_attivo
     saved_count = 0
     deleted_count = 0
-    
+
     for item in batch_data.presenze:
         # Cerca presenza esistente per lo studente nella data
         existing = db.query(models.Presenza).filter(
             models.Presenza.id_utente == item.id_utente,
             models.Presenza.data_presenza == target_date
         ).first()
-        
+
         if item.presente:
             if existing:
                 existing.ora_ingresso = item.ora_ingresso
@@ -2034,14 +2081,230 @@ def batch_save_presenze(
             if existing:
                 db.delete(existing)
                 deleted_count += 1
-                
+
     try:
         db.commit()
         return {
             "message": "Presenze aggiornate con successo",
             "salvate": saved_count,
-            "rimosse": deleted_count
+            "eliminate": deleted_count
         }
+    except Exception as e:
+        db.rollback()
+        error_msg = extract_sql_error_message(e)
+        raise HTTPException(status_code=400, detail=error_msg)
+
+
+# --- Endpoint per Timbrature Studente via QR Code ---
+
+class LezioneOggiResponse(BaseModel):
+    ha_lezione: bool
+    lezione: Optional[schemas.CalendarioResponse] = None
+    messaggio: str
+
+@app.get("/studente/lezione-oggi", response_model=LezioneOggiResponse)
+def get_lezione_oggi(
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Verifica se lo studente ha lezioni oggi per generare il QR code."""
+    today = date.today()
+    user_id = current_user.id_utente
+
+    # Cerca corsi attivi a cui lo studente è iscritto
+    corsi_attivi_studente = db.query(models.UtenteCorsoAttivo).filter(
+        models.UtenteCorsoAttivo.id_utente == user_id
+    ).all()
+
+    if not corsi_attivi_studente:
+        return LezioneOggiResponse(
+            ha_lezione=False,
+            messaggio="Non sei iscritto a nessun corso attivo"
+        )
+
+    # Cerca lezioni oggi per i corsi a cui è iscritto
+    corsi_ids = [ca.id_corso_attivo for ca in corsi_attivi_studente]
+    lezione_oggi = db.query(models.Calendario).filter(
+        models.Calendario.data == today,
+        models.Calendario.id_corso_attivo.in_(corsi_ids)
+    ).first()
+
+    if not lezione_oggi:
+        return LezioneOggiResponse(
+            ha_lezione=False,
+            messaggio="Non ci sono lezioni previste per oggi"
+        )
+
+    return LezioneOggiResponse(
+        ha_lezione=True,
+        lezione=lezione_oggi,
+        messaggio="Lezione trovata per oggi"
+    )
+
+
+class QRCodeRequest(BaseModel):
+    id_lezione: int
+
+class QRCodeResponse(BaseModel):
+    qr_code_data: str
+    scadenza: str
+    lezione_info: dict
+
+@app.post("/studente/genera-qr", response_model=QRCodeResponse)
+def genera_qr_code(
+    qr_request: QRCodeRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Genera i dati per il QR code per la timbratura."""
+    # Verifica che la lezione esista
+    lezione = db.query(models.Calendario).filter(
+        models.Calendario.id == qr_request.id_lezione
+    ).first()
+
+    if not lezione:
+        raise HTTPException(status_code=404, detail="Lezione non trovata")
+
+    # Verifica che la lezione sia oggi
+    today = date.today()
+    if lezione.data != today:
+        raise HTTPException(status_code=400, detail="È possibile timbrare solo per lezioni di oggi")
+
+    # Verifica che lo studente sia iscritto al corso
+    iscritto = db.query(models.UtenteCorsoAttivo).filter(
+        models.UtenteCorsoAttivo.id_utente == current_user.id_utente,
+        models.UtenteCorsoAttivo.id_corso_attivo == lezione.id_corso_attivo
+    ).first()
+
+    if not iscritto:
+        raise HTTPException(status_code=403, detail="Non sei iscritto a questo corso")
+
+    # Verifica se ha già timbrato per questa lezione oggi
+    presenza_esistente = db.query(models.Presenza).filter(
+        models.Presenza.id_utente == current_user.id_utente,
+        models.Presenza.data_presenza == today,
+        models.Presenza.id_corso_attivo == lezione.id_corso_attivo
+    ).first()
+
+    if presenza_esistente and presenza_esistente.ora_ingresso:
+        raise HTTPException(status_code=400, detail="Hai già timbrato l'ingresso per oggi")
+
+    # Genera dati QR code
+    qr_data = {
+        "user_id": current_user.id_utente,
+        "lezione_id": lezione.id,
+        "corso_attivo_id": lezione.id_corso_attivo,
+        "timestamp": datetime.now().isoformat(),
+        "tipo": "timbratura_ingresso"
+    }
+
+    # Scadenza QR code (5 minuti)
+    scadenza = (datetime.now() + timedelta(minutes=5)).isoformat()
+
+    return QRCodeResponse(
+        qr_code_data=json.dumps(qr_data),
+        scadenza=scadenza,
+        lezione_info={
+            "id": lezione.id,
+            "data": lezione.data.isoformat(),
+            "ora_inizio": lezione.ora_inizio.isoformat() if lezione.ora_inizio else None,
+            "ora_fine": lezione.ora_fine.isoformat() if lezione.ora_fine else None,
+            "id_corso_attivo": lezione.id_corso_attivo
+        }
+    )
+
+
+class TimbraturaQRRequest(BaseModel):
+    qr_data: str
+
+class TimbraturaQRResponse(BaseModel):
+    success: bool
+    messaggio: str
+    presenza: Optional[schemas.PresenzaResponse] = None
+
+@app.post("/studente/timbra-qr", response_model=TimbraturaQRResponse)
+def timbra_qr_code(
+    qr_request: TimbraturaQRRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Utente = Depends(get_current_user)
+):
+    """Registra la timbratura tramite QR code."""
+    try:
+        qr_data = json.loads(qr_request.qr_data)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="QR code non valido")
+
+    # Verifica che il QR code sia per l'utente corrente
+    if qr_data.get("user_id") != current_user.id_utente:
+        raise HTTPException(status_code=403, detail="QR code non valido per questo utente")
+
+    # Verifica scadenza QR code
+    qr_timestamp = datetime.fromisoformat(qr_data.get("timestamp", ""))
+    if datetime.now() - qr_timestamp > timedelta(minutes=5):
+        raise HTTPException(status_code=400, detail="QR code scaduto")
+
+    # Verifica che la lezione esista
+    lezione = db.query(models.Calendario).filter(
+        models.Calendario.id == qr_data.get("lezione_id")
+    ).first()
+
+    if not lezione:
+        raise HTTPException(status_code=404, detail="Lezione non trovata")
+
+    # Verifica che la lezione sia oggi
+    today = date.today()
+    if lezione.data != today:
+        raise HTTPException(status_code=400, detail="QR code non valido per la data corrente")
+
+    # Verifica se ha già timbrato
+    presenza_esistente = db.query(models.Presenza).filter(
+        models.Presenza.id_utente == current_user.id_utente,
+        models.Presenza.data_presenza == today,
+        models.Presenza.id_corso_attivo == lezione.id_corso_attivo
+    ).first()
+
+    ora_corrente = datetime.now().time()
+
+    if presenza_esistente:
+        if presenza_esistente.ora_ingresso and not presenza_esistente.ora_uscita:
+            # Timbratura uscita
+            presenza_esistente.ora_uscita = ora_corrente
+            db.commit()
+            db.refresh(presenza_esistente)
+            return TimbraturaQRResponse(
+                success=True,
+                messaggio="Timbratura uscita registrata con successo",
+                presenza=presenza_esistente
+            )
+        elif presenza_esistente.ora_ingresso and presenza_esistente.ora_uscita:
+            raise HTTPException(status_code=400, detail="Hai già completato la timbratura per oggi")
+        else:
+            # Aggiorna ora ingresso
+            presenza_esistente.ora_ingresso = ora_corrente
+            db.commit()
+            db.refresh(presenza_esistente)
+            return TimbraturaQRResponse(
+                success=True,
+                messaggio="Timbratura ingresso aggiornata con successo",
+                presenza=presenza_esistente
+            )
+    else:
+        # Nuova timbratura ingresso
+        nuova_presenza = models.Presenza(
+            id_utente=current_user.id_utente,
+            id_corso_attivo=lezione.id_corso_attivo,
+            data_presenza=today,
+            ora_ingresso=ora_corrente,
+            note="Timbratura via QR code"
+        )
+        db.add(nuova_presenza)
+        db.commit()
+        db.refresh(nuova_presenza)
+        return TimbraturaQRResponse(
+            success=True,
+            messaggio="Timbratura ingresso registrata con successo",
+            presenza=nuova_presenza
+        )
     except Exception as e:
         db.rollback()
         error_msg = extract_sql_error_message(e)

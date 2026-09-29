@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITS Manager - Documentazione Tecnica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 20px;
+                max-width: 100%;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        h3 {
+            color: #7f8c8d;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        h4 {
+            color: #95a5a6;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        blockquote {
+            border-left: 4px solid #3498db;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .header h1 {
+            border: none;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+
+        .header .meta {
+            color: #95a5a6;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .toc {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+
+        .toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .toc li {
+            margin-bottom: 8px;
+        }
+
+        .toc a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .badge-success {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .badge-info {
+            background: #3498db;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .print-btn:hover {
+            background: #2980b9;
+        }
+
+        .section {
+            page-break-inside: avoid;
+        }
+
+        .diagram {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #ecf0f1;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">🖨️ Stampa PDF</button>
+
+    <div class="container">
+        <div class="header">
+            <h1>ITS Manager</h1>
+            <p class="subtitle">Documentazione Tecnica Completa</p>
+            <p class="meta">Versione 1.0 | 29 Settembre 2026 | Team di Sviluppo ITS Manager</p>
+        </div>
+
+        <div class="toc">
+            <h3>📋 Indice</h3>
+            <ul>
+                <li><a href="#introduzione">1. Introduzione</a></li>
+                <li><a href="#architettura">2. Architettura del Sistema</a></li>
+                <li><a href="#stack">3. Stack Tecnologico</a></li>
+                <li><a href="#backend">4. Componenti Backend</a></li>
+                <li><a href="#frontend">5. Componenti Frontend</a></li>
+                <li><a href="#database">6. Database e Modelli Dati</a></li>
+                <li><a href="#sicurezza">7. Sicurezza e Autenticazione</a></li>
+                <li><a href="#devops">8. DevOps e Deployment</a></li>
+                <li><a href="#funzionalita">9. Funzionalità Principali</a></li>
+                <li><a href="#performance">10. Performance e Scalabilità</a></li>
+                <li><a href="#conclusioni">11. Conclusioni</a></li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h1 id="introduzione">🎯 1. Introduzione</h1>
+            
+            <p><strong>ITS Manager</strong> è un gestionale didattico completo per istituti di formazione tecnica superiore (ITS), progettato per gestire corsi, edizioni, studenti, docenti, presenze e calendario didattico in modo integrato ed efficiente.</p>
+
+            <h3>Obiettivi del Progetto</h3>
+            <ul>
+                <li><span class="badge badge-success">✓</span> Gestione centralizzata di corsi ed edizioni</li>
+                <li><span class="badge badge-success">✓</span> Tracciamento presenze studenti e docenti</li>
+                <li><span class="badge badge-success">✓</span> Calendario didattico interattivo</li>
+                <li><span class="badge badge-success">✓</span> Sistema di timbratura via QR code</li>
+                <li><span class="badge badge-success">✓</span> Dashboard analitiche per studenti e segreteria</li>
+                <li><span class="badge badge-success">✓</span> Interfaccia responsive mobile-first</li>
+            </ul>
+
+            <h3>Target Users</h3>
+            <ul>
+                <li><strong>Segreteria Didattica</strong>: Gestione completa dell'istituto</li>
+                <li><strong>Studenti</strong>: Visualizzazione corsi, lezioni e presenze</li>
+                <li><strong>Docenti</strong>: Gestione lezioni e registrazioni presenze</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h1 id="architettura">🏗️ 2. Architettura del Sistema</h1>
+            
+            <h3>Architettura Generale</h3>
+            <div class="diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────┐
+│                     CLIENT BROWSER                           │
+│              (Desktop, Tablet, Mobile)                      │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ HTTPS
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│              NGINX REVERSE PROXY (Port 3000)                │
+│           - Serve file statici frontend                      │
+│           - Routing client-side SPA                          │
+│           - Compressione Gzip                                │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ HTTP API Calls
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│              FASTAPI BACKEND (Port 8000)                     │
+│              - Uvicorn ASGI Server                          │
+│              - API RESTful                                   │
+│              - JWT Authentication                            │
+│              - Business Logic Layer                          │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ SQLAlchemy ORM
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│              MYSQL DATABASE                                 │
+│              - Relational Data Storage                      │
+│              - Foreign Keys & Constraints                   │
+│              - Stored Procedures & Triggers                  │
+└─────────────────────────────────────────────────────────────┘
+</pre>
+            </div>
+
+            <h3>Architettura a Microservizi</h3>
+            <p>Il sistema adotta un'architettura modulare containerizzata:</p>
+            <ol>
+                <li><strong>Frontend Container</strong>: NGINX + HTML/CSS/JS statici</li>
+                <li><strong>Backend Container</strong>: FastAPI + Python logic</li>
+                <li><strong>Database Container</strong>: MySQL (esterno in produzione)</li>
+            </ol>
+
+            <h3>Communication Pattern</h3>
+            <ul>
+                <li><strong>Frontend → Backend</strong>: REST API (JSON over HTTP)</li>
+                <li><strong>Backend → Database</strong>: SQLAlchemy ORM</li>
+                <li><strong>Authentication</strong>: JWT Bearer Tokens + HttpOnly Cookies</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h1 id="stack">🛠️ 3. Stack Tecnologico</h1>
+            
+            <h3>Frontend Stack</h3>
+            <table>
+                <tr>
+                    <th>Tecnologia</th>
+                    <th>Versione</th>
+                    <th>Utilizzo</th>
+                </tr>
+                <tr>
+                    <td>HTML5</td>
+                    <td>-</td>
+                    <td>Struttura semantica delle pagine</td>
+                </tr>
+                <tr>
+                    <td>CSS3</td>
+                    <td>-</td>
+                    <td>Styling e layout responsive</td>
+                </tr>
+                <tr>
+                    <td>JavaScript (ES6+)</td>
+                    <td>-</td>
+                    <td>Logica client-side</td>
+                </tr>
+                <tr>
+                    <td>Bootstrap 5</td>
+                    <td>5.x</td>
+                    <td>Framework UI responsive</td>
+                </tr>
+                <tr>
+                    <td>Bootstrap Icons</td>
+                    <td>1.x</td>
+                    <td>Icone vettoriali</td>
+                </tr>
+                <tr>
+                    <td>FullCalendar</td>
+                    <td>6.1.10</td>
+                    <td>Calendario interattivo</td>
+                </tr>
+                <tr>
+                    <td>QRCode.js</td>
+                    <td>1.5.3</td>
+                    <td>Generazione QR code</td>
+                </tr>
+                <tr>
+                    <td>Google Fonts</td>
+                    <td>Inter</td>
+                    <td>Tipografia moderna</td>
+                </tr>
+            </table>
+
+            <h3>Backend Stack</h3>
+            <table>
+                <tr>
+                    <th>Tecnologia</th>
+                    <th>Versione</th>
+                    <th>Utilizzo</th>
+                </tr>
+                <tr>
+                    <td>Python</td>
+                    <td>3.10</td>
+                    <td>Linguaggio principale</td>
+                </tr>
+                <tr>
+                    <td>FastAPI</td>
+                    <td>Latest</td>
+                    <td>Framework API REST</td>
+                </tr>
+                <tr>
+                    <td>Uvicorn</td>
+                    <td>Latest</td>
+                    <td>Server ASGI</td>
+                </tr>
+                <tr>
+                    <td>SQLAlchemy</td>
+                    <td>Latest</td>
+                    <td>ORM Database</td>
+                </tr>
+                <tr>
+                    <td>PyMySQL</td>
+                    <td>Latest</td>
+                    <td>Driver MySQL</td>
+                </tr>
+                <tr>
+                    <td>PyJWT</td>
+                    <td>Latest</td>
+                    <td>Gestione JWT</td>
+                </tr>
+                <tr>
+                    <td>python-jose</td>
+                    <td>Latest</td>
+                    <td>Crittografia JWT</td>
+                </tr>
+                <tr>
+                    <td>passlib</td>
+                    <td>Latest</td>
+                    <td>Hashing password</td>
+                </tr>
+                <tr>
+                    <td>Pydantic</td>
+                    <td>Latest</td>
+                    <td>Validazione dati</td>
+                </tr>
+            </table>
+
+            <h3>Database Stack</h3>
+            <table>
+                <tr>
+                    <th>Tecnologia</th>
+                    <th>Versione</th>
+                    <th>Utilizzo</th>
+                </tr>
+                <tr>
+                    <td>MySQL</td>
+                    <td>8.x</td>
+                    <td>Database relazionale</td>
+                </tr>
+                <tr>
+                    <td>InnoDB</td>
+                    <td>-</td>
+                    <td>Storage engine</td>
+                </tr>
+            </table>
+
+            <h3>DevOps Stack</h3>
+            <table>
+                <tr>
+                    <th>Tecnologia</th>
+                    <th>Versione</th>
+                    <th>Utilizzo</th>
+                </tr>
+                <tr>
+                    <td>Docker</td>
+                    <td>Latest</td>
+                    <td>Containerizzazione</td>
+                </tr>
+                <tr>
+                    <td>Docker Compose</td>
+                    <td>Latest</td>
+                    <td>Orchestrazione container</td>
+                </tr>
+                <tr>
+                    <td>NGINX</td>
+                    <td>Alpine</td>
+                    <td>Web server frontend</td>
+                </tr>
+                <tr>
+                    <td>Git</td>
+                    <td>Latest</td>
+                    <td>Version control</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h1 id="backend">🔧 4. Componenti Backend</h1>
+            
+            <h3>FastAPI Application Structure</h3>
+            <div class="diagram">
+<pre>
+backend/
+├── main.py                 # Entry point API & endpoints
+├── models.py               # SQLAlchemy models (tabelle DB)
+├── schemas.py              # Pydantic schemas (validazione)
+├── auth.py                 # Autenticazione & JWT logic
+├── database.py             # Database connection & session
+├── requirements.txt        # Python dependencies
+├── Dockerfile             # Container definition
+└── comuni.json            # Data comuni italiani
+</pre>
+            </div>
+
+            <h3>API Endpoints Principali</h3>
+            
+            <h4>Autenticazione</h4>
+            <ul>
+                <li><code>POST /auth/login</code> - Login utente</li>
+                <li><code>POST /auth/refresh</code> - Refresh token</li>
+                <li><code>POST /auth/logout</code> - Logout</li>
+            </ul>
+
+            <h4>Utenti</h4>
+            <ul>
+                <li><code>GET /users</code> - Lista utenti</li>
+                <li><code>POST /users</code> - Crea utente</li>
+                <li><code>PUT /users/{id}</code> - Aggiorna utente</li>
+                <li><code>DELETE /users/{id}</code> - Elimina utente</li>
+            </ul>
+
+            <h4>Corsi</h4>
+            <ul>
+                <li><code>GET /corsi</code> - Lista corsi master</li>
+                <li><code>POST /corsi</code> - Crea corso</li>
+                <li><code>PUT /corsi/{id}</code> - Aggiorna corso</li>
+                <li><code>DELETE /corsi/{id}</code> - Elimina corso</li>
+            </ul>
+
+            <h4>Calendario</h4>
+            <ul>
+                <li><code>GET /calendario</code> - Lista lezioni</li>
+                <li><code>POST /calendario</code> - Crea lezione</li>
+                <li><code>PUT /calendario/{id}</code> - Aggiorna lezione</li>
+                <li><code>DELETE /calendario/{id}</code> - Elimina lezione</li>
+            </ul>
+
+            <h4>Presenze</h4>
+            <ul>
+                <li><code>GET /presenze</code> - Lista presenze</li>
+                <li><code>POST /presenze</code> - Crea presenza</li>
+                <li><code>PUT /presenze/{id}</code> - Aggiorna presenza</li>
+                <li><code>POST /presenze/batch</code> - Batch presenze</li>
+            </ul>
+
+            <h4>Studente (QR Code)</h4>
+            <ul>
+                <li><code>GET /studente/lezione-oggi</code> - Verifica lezioni oggi</li>
+                <li><code>POST /studente/genera-qr</code> - Genera QR code</li>
+                <li><code>POST /studente/timbra-qr</code> - Registra timbratura</li>
+            </ul>
+
+            <h3>Business Logic Layer</h3>
+            
+            <h4>Authentication System</h4>
+            <ul>
+                <li><strong>JWT Access Token</strong>: Scadenza 15 minuti</li>
+                <li><strong>Refresh Token</strong>: Cookie HttpOnly, scadenza 7 giorni</li>
+                <li><strong>Password Hashing</strong>: bcrypt con salt</li>
+                <li><strong>Role-based Access</strong>: Studente, Segreteria, Docente</li>
+            </ul>
+
+            <h4>Validation Layer</h4>
+            <ul>
+                <li><strong>Pydantic Schemas</strong>: Validazione automatica input</li>
+                <li><strong>SQLAlchemy Constraints</strong>: Validazione a livello database</li>
+                <li><strong>Custom Validators</strong>: Logica business specifica</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h1 id="frontend">🎨 5. Componenti Frontend</h1>
+            
+            <h3>Frontend Structure</h3>
+            <div class="diagram">
+<pre>
+frontend/
+├── index.html              # Landing page
+├── login.html              # Login page
+├── shared/                 # Componenti condivisi
+│   ├── styles.css         # CSS globale
+│   └── auth.js            # Auth & API client
+├── segreteria/            # Area segreteria
+│   ├── dashboard.html
+│   ├── calendario.html
+│   ├── timbrature.html
+│   ├── corsi.html
+│   ├── aule.html
+│   └── [altre pagine...]
+├── studente/              # Area studente
+│   ├── dashboard.html
+│   ├── lezioni.html
+│   ├── timbrature.html
+│   ├── app.js             # Logic studente
+│   └── studente.css       # CSS studente
+├── assets/                # Risorse statiche
+│   ├── bootstrap.min.css
+│   ├── bootstrap-icons.css
+│   ├── bootstrap.bundle.min.js
+│   └── img/
+└── Dockerfile             # Container definition
+</pre>
+            </div>
+
+            <h3>Frontend Architecture</h3>
+            
+            <h4>CSS Architecture</h4>
+            <ul>
+                <li><strong>Shared Styles</strong>: Global CSS utility classes</li>
+                <li><strong>Segreteria CSS</strong>: Specifico area segreteria</li>
+                <li><strong>Studente CSS</strong>: Specifico area studente</li>
+                <li><strong>Mobile-First</strong>: Responsive design priority</li>
+                <li><strong>Design System</strong>: Colori, tipografia, componenti riutilizzabili</li>
+            </ul>
+
+            <h4>JavaScript Architecture</h4>
+            <ul>
+                <li><strong>Modular Pattern</strong>: Separazione per area funzionale</li>
+                <li><strong>API Client</strong>: Centralizzato in auth.js</li>
+                <li><strong>State Management</strong>: Gestione stato locale</li>
+                <li><strong>Error Handling</strong>: Toast notifications</li>
+                <li><strong>SPA Routing</strong>: Navigazione client-side</li>
+            </ul>
+
+            <h4>Responsive Design</h4>
+            <ul>
+                <li><strong>Breakpoints</strong>: 576px (mobile), 768px (tablet), 992px (desktop)</li>
+                <li><strong>Mobile Navigation</strong>: Bottom bar per studenti</li>
+                <li><strong>Touch Optimization</strong>: Target minimi 44px per iOS</li>
+                <li><strong>Performance</strong>: Lazy loading, CSS optimization</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h1 id="database">🗄️ 6. Database e Modelli Dati</h1>
+            
+            <h3>Schema Database</h3>
+            
+            <h4>Tabelle Principali</h4>
+            
+            <h5>utenti</h5>
+            <pre>
+- id_utente (PK)
+- Nome
+- Cognome
+- Email
+- Password_Hash
+- Ruolo (studente/segreteria/docente)
+- Telefono
+- Data_Nascita
+- Citta_Nascita
+- Email_Parenti
+- Telefono_Parenti
+            </pre>
+
+            <h5>corsi</h5>
+            <pre>
+- id_corso (PK)
+- Nome
+- Descrizione
+- Area_Tematica
+- Durata_Ore
+            </pre>
+
+            <h5>corsi_attivi</h5>
+            <pre>
+- id_corso_attivo (PK)
+- id_corso (FK)
+- data_inizio
+- data_fine
+- archiviato
+            </pre>
+
+            <h5>calendario</h5>
+            <pre>
+- id (PK)
+- data
+- ora_inizio
+- ora_fine
+- id_modulo (FK)
+- id_utente (FK - docente)
+- id_corso_attivo (FK)
+- note
+            </pre>
+
+            <h5>presenze</h5>
+            <pre>
+- id_presenza (PK)
+- id_utente (FK)
+- id_corso_attivo (FK)
+- data_presenza
+- ora_ingresso
+- ora_uscita
+- note
+            </pre>
+
+            <h3>Relazioni Database</h3>
+            <ul>
+                <li><strong>corsi → corsi_attivi</strong>: One-to-Many</li>
+                <li><strong>corsi_attivi → calendario</strong>: One-to-Many</li>
+                <li><strong>corsi_attivi → utenti_corsi_attivi</strong>: One-to-Many</li>
+                <li><strong>utenti → presenze</strong>: One-to-Many</li>
+                <li><strong>utenti → calendario</strong>: One-to-Many (docenti)</li>
+            </ul>
+
+            <h3>Trigger e Constraints</h3>
+            <ul>
+                <li><strong>Foreign Key Constraints</strong>: Integrità referenziale</li>
+                <li><strong>Unique Constraints</strong>: Prevenzione duplicati</li>
+                <li><strong>Check Constraints</strong>: Validazione dati</li>
+                <li><strong>Trigger Automatici</strong>: Aggiornamenti timestamp</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h1 id="sicurezza">🔒 7. Sicurezza e Autenticazione</h1>
+            
+            <h3>Authentication Flow</h3>
+            <div class="diagram">
+<pre>
+1. User → POST /auth/login (username, password)
+2. Backend → Valida credenziali
+3. Backend → Genera JWT Access Token (15min)
+4. Backend → Set HttpOnly Refresh Token Cookie (7giorni)
+5. Frontend → Salva Access Token in localStorage
+6. Richieste API → Include Authorization: Bearer {token}
+7. Token scaduto → POST /auth/refresh (automatico)
+8. Refresh fallito → Logout automatico
+</pre>
+            </div>
+
+            <h3>Security Measures</h3>
+            
+            <h4>Backend Security</h4>
+            <ul>
+                <li><strong>Password Hashing</strong>: bcrypt con salt rounds</li>
+                <li><strong>JWT Validation</strong>: Signature verification</li>
+                <li><strong>CORS Configuration</strong>: Origins whitelist</li>
+                <li><strong>SQL Injection Prevention</strong>: Parameterized queries</li>
+                <li><strong>XSS Protection</strong>: Input sanitization</li>
+                <li><strong>Rate Limiting</strong>: (implementabile)</li>
+            </ul>
+
+            <h4>Frontend Security</h4>
+            <ul>
+                <li><strong>HttpOnly Cookies</strong>: Refresh token protetto</li>
+                <li><strong>Secure Flag</strong>: HTTPS only in produzione</li>
+                <li><strong>SameSite Policy</strong>: CSRF protection</li>
+                <li><strong>Content Security Policy</strong>: (implementabile)</li>
+                <li><strong>Input Validation</strong>: Client-side + server-side</li>
+            </ul>
+
+            <h4>QR Code Security</h4>
+            <ul>
+                <li><strong>Timelimited Tokens</strong>: Validità 5 minuti</li>
+                <li><strong>User-specific QR</strong>: Binding allo studente</li>
+                <li><strong>Date Validation</strong>: Solo lezioni del giorno</li>
+                <li><strong>Course Verification</strong>: Solo corsi iscritti</li>
+                <li><strong>One-time Use</strong>: Token monouso</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h1 id="devops">🚀 8. DevOps e Deployment</h1>
+            
+            <h3>Docker Configuration</h3>
+            
+            <h4>Backend Dockerfile</h4>
+            <pre>
+FROM python:3.10-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+            </pre>
+
+            <h4>Frontend Dockerfile</h4>
+            <pre>
+FROM nginx:alpine
+COPY . /usr/share/nginx/html/
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+            </pre>
+
+            <h4>Docker Compose</h4>
+            <pre>
+services:
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    environment:
+      - DATABASE_URL=mysql+pymysql://...
+    volumes:
+      - ./backend:/app
+    command: uvicorn main:app --reload
+
+  frontend:
+    build: ./frontend
+    ports: ["3000:80"]
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    depends_on:
+      - backend
+            </pre>
+
+            <h3>Deployment Strategy</h3>
+            
+            <h4>Development</h4>
+            <ul>
+                <li><strong>Hot Reload</strong>: <code>--reload</code> flag per sviluppo</li>
+                <li><strong>Volume Mounts</strong>: Live code editing</li>
+                <li><strong>Local Database</strong>: MySQL locale o remote</li>
+            </ul>
+
+            <h4>Production</h4>
+            <ul>
+                <li><strong>Multi-stage Builds</strong>: Ottimizzazione immagini</li>
+                <li><strong>Environment Variables</strong>: Configurazione esterna</li>
+                <li><strong>Reverse Proxy</strong>: NGINX production configuration</li>
+                <li><strong>SSL/TLS</strong>: HTTPS con Let's Encrypt</li>
+                <li><strong>Health Checks</strong>: Container monitoring</li>
+                <li><strong>Logging</strong>: Centralized logging</li>
+                <li><strong>Backup Strategy</strong>: Database dumps regolari</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h1 id="funzionalita">📱 9. Funzionalità Principali</h1>
+            
+            <h3>Area Segreteria</h3>
+            
+            <h4>Gestione Corsi</h4>
+            <ul>
+                <li>CRUD completo corsi master</li>
+                <li>Gestione aree tematiche</li>
+                <li>Definizione durata ore</li>
+                <li>Archiviazione corsi</li>
+            </ul>
+
+            <h4>Gestione Edizioni</h4>
+            <ul>
+                <li>Creazione edizioni da corsi master</li>
+                <li>Definizione periodi didattici</li>
+                <li>Gestione stato archiviazione</li>
+                <li>Assegnazione studenti</li>
+            </ul>
+
+            <h4>Calendario Didattico</h4>
+            <ul>
+                <li>Creazione lezioni singole</li>
+                <li>Generazione settimane complete</li>
+                <li>Assegnazione docenti e moduli</li>
+                <li>Gestione orari differenziati</li>
+                <li>Budget ore per unità formative</li>
+            </ul>
+
+            <h4>Gestione Presenze</h4>
+            <ul>
+                <li>Registro presenze giornaliero</li>
+                <li>Appello rapido per classe</li>
+                <li>Statistiche presenze/assenze</li>
+                <li>Export dati presenze</li>
+            </ul>
+
+            <h3>Area Studente</h3>
+            
+            <h4>Dashboard</h4>
+            <ul>
+                <li>Panoramica corsi ed edizioni</li>
+                <li>Statistiche presenze</li>
+                <li>Lezioni del giorno</li>
+                <li>Ultima timbratura</li>
+            </ul>
+
+            <h4>Lezioni</h4>
+            <ul>
+                <li>Calendario personale interattivo</li>
+                <li>Dettagli lezioni (docente, modulo, orario)</li>
+                <li>Filtri per periodo</li>
+            </ul>
+
+            <h4>Timbrature QR Code</h4>
+            <ul>
+                <li>Verifica lezioni del giorno</li>
+                <li>Generazione QR code timbratura</li>
+                <li>Timbratura ingresso/uscita</li>
+                <li>Storico presenze</li>
+            </ul>
+
+            <h3>Sistema Timbratura QR Code</h3>
+            
+            <h4>Workflow</h4>
+            <ol>
+                <li><strong>Verifica Lezione</strong>: Sistema controlla lezioni odierne</li>
+                <li><strong>Generazione QR</strong>: QR code con dati crittografati</li>
+                <li><strong>Validazione</strong>: Scansione e validazione token</li>
+                <li><strong>Registrazione</strong>: Salvataggio automatico presenze</li>
+                <li><strong>Feedback</strong>: Conferma immediata all'utente</li>
+            </ol>
+
+            <h4>Sicurezza QR</h4>
+            <ul>
+                <li>Validità temporale (5 minuti)</li>
+                <li>Binding utente-specifico</li>
+                <li>Verifica corso iscrizione</li>
+                <li>Anti-replay protection</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h1 id="performance">⚡ 10. Performance e Scalabilità</h1>
+            
+            <h3>Performance Optimization</h3>
+            
+            <h4>Frontend</h4>
+            <ul>
+                <li><strong>Minification</strong>: CSS/JS compressi</li>
+                <li><strong>Lazy Loading</strong>: Caricamento on-demand</li>
+                <li><strong>Image Optimization</strong>: Formati webp, lazy load</li>
+                <li><strong>Caching Strategy</strong>: Browser caching headers</li>
+                <li><strong>CDN Integration</strong>: (implementabile)</li>
+            </ul>
+
+            <h4>Backend</h4>
+            <ul>
+                <li><strong>Database Indexing</strong>: Indici su colonne frequenti</li>
+                <li><strong>Query Optimization</strong>: N+1 prevention</li>
+                <li><strong>Connection Pooling</strong>: SQLAlchemy connection pool</li>
+                <li><strong>Async Operations</strong>: Operazioni I/O asincrone</li>
+                <li><strong>Response Compression</strong>: Gzip encoding</li>
+            </ul>
+
+            <h4>Database</h4>
+            <ul>
+                <li><strong>Index Strategy</strong>: Indici su foreign keys</li>
+                <li><strong>Query Optimization</strong>: EXPLAIN analysis</li>
+                <li><strong>Connection Pooling</strong>: Gestione connessioni</li>
+                <li><strong>Partitioning</strong>: (implementabile per grandi dataset)</li>
+            </ul>
+
+            <h3>Scalability Strategy</h3>
+            
+            <h4>Horizontal Scaling</h4>
+            <ul>
+                <li><strong>Load Balancing</strong>: NGINX load balancer</li>
+                <li><strong>Multiple Backend Instances</strong>: Uvicorn workers</li>
+                <li><strong>Database Replication</strong>: Read replicas</li>
+                <li><strong>Caching Layer</strong>: Redis integration</li>
+            </ul>
+
+            <h4>Vertical Scaling</h4>
+            <ul>
+                <li><strong>Resource Allocation</strong>: CPU/RAM optimization</li>
+                <li><strong>Database Tuning</strong>: MySQL configuration</li>
+                <li><strong>Connection Limits</strong>: Optimized pool sizes</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h1 id="conclusioni">🎓 11. Conclusioni</h1>
+            
+            <p><strong>ITS Manager</strong> rappresenta una soluzione completa e moderna per la gestione didattica di istituti ITS, combinando:</p>
+            
+            <ul>
+                <li><span class="badge badge-info">Architettura moderna</span>: Microservizi containerizzati</li>
+                <li><span class="badge badge-info">Stack tecnologico avanzato</span>: FastAPI, Python, NGINX</li>
+                <li><span class="badge badge-info">Sicurezza robusta</span>: JWT, encryption, validation</li>
+                <li><span class="badge badge-info">UX eccellente</span>: Responsive design, mobile-first</li>
+                <li><span class="badge badge-info">Scalabilità</span>: Progettato per la crescita</li>
+                <li><span class="badge badge-info">Manutenibilità</span>: Codice modulare e documentato</li>
+            </ul>
+
+            <p>Il sistema è pronto per deployment in produzione e può essere facilmente esteso con nuove funzionalità secondo le esigenze dell'istituto.</p>
+
+            <h3>🔮 Future Enhancements</h3>
+            
+            <h4>Planned Features</h4>
+            <ul>
+                <li><strong>Mobile App</strong>: Native iOS/Android</li>
+                <li><strong>Push Notifications</strong>: Lezioni e promemoria</li>
+                <li><strong>Advanced Analytics</strong>: Dashboard predittive</li>
+                <li><strong>Integration Systems</strong>: ERP/CRM integration</li>
+                <li><strong>Offline Mode</strong>: PWA capabilities</li>
+                <li><strong>AI Features</strong>: Pattern recognition presenze</li>
+            </ul>
+
+            <h4>Technical Improvements</h4>
+            <ul>
+                <li><strong>Microservices Architecture</strong>: Service separation</li>
+                <li><strong>Event-Driven</strong>: Message queue integration</li>
+                <li><strong>Advanced Caching</strong>: Redis implementation</li>
+                <li><strong>API Versioning</strong>: Backward compatibility</li>
+                <li><strong>Testing Suite</strong>: Unit/integration tests</li>
+                <li><strong>CI/CD Pipeline</strong>: Automated deployment</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p><strong>Documento Versione</strong>: 1.0</p>
+            <p><strong>Data</strong>: 29 Settembre 2026</p>
+            <p><strong>Autore</strong>: Team di Sviluppo ITS Manager</p>
+            <p><strong>Stato</strong>: Completo per Presentazione Aziendale</p>
+        </div>
+    </div>
+</body>
+</html>

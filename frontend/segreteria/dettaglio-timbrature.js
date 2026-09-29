@@ -1216,27 +1216,6 @@ function validateTimbraturaValues(dataPresenza, oraIn, oraOut, excludeId = null)
         }
     }
 
-    // 3. Controllo limite ore di lezione del giorno
-    if (currentDayMaxLessonMinutes > 0 && proposedInMin !== null && proposedOutMin !== null) {
-        let proposedDuration = proposedOutMin - proposedInMin;
-        let existingTotal = 0;
-        presenzeGiorno.forEach(p => {
-            const pIn = timeToMinutes(p.ora_ingresso);
-            const pOut = timeToMinutes(p.ora_uscita);
-            if (pIn !== null && pOut !== null && pOut > pIn) {
-                existingTotal += (pOut - pIn);
-            }
-        });
-
-        if (existingTotal + proposedDuration > currentDayMaxLessonMinutes) {
-            const existingHours = formatMinutesToHours(existingTotal);
-            const proposedHours = formatMinutesToHours(proposedDuration);
-            const totalHours = formatMinutesToHours(existingTotal + proposedDuration);
-            const maxHours = formatMinutesToHours(currentDayMaxLessonMinutes);
-            return `La somma delle ore delle timbrature (${totalHours}) supera le ore di lezione previste per questo giorno (${maxHours}). Ore attuali: ${existingHours}, questa timbratura: ${proposedHours}.`;
-        }
-    }
-
     return null;
 }
 

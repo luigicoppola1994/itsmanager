@@ -2902,5 +2902,377 @@ p, li, td, th, label, span, div {
     border: 2px solid #4682B4 !important;
 }
 
+/* ============================================================
+   MOBILE RESPONSIVE DESIGN - Full Mobile Optimization
+   ============================================================ */
+
+/* Small devices (phones, 576px and down) */
+@media (max-width: 576px) {
+    /* Sidebar completamente nascosta su mobile */
+    .sidebar {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
+
+    /* Main content senza margin per la sidebar */
+    .main-content {
+        margin-left: 0 !important;
+        padding: 16px 12px 80px 12px !important;
+    }
+
+    /* Container responsive */
+    .container {
+        padding: 0 12px !important;
+    }
+
+    /* Top bar responsive */
+    .rubick-top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 0;
+    }
+
+    .rubick-top-bar-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* Header responsive */
+    .nc-page-header,
+    .top-action-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px 20px;
+        gap: 16px;
+    }
+
+    .nc-title,
+    .page-header-info h1 {
+        font-size: 1.25rem !important;
+    }
+
+    .nc-subtitle,
+    .page-header-info p {
+        font-size: 0.85rem !important;
+    }
+
+    /* Search box responsive */
+    .search-box,
+    .rubick-quick-search {
+        width: 100%;
+    }
+
+    /* Card responsive */
+    .course-card-unit,
+    .uf-card-unit,
+    .step-card {
+        padding: 16px 20px;
+        margin-bottom: 16px;
+    }
+
+    .course-card-header-line,
+    .uf-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .course-card-title,
+    .uf-badge-title {
+        font-size: 1rem;
+    }
+
+    /* Course actions responsive */
+    .course-card-actions,
+    .header-controls {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .btn-add-course,
+    .btn-action-icon {
+        flex: 1;
+        min-width: auto;
+    }
+
+    /* Table responsive */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .editions-table,
+    .table {
+        font-size: 0.8rem;
+    }
+
+    .editions-table th,
+    .editions-table td,
+    .table th,
+    .table td {
+        padding: 8px 10px;
+    }
+
+    /* Edition info responsive */
+    .edition-info-meta {
+        flex-direction: column;
+        gap: 8px;
+        font-size: 0.8rem;
+    }
+
+    /* Modal responsive */
+    .modal-dialog {
+        margin: 8px;
+    }
+
+    .modal-content {
+        border-radius: 8px;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: 16px;
+    }
+
+    /* Form responsive */
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-control,
+    .form-select {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    /* Calendar responsive */
+    .calendar-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .cal-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .cal-toolbar-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    #oreSidebar {
+        order: -1;
+        margin-bottom: 20px;
+    }
+
+    /* FullCalendar mobile */
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 1rem !important;
+    }
+
+    .fc .fc-button {
+        font-size: 0.75rem !important;
+        padding: 4px 8px !important;
+    }
+
+    .fc .fc-daygrid-day-number {
+        font-size: 0.75rem !important;
+        padding: 4px 6px !important;
+    }
+
+    .fc .fc-daygrid-day-frame {
+        min-height: 60px !important;
+    }
+
+    /* Budget sidebar responsive */
+    .ore-total-summary {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    /* Cards grid responsive */
+    #corsiGrid,
+    #edizioniGrid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Banner responsive */
+    .edition-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px;
+    }
+
+    .edition-period-chips {
+        width: 100%;
+    }
+
+    /* Typography adjustments */
+    h1, .h1 {
+        font-size: 1.5rem;
+    }
+
+    h2, .h2 {
+        font-size: 1.25rem;
+    }
+
+    h3, .h3 {
+        font-size: 1.1rem;
+    }
+
+    /* Badge adjustments */
+    .badge {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+    }
+
+    /* Button adjustments */
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-add-course {
+        font-size: 0.85rem;
+        padding: 8px 12px;
+    }
+
+    /* User info card responsive */
+    .user-info-header-card {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px;
+    }
+
+    /* Meta items responsive */
+    .meta-item {
+        flex-wrap: wrap;
+    }
+
+    /* Toast responsive */
+    .toast {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        transform: translateY(150%);
+    }
+
+    .toast.show {
+        transform: translateY(0);
+    }
+}
+
+/* Medium devices (tablets, 768px and down) */
+@media (max-width: 768px) {
+    /* Sidebar responsive per segreteria (opzionale) */
+    .sidebar {
+        width: 200px !important;
+    }
+
+    .main-content {
+        margin-left: 200px !important;
+        padding: 20px 24px;
+    }
+
+    /* Two column layouts become single column */
+    .courses-list-container,
+    .edition-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .course-card-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    /* Calendar responsive */
+    .calendar-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* Grid adjustments */
+    .users-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+
+    #corsiGrid,
+    #edizioniGrid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+}
+
+/* Large devices optimization (992px and down) */
+@media (max-width: 992px) {
+    /* Adjustments for smaller desktops/tablets */
+    .search-box {
+        width: 250px;
+    }
+
+    .rubick-quick-search {
+        width: 180px;
+    }
+
+    /* Make tables scrollable */
+    .table-responsive {
+        overflow-x: auto;
+    }
+}
+
+/* ============================================================
+   TOUCH-OPTIMIZED INTERACTIONS
+   ============================================================ */
+
+/* Larger touch targets for mobile */
+@media (max-width: 768px) {
+    .btn,
+    .btn-action-icon,
+    .nav-item-link,
+    .edition-row,
+    .corso-card,
+    .edizione-card {
+        min-height: 44px; /* iOS touch target size */
+    }
+
+    /* Make inputs larger for touch */
+    .form-control,
+    .form-select {
+        min-height: 44px;
+        padding: 10px 14px;
+    }
+
+    /* Checkbox/radio optimization */
+    input[type="checkbox"],
+    input[type="radio"] {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* Prevent horizontal scroll on mobile */
+@media (max-width: 768px) {
+    body,
+    .app-wrapper,
+    .main-content {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    * {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+}
 
 

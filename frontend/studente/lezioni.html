@@ -11,6 +11,7 @@
     <link href="../assets/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../shared/styles.css?v=2.1">
     <link rel="stylesheet" href="../segreteria/segreteria.css?v=4.0">
+    <link rel="stylesheet" href="studente.css?v=1.0">
 </head>
 <body>
     <div class="app-wrapper">
@@ -111,6 +112,26 @@
                 <p class="text-muted fw-semibold">Caricamento lezioni in corso...</p>
             </div>
         </main>
+
+        <!-- MOBILE BOTTOM BAR -->
+        <div class="mobile-bottom-bar">
+            <a href="dashboard.html" class="mobile-nav-item">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="lezioni.html" class="mobile-nav-item active">
+                <i class="bi bi-calendar3"></i>
+                <span>Lezioni</span>
+            </a>
+            <a href="timbrature.html" class="mobile-nav-item">
+                <i class="bi bi-clock-history"></i>
+                <span>Timbrature</span>
+            </a>
+            <button class="mobile-nav-item" id="mobileLogoutBtn">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Esci</span>
+            </button>
+        </div>
     </div>
 
     <!-- TOAST -->
