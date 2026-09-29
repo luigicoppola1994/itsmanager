@@ -497,6 +497,20 @@ function renderDashboard() {
             </div>
             ` : ''}
 
+            ${todayLezioni.length > 0 ? `
+            <section class="today-lesson-card" aria-labelledby="todayLessonTitle">
+                <div class="today-lesson-icon"><i class="bi bi-qr-code-scan"></i></div>
+                <div class="today-lesson-content">
+                    <span class="today-lesson-eyebrow">Oggi in aula</span>
+                    <h2 id="todayLessonTitle">Hai una lezione prevista oggi</h2>
+                    <p>${todayLezioni[0].ora_inizio?.substring(0, 5) || '--:--'} - ${todayLezioni[0].ora_fine?.substring(0, 5) || '--:--'}</p>
+                </div>
+                <a class="today-lesson-action" href="timbrature.html">
+                    <i class="bi bi-arrow-right-circle me-1"></i>Genera QR
+                </a>
+            </section>
+            ` : ''}
+
             <!-- SEZIONE 3: CALENDARIO SETTIMANALE -->
             <div class="dashboard-card" style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                 <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #007bff;">
@@ -881,7 +895,7 @@ function renderLezioneOggi(data) {
     }
 
     container.innerHTML = `
-        <div class="alert alert-info mb-3">
+            <div class="qr-lesson-summary mb-3">
             <i class="bi bi-calendar-check me-2"></i>
             <strong>Lezione oggi:</strong> ${formatDateItalian(lezione.data)}
             <br>
@@ -894,11 +908,11 @@ function renderLezioneOggi(data) {
                     <i class="bi bi-qr-code-scan me-2"></i>Genera QR Code per Timbrare
                 </button>
             </div>
-            <div id="qrCodeContainer" class="text-center mt-4" style="display: none;">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">QR Code per Timbratura</h5>
-                        <div id="qrCode" class="mb-3"></div>
+            <div id="qrCodeContainer" class="qr-code-panel text-center mt-4" style="display: none;">
+                <div class="card-body">
+                        <span class="qr-code-kicker">Timbratura digitale</span>
+                        <h5 class="card-title mb-3">QR Code pronto</h5>
+                        <canvas id="qrCode" class="qr-code-canvas mb-3"></canvas>
                         <p class="text-muted small mb-3">Scansiona questo QR code per timbrare l'ingresso</p>
                         <p class="text-warning small mb-3">
                             <i class="bi bi-clock me-1"></i>Valido per 5 minuti
@@ -909,7 +923,6 @@ function renderLezioneOggi(data) {
                         <button id="btnAnnullaQR" class="btn btn-secondary ms-2">
                             <i class="bi bi-x-circle me-1"></i>Annulla
                         </button>
-                    </div>
                 </div>
             </div>
         ` : ''}
