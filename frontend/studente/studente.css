@@ -643,3 +643,155 @@ body {
         min-height: 44px;
     }
 }
+
+/* Mobile layout overrides for all student pages. */
+@media (max-width: 768px) {
+    html,
+    body {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .app-wrapper {
+        display: block;
+        width: 100%;
+        min-width: 0;
+    }
+
+    aside.sidebar {
+        display: none !important;
+    }
+
+    main.main-content {
+        width: 100% !important;
+        max-width: 100%;
+        min-width: 0;
+        margin-left: 0 !important;
+        padding: 12px 12px 84px !important;
+    }
+
+    .rubick-top-bar {
+        width: 100%;
+        min-width: 0;
+        margin: 0 0 16px;
+        padding: 12px 0;
+        gap: 10px;
+    }
+
+    .rubick-breadcrumb {
+        width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    .rubick-breadcrumb > * {
+        flex: 0 0 auto;
+    }
+
+    .breadcrumb-root {
+        max-width: 42%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .rubick-top-bar-actions {
+        width: auto;
+        align-self: flex-end;
+    }
+
+    .nc-page-header,
+    .top-action-bar {
+        width: 100%;
+        min-width: 0;
+        padding: 12px 0;
+        margin-bottom: 16px;
+    }
+
+    .page-header-info,
+    .page-header-info h1,
+    .page-header-info p,
+    .nc-title,
+    .nc-subtitle {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    .course-card-unit {
+        width: 100%;
+        min-width: 0;
+        margin-bottom: 14px;
+        border-radius: 8px;
+    }
+
+    .course-card-header-line,
+    .course-dropdown-body {
+        min-width: 0;
+        padding: 14px;
+    }
+
+    .course-card-title,
+    .course-card-title span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .list-group,
+    .list-group-item {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .list-group-item > .d-flex {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Dashboard content is generated with inline desktop styles. */
+    .dashboard-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 10px !important;
+        margin: 0 !important;
+    }
+
+    .dashboard-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 15px !important;
+        margin-bottom: 14px !important;
+        overflow: hidden;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+    }
+
+    #studentCalendar {
+        width: 100%;
+        min-height: 360px !important;
+        overflow: hidden;
+    }
+
+    #studentCalendar .fc-toolbar {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    #studentCalendar .fc-toolbar-title {
+        font-size: 1rem;
+    }
+
+    #studentCalendar .fc-button {
+        min-height: 40px;
+        padding: 6px 8px;
+        font-size: 0.75rem;
+    }
+
+    #studentCalendar .fc-scrollgrid,
+    #studentCalendar .fc-view-harness {
+        max-width: 100%;
+    }
+}
