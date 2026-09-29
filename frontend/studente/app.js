@@ -723,9 +723,6 @@ function renderTimbrature() {
 
     console.log('[STUDENTE] Dati timbrature - presenze:', studentPresenze.length);
 
-    // Verifica lezione oggi
-    checkLezioneOggi();
-
     // Raggruppa presenze per data
     const presenzeByDate = {};
     studentPresenze.forEach(p => {
@@ -835,6 +832,9 @@ function renderTimbrature() {
     console.log('[STUDENTE] HTML generato, lunghezza:', html.length);
     container.innerHTML = html;
     console.log('[STUDENTE] innerHTML impostato');
+
+    // Il contenitore esiste solo dopo il rendering del markup.
+    checkLezioneOggi();
 }
 
 // Funzione per verificare lezione oggi
