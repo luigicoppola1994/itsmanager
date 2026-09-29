@@ -505,7 +505,7 @@ function renderDashboard() {
                     <h2 id="todayLessonTitle">Hai una lezione prevista oggi</h2>
                     <p>${todayLezioni[0].ora_inizio?.substring(0, 5) || '--:--'} - ${todayLezioni[0].ora_fine?.substring(0, 5) || '--:--'}</p>
                 </div>
-                <a class="today-lesson-action" href="timbrature.html">
+                <a class="today-lesson-action" href="timbrature.html?genera_qr=1">
                     <i class="bi bi-arrow-right-circle me-1"></i>Genera QR
                 </a>
             </section>
@@ -948,6 +948,10 @@ function renderLezioneOggi(data) {
     if (btnAnnullaQR) {
         btnAnnullaQR.addEventListener('click', annullaQRCode);
     }
+
+    if (new URLSearchParams(window.location.search).get('genera_qr') === '1' && btnGeneraQR) {
+        generaQRCode();
+    }
 }
 
 // Funzione per generare QR code
@@ -992,8 +996,13 @@ async function generaQRCode() {
 
             // Genera QR code visivo
             const qrElement = document.getElementById('qrCode');
-            if (qrElement && typeof QRCode !== 'undefined') {
-                QRCode.toCanvas(qrElement, qrData.qr_code_data, {
+            if (!qrElement || typeof QRCode === 'undefined') {
+                showToast('error', 'Errore', 'Libreria QR non disponibile');
+                return;
+            }
+
+            try {
+                await QRCode.toCanvas(qrElement, qrData.qr_code_data, {
                     width: 200,
                     margin: 2,
                     color: {
@@ -1001,6 +1010,10 @@ async function generaQRCode() {
                         light: '#ffffff'
                     }
                 });
+            } catch (error) {
+                console.error('[STUDENTE] Errore rendering QR code:', error);
+                showToast('error', 'Errore', 'Impossibile visualizzare il QR code');
+                return;
             }
 
             // Salva dati QR code per conferma
